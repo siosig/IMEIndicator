@@ -1,119 +1,147 @@
-# IMEIndicatorW
+# IMEIndicatorClockW
 
-Windows用 IME状態インジケーター＆デスクトップ時計アプリケーション
+[日本語](README_ja.md) | [繁體中文](README_zh-Hant.md) | [简体中文](README_zh-Hans.md) | [한국어](README_ko.md)
 
-## 概要
+A Windows utility app that visually displays IME (Input Method Editor) status with a customizable desktop clock.
 
-IMEIndicatorWは、現在のIME（入力メソッド）の状態をデスクトップ上に視覚的に表示するWindows用アプリケーションです。macOS版 [IMEIndicatorClock](https://github.com/obott9/IMEIndicatorClock) のWindows移植版です。
+This is the Windows port of the macOS version [IMEIndicatorClock](https://github.com/obott9/IMEIndicatorClock).
 
-日本語入力のON/OFFが分かりにくいという問題を解決し、常に入力状態を確認できます。
+## Screenshots
 
-## 機能
+(Coming soon)
 
-### IMEインジケーター
-- IMEのON/OFF状態を色分けして表示
-- 24言語対応（日本語、英語、韓国語、中国語、ベトナム語、タイ語など）
-- 言語別のカスタムカラー・表示テキスト設定
-- サイズ・透明度の調整
-- マルチディスプレイ対応
+## Vision
 
-### デスクトップ時計
-- デジタル/アナログ表示の切り替え
-- 日付・時刻フォーマットのカスタマイズ（和暦対応）
-- レイアウト選択（縦/横並び、日付のみ、時刻のみ）
-- IME状態による背景色の変更
-- マルチディスプレイ対応
+**Our goal is to support IMEs from around the world.**
 
-### マウスカーソルインジケーター
-- カーソル位置にIME状態を表示
-- オフセット調整可能
+We aim to help IME users see their current input mode at a glance.
 
-## スクリーンショット
+## Features
 
-（準備中）
+### IME Indicator
+- Visually displays the current input method status on screen
+- Japanese: Red circle with "あ"
+- English: Blue circle with "A"
+- Customizable position, size, and opacity
+- Multi-display support
 
-## 動作環境
+### Desktop Clock
+- Floating clock supporting both analog and digital modes
+- Date display with Japanese calendar (Wareki) support
+- Background color changes based on IME status
+- Fully customizable window size, font size, and colors
+
+### Mouse Cursor Indicator
+- Displays IME status near the mouse cursor
+- Convenient for text input
+
+## Language Support
+
+### Full Support (IME Detection + UI)
+| Language | IME Detection | UI Localization |
+|----------|:-------------:|:---------------:|
+| Japanese | ✅ | ✅ |
+| English | ✅ | ✅ |
+| Chinese (Simplified) | ✅ | ✅ |
+| Chinese (Traditional) | ✅ | ✅ |
+| Korean | ✅ | ✅ |
+
+### IME Detection + Basic UI
+| Language | IME Detection | UI Localization |
+|----------|:-------------:|:---------------:|
+| Thai | ✅ | ✅ |
+| Vietnamese | ✅ | ✅ |
+| Arabic | ✅ | ✅ |
+| Hebrew | ✅ | ✅ |
+| Hindi | ✅ | ✅ |
+| Russian | ✅ | ✅ |
+| Greek | ✅ | ✅ |
+| Bengali | ✅ | ✅ |
+| Tamil | ✅ | ✅ |
+| Telugu | ✅ | ✅ |
+| Nepali | ✅ | ✅ |
+| Sinhala | ✅ | ✅ |
+| Myanmar | ✅ | ✅ |
+| Khmer | ✅ | ✅ |
+| Lao | ✅ | ✅ |
+| Mongolian | ✅ | ✅ |
+| Persian | ✅ | ✅ |
+| Ukrainian | ✅ | ✅ |
+
+*UI translations for these languages are machine-translated and may need improvement. Contributions welcome!*
+
+## System Requirements
 
 - Windows 10/11
 - .NET 8.0 Runtime
 
-## インストール
+## Installation
 
-1. [Releases](https://github.com/obott9/IMEIndicatorW/releases) から最新版をダウンロード
-2. 任意のフォルダに展開
-3. `IMEIndicatorW.exe` を実行
+1. Download the latest release from [Releases](https://github.com/obott9/IMEIndicatorClockW/releases)
+2. Extract to any folder
+3. Run `IMEIndicatorW.exe`
 
-## ビルド
+## Build from Source
 
-### 必要環境
-- Visual Studio 2022 または VS Code
+### Requirements
+- Visual Studio 2022 or VS Code
 - .NET 8.0 SDK
 
-### ビルド手順
+### Build Steps
 ```bash
-git clone https://github.com/obott9/IMEIndicatorW.git
-cd IMEIndicatorW
+git clone https://github.com/obott9/IMEIndicatorClockW.git
+cd IMEIndicatorClockW
 dotnet build
 ```
 
-## 使用方法
+## Usage
 
-1. アプリケーションを起動すると、システムトレイにアイコンが表示されます
-2. トレイアイコンを右クリックでメニューを表示
-3. 「設定...」から各種設定を変更できます
+1. Launch the app - an icon appears in the system tray
+2. Right-click the tray icon to access settings
+3. Drag the clock or indicator to your preferred position
 
-### 設定項目
+## Security & Privacy
 
-| カテゴリ | 設定項目 |
-|---------|---------|
-| IMEインジケーター | サイズ、透明度、位置、フォント、言語別色設定、ピクセル検証間隔 |
-| 時計 | スタイル、サイズ、フォント、フォーマット、レイアウト、背景色 |
-| マウス | サイズ、透明度、オフセット |
+### About Keyboard Hook Usage
 
-## セキュリティ・プライバシーについて
+This application uses a **low-level keyboard hook** (`SetWindowsHookEx` API) for accurate IME status detection.
 
-### キーボードフックの使用について
+**Why is a keyboard hook necessary?**
+- Standard Windows IME APIs cannot accurately detect IME status in some applications (terminals, games, etc.)
+- The keyboard hook detects IME toggle keys (Hankaku/Zenkaku, Henkan, etc.) for more accurate status display
 
-本アプリケーションは、IME状態の正確な検出のために**低レベルキーボードフック**（`SetWindowsHookEx` API）を使用しています。
+**Safety:**
+- Key input content is **never recorded or transmitted**
+- Only IME-related keys are detected (Hankaku/Zenkaku, Ctrl+Space, etc.)
+- No internet communication features
+- Settings are stored locally only (`%AppData%\IMEIndicatorW`)
+- Source code is open and verifiable
 
-**なぜキーボードフックが必要か：**
-- Windows標準のIME APIだけでは、一部のアプリケーション（ターミナル、ゲームなど）でIME状態を正確に取得できません
-- キーボードフックにより、IME切り替えキー（半角/全角、変換キーなど）の押下を検出し、より正確な状態表示を実現しています
+**About antivirus warnings:**
+Applications using keyboard hooks may trigger antivirus warnings. This is because the same technology is used by keyloggers, but this application performs no malicious operations. Please review the source code if you have concerns.
 
-**安全性について：**
-- キー入力の内容は**一切記録・送信しません**
-- 検出するのはIME関連のキー（半角/全角、Ctrl+Space等）のみです
-- インターネット通信機能はありません
-- 設定データはローカル（`%AppData%\IMEIndicatorW`）にのみ保存されます
-- ソースコードは公開されており、動作を確認できます
+## Development
 
-**ウイルス対策ソフトの警告について：**
-キーボードフックを使用するアプリケーションは、ウイルス対策ソフトから警告を受ける場合があります。これはキーロガー等と同じ技術を使用しているためですが、本アプリケーションは悪意のある動作を行いません。ご心配な場合はソースコードをご確認ください。
+This project was developed in collaboration with [Claude AI](https://claude.ai/) by Anthropic.
 
-## 技術スタック
+Claude assisted with:
+- Architecture design and code implementation
+- Multi-language localization
+- Documentation and README creation
 
-- C# / .NET 8.0
-- WPF (Windows Presentation Foundation)
-- MVVM パターン (CommunityToolkit.Mvvm)
-- Windows IME API (IMM32, TSF)
-- 低レベルキーボードフック (SetWindowsHookEx)
-- ピクセルベースIME検出（タスクバーのIMEアイコン解析）
+## Support
 
-## 対応言語
+If you find this app useful, consider buying me a coffee!
 
-英語、日本語、韓国語、中国語（簡体/繁体）、ベトナム語、タイ語、ヒンディー語、ベンガル語、タミル語、テルグ語、ネパール語、シンハラ語、ミャンマー語、クメール語、ラオ語、モンゴル語、アラビア語、ペルシャ語、ヘブライ語、ウクライナ語、ロシア語、ギリシャ語
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/obott9)
 
-## ライセンス
+## Contributing
 
-MIT License
+We welcome contributions! Especially:
+- UI translations for additional languages
+- Support for more IME types
+- Bug reports and feature requests
 
-## 作者
+## License
 
-[obott9](https://github.com/obott9)
-
-## 謝辞
-
-- [imel](https://github.com/na0k106ata/imel) - IME状態検出の参考
-- [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet)
-- [Hardcodet.NotifyIcon.Wpf](https://github.com/hardcodet/wpf-notifyicon)
-
+MIT License - See [LICENSE](LICENSE) file for details.
