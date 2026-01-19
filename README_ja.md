@@ -8,7 +8,15 @@ macOS版 [IMEIndicatorClock](https://github.com/obott9/IMEIndicatorClock) のWin
 
 ## スクリーンショット
 
-（準備中）
+### デスクトップ表示
+| IME ON（日本語入力） | IME OFF（英語入力） |
+|:-------------------:|:-------------------:|
+| ![IME ON](docs/images/desktop-ime-on.png) | ![IME OFF](docs/images/desktop-ime-off.png) |
+
+### 設定画面
+| IMEインジケータ | 時計 | マウスカーソル | バージョン |
+|:--------------:|:----:|:-------------:|:---------:|
+| ![Indicator](docs/images/settings-indicator.png) | ![Clock](docs/images/settings-clock.png) | ![Cursor](docs/images/settings-cursor.png) | ![Version](docs/images/settings-version.png) |
 
 ## ビジョン
 

@@ -8,7 +8,15 @@ This is the Windows port of the macOS version [IMEIndicatorClock](https://github
 
 ## Screenshots
 
-(Coming soon)
+### Desktop Overview
+| IME ON (Japanese) | IME OFF (English) |
+|:-----------------:|:-----------------:|
+| ![IME ON](docs/images/desktop-ime-on.png) | ![IME OFF](docs/images/desktop-ime-off.png) |
+
+### Settings
+| IME Indicator | Clock | Mouse Cursor | Version |
+|:-------------:|:-----:|:------------:|:-------:|
+| ![Indicator](docs/images/settings-indicator.png) | ![Clock](docs/images/settings-clock.png) | ![Cursor](docs/images/settings-cursor.png) | ![Version](docs/images/settings-version.png) |
 
 ## Vision
 

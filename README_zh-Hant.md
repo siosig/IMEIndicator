@@ -8,7 +8,15 @@
 
 ## 螢幕截圖
 
-（準備中）
+### 桌面概覽
+| 輸入法開啟（日文） | 輸入法關閉（英文） |
+|:-----------------:|:-----------------:|
+| ![IME ON](docs/images/desktop-ime-on.png) | ![IME OFF](docs/images/desktop-ime-off.png) |
+
+### 設定介面
+| 輸入法指示器 | 時鐘 | 滑鼠游標 | 版本 |
+|:----------:|:----:|:-------:|:----:|
+| ![Indicator](docs/images/settings-indicator.png) | ![Clock](docs/images/settings-clock.png) | ![Cursor](docs/images/settings-cursor.png) | ![Version](docs/images/settings-version.png) |
 
 ## 願景
 

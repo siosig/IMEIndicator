@@ -8,7 +8,15 @@
 
 ## 屏幕截图
 
-（准备中）
+### 桌面概览
+| 输入法开启（日文） | 输入法关闭（英文） |
+|:-----------------:|:-----------------:|
+| ![IME ON](docs/images/desktop-ime-on.png) | ![IME OFF](docs/images/desktop-ime-off.png) |
+
+### 设置界面
+| 输入法指示器 | 时钟 | 鼠标光标 | 版本 |
+|:----------:|:----:|:-------:|:----:|
+| ![Indicator](docs/images/settings-indicator.png) | ![Clock](docs/images/settings-clock.png) | ![Cursor](docs/images/settings-cursor.png) | ![Version](docs/images/settings-version.png) |
 
 ## 愿景
 

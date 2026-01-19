@@ -8,7 +8,15 @@ macOS 버전 [IMEIndicatorClock](https://github.com/obott9/IMEIndicatorClock)의
 
 ## 스크린샷
 
-(준비 중)
+### 데스크톱 미리보기
+| IME 켜짐 (일본어) | IME 꺼짐 (영어) |
+|:----------------:|:---------------:|
+| ![IME ON](docs/images/desktop-ime-on.png) | ![IME OFF](docs/images/desktop-ime-off.png) |
+
+### 설정 화면
+| IME 인디케이터 | 시계 | 마우스 커서 | 버전 |
+|:-------------:|:----:|:----------:|:----:|
+| ![Indicator](docs/images/settings-indicator.png) | ![Clock](docs/images/settings-clock.png) | ![Cursor](docs/images/settings-cursor.png) | ![Version](docs/images/settings-version.png) |
 
 ## 비전
 
