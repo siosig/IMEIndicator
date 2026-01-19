@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <data name="AppTitle" xml:space="preserve"><value>IME Indicator Clock</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>ການຕັ້ງຄ່າ - IME Indicator Clock</value></data>
+  <data name="TabIMEIndicator" xml:space="preserve"><value>ຕົວຊີ້ບອກ IME</value></data>
+  <data name="TabClock" xml:space="preserve"><value>ໂມງ</value></data>
+  <data name="TabMouse" xml:space="preserve"><value>ຕົວຊີ້ບອກເຄີເຊີ</value></data>
+  <data name="TabAbout" xml:space="preserve"><value>ກ່ຽວກັບ</value></data>
+  <data name="LabelVisible" xml:space="preserve"><value>ສະແດງ</value></data>
+  <data name="LabelSize" xml:space="preserve"><value>ຂະໜາດ</value></data>
+  <data name="LabelPosition" xml:space="preserve"><value>ຕຳແໜ່ງ</value></data>
+  <data name="LabelFont" xml:space="preserve"><value>ຟອນ</value></data>
+  <data name="LabelLanguage" xml:space="preserve"><value>ພາສາ</value></data>
+  <data name="BtnTopLeft" xml:space="preserve"><value>ເທິງຊ້າຍ</value></data>
+  <data name="BtnTopRight" xml:space="preserve"><value>ເທິງຂວາ</value></data>
+  <data name="BtnBottomLeft" xml:space="preserve"><value>ລຸ່ມຊ້າຍ</value></data>
+  <data name="BtnBottomRight" xml:space="preserve"><value>ລຸ່ມຂວາ</value></data>
+  <data name="Language" xml:space="preserve"><value>ພາສາ</value></data>
+  <data name="Color" xml:space="preserve"><value>ສີ</value></data>
+  <data name="Text" xml:space="preserve"><value>ຂໍ້ຄວາມ</value></data>
+  <data name="LabelWidth" xml:space="preserve"><value>ກວ້າງ</value></data>
+  <data name="LabelHeight" xml:space="preserve"><value>ສູງ</value></data>
+  <data name="LabelBackgroundColor" xml:space="preserve"><value>ສີພື້ນຫຼັງ</value></data>
+  <data name="LabelVersion" xml:space="preserve"><value>ລຸ້ນ</value></data>
+  <data name="BtnSave" xml:space="preserve"><value>ບັນທຶກ</value></data>
+  <data name="BtnClose" xml:space="preserve"><value>ປິດ</value></data>
+  <data name="BtnOK" xml:space="preserve"><value>ຕົກລົງ</value></data>
+  <data name="BtnCancel" xml:space="preserve"><value>ຍົກເລີກ</value></data>
+  <data name="MenuSettings" xml:space="preserve"><value>ການຕັ້ງຄ່າ...</value></data>
+  <data name="MenuExit" xml:space="preserve"><value>ອອກ</value></data>
+  <data name="MsgComplete" xml:space="preserve"><value>ສຳເລັດ</value></data>
+  <data name="DisplayPrimary" xml:space="preserve"><value>(ຫຼັກ)</value></data>
+  <data name="DisplayFormat" xml:space="preserve"><value>ຈໍສະແດງ {0}{1} - {2}x{3}</value></data>
+  <data name="LabelSupportedLanguages" xml:space="preserve"><value>🌐 ພາສາທີ່ຮອງຮັບ</value></data>
+  <data name="LangEnglish" xml:space="preserve"><value>ອັງກິດ (IME ປິດ)</value></data>
+  <data name="LangOther" xml:space="preserve"><value>IME ອື່ນ</value></data>
+</root>

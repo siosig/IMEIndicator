@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <data name="AppTitle" xml:space="preserve"><value>IME Indicator Clock</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>सेटिंग्स - IME Indicator Clock</value></data>
+  <data name="TabIMEIndicator" xml:space="preserve"><value>IME संकेतक</value></data>
+  <data name="TabClock" xml:space="preserve"><value>घड़ी</value></data>
+  <data name="TabMouse" xml:space="preserve"><value>कर्सर संकेतक</value></data>
+  <data name="LabelMouseDescription" xml:space="preserve"><value>IME संकेतक से भाषा रंग सेटिंग्स का उपयोग करता है</value></data>
+  <data name="TabAbout" xml:space="preserve"><value>के बारे में</value></data>
+  <data name="LabelVisible" xml:space="preserve"><value>दृश्यमान</value></data>
+  <data name="LabelSize" xml:space="preserve"><value>आकार</value></data>
+  <data name="LabelOpacity" xml:space="preserve"><value>पारदर्शिता</value></data>
+  <data name="LabelPosition" xml:space="preserve"><value>स्थिति</value></data>
+  <data name="LabelPositionPreset" xml:space="preserve"><value>स्थिति प्रीसेट</value></data>
+  <data name="LabelPositionManual" xml:space="preserve"><value>स्थिति (मैनुअल)</value></data>
+  <data name="LabelFont" xml:space="preserve"><value>फ़ॉन्ट</value></data>
+  <data name="LabelFontSize" xml:space="preserve"><value>फ़ॉन्ट आकार</value></data>
+  <data name="LabelDisplay" xml:space="preserve"><value>डिस्प्ले</value></data>
+  <data name="LabelLanguage" xml:space="preserve"><value>भाषा</value></data>
+  <data name="BtnTopLeft" xml:space="preserve"><value>ऊपर बाएं</value></data>
+  <data name="BtnTopRight" xml:space="preserve"><value>ऊपर दाएं</value></data>
+  <data name="BtnBottomLeft" xml:space="preserve"><value>नीचे बाएं</value></data>
+  <data name="BtnBottomRight" xml:space="preserve"><value>नीचे दाएं</value></data>
+  <data name="LabelLanguageColors" xml:space="preserve"><value>भाषा रंग</value></data>
+  <data name="GlobalFont" xml:space="preserve"><value>डिफ़ॉल्ट फ़ॉन्ट:</value></data>
+  <data name="Language" xml:space="preserve"><value>भाषा</value></data>
+  <data name="Font" xml:space="preserve"><value>फ़ॉन्ट</value></data>
+  <data name="Size" xml:space="preserve"><value>आकार</value></data>
+  <data name="FontSize" xml:space="preserve"><value>आकार</value></data>
+  <data name="Color" xml:space="preserve"><value>रंग</value></data>
+  <data name="Text" xml:space="preserve"><value>टेक्स्ट</value></data>
+  <data name="LabelWindowSettings" xml:space="preserve"><value>विंडो सेटिंग्स</value></data>
+  <data name="LabelDisplaySettings" xml:space="preserve"><value>प्रदर्शन सेटिंग्स</value></data>
+  <data name="LabelColorSettings" xml:space="preserve"><value>रंग सेटिंग्स</value></data>
+  <data name="LabelStyle" xml:space="preserve"><value>शैली</value></data>
+  <data name="StyleDigital" xml:space="preserve"><value>डिजिटल</value></data>
+  <data name="StyleAnalog" xml:space="preserve"><value>एनालॉग</value></data>
+  <data name="LabelWidth" xml:space="preserve"><value>चौड़ाई</value></data>
+  <data name="LabelHeight" xml:space="preserve"><value>ऊंचाई</value></data>
+  <data name="LabelBackgroundColor" xml:space="preserve"><value>पृष्ठभूमि रंग</value></data>
+  <data name="LabelUseIMEIndicatorColors" xml:space="preserve"><value>IME संकेतक भाषा रंग उपयोग करें</value></data>
+  <data name="LabelIMEOff" xml:space="preserve"><value>IME बंद</value></data>
+  <data name="LabelIMEOn" xml:space="preserve"><value>IME चालू</value></data>
+  <data name="LabelShowSeconds" xml:space="preserve"><value>सेकंड की सुई दिखाएं</value></data>
+  <data name="LabelAnalogClockSize" xml:space="preserve"><value>एनालॉग घड़ी का आकार</value></data>
+  <data name="LabelDateFormat" xml:space="preserve"><value>दिनांक प्रारूप</value></data>
+  <data name="LabelTimeFormat" xml:space="preserve"><value>समय प्रारूप</value></data>
+  <data name="LabelLayout" xml:space="preserve"><value>दिनांक/समय लेआउट</value></data>
+  <data name="FormatFull" xml:space="preserve"><value>पूर्ण</value></data>
+  <data name="FormatNormal" xml:space="preserve"><value>सामान्य</value></data>
+  <data name="FormatShort" xml:space="preserve"><value>संक्षिप्त</value></data>
+  <data name="FormatCustom1" xml:space="preserve"><value>कस्टम 1</value></data>
+  <data name="FormatCustom2" xml:space="preserve"><value>कस्टम 2</value></data>
+  <data name="LayoutVerticalDateFirst" xml:space="preserve"><value>लंबवत (दिनांक, समय)</value></data>
+  <data name="LayoutVerticalTimeFirst" xml:space="preserve"><value>लंबवत (समय, दिनांक)</value></data>
+  <data name="LayoutHorizontalDateFirst" xml:space="preserve"><value>क्षैतिज (दिनांक, समय)</value></data>
+  <data name="LayoutHorizontalTimeFirst" xml:space="preserve"><value>क्षैतिज (समय, दिनांक)</value></data>
+  <data name="LayoutDateOnly" xml:space="preserve"><value>केवल दिनांक</value></data>
+  <data name="LayoutTimeOnly" xml:space="preserve"><value>केवल समय</value></data>
+  <data name="LabelOffsetX" xml:space="preserve"><value>ऑफसेट X</value></data>
+  <data name="LabelOffsetY" xml:space="preserve"><value>ऑफसेट Y</value></data>
+  <data name="LabelVersion" xml:space="preserve"><value>संस्करण</value></data>
+  <data name="BtnResetSettings" xml:space="preserve"><value>सेटिंग्स रीसेट करें</value></data>
+  <data name="LabelDebugMode" xml:space="preserve"><value>डीबग लॉग सक्षम करें</value></data>
+  <data name="BtnSave" xml:space="preserve"><value>सहेजें</value></data>
+  <data name="BtnClose" xml:space="preserve"><value>बंद करें</value></data>
+  <data name="BtnOK" xml:space="preserve"><value>ठीक है</value></data>
+  <data name="BtnCancel" xml:space="preserve"><value>रद्द करें</value></data>
+  <data name="MenuIMEIndicator" xml:space="preserve"><value>IME संकेतक</value></data>
+  <data name="MenuClock" xml:space="preserve"><value>घड़ी</value></data>
+  <data name="MenuMouseIndicator" xml:space="preserve"><value>कर्सर संकेतक</value></data>
+  <data name="MenuSettings" xml:space="preserve"><value>सेटिंग्स...</value></data>
+  <data name="MenuExit" xml:space="preserve"><value>बाहर निकलें</value></data>
+  <data name="MsgSaveComplete" xml:space="preserve"><value>सेटिंग्स सहेजी गईं।</value></data>
+  <data name="MsgSaveCompleteTitle" xml:space="preserve"><value>सहेजना पूर्ण</value></data>
+  <data name="MsgResetConfirm" xml:space="preserve"><value>सभी सेटिंग्स को डिफ़ॉल्ट पर रीसेट करें?</value></data>
+  <data name="MsgResetTitle" xml:space="preserve"><value>सेटिंग्स रीसेट करें</value></data>
+  <data name="MsgResetComplete" xml:space="preserve"><value>सेटिंग्स रीसेट हो गईं।</value></data>
+  <data name="MsgComplete" xml:space="preserve"><value>पूर्ण</value></data>
+  <data name="DisplayPrimary" xml:space="preserve"><value>(प्राथमिक)</value></data>
+  <data name="DisplayFormat" xml:space="preserve"><value>डिस्प्ले {0}{1} - {2}x{3}</value></data>
+  <data name="AppDescription" xml:space="preserve"><value>IME स्थिति प्रदर्शन और डेस्कटॉप घड़ी उपयोगिता</value></data>
+  <data name="LabelSupportedLanguages" xml:space="preserve"><value>🌐 समर्थित भाषाएं</value></data>
+  <data name="LabelCustomize" xml:space="preserve"><value>⚙ अनुकूलित करें</value></data>
+  <data name="BtnGoToIMEIndicator" xml:space="preserve"><value>IME संकेतक सेटिंग्स...</value></data>
+  <data name="BtnGoToClock" xml:space="preserve"><value>घड़ी सेटिंग्स...</value></data>
+  <data name="BtnGoToMouse" xml:space="preserve"><value>कर्सर संकेतक सेटिंग्स...</value></data>
+  <data name="LangEnglish" xml:space="preserve"><value>अंग्रेज़ी (IME बंद)</value></data>
+  <data name="LangJapanese" xml:space="preserve"><value>जापानी</value></data>
+  <data name="LangKorean" xml:space="preserve"><value>कोरियाई</value></data>
+  <data name="LangChineseSimplified" xml:space="preserve"><value>चीनी (सरलीकृत)</value></data>
+  <data name="LangChineseTraditional" xml:space="preserve"><value>चीनी (पारंपरिक)</value></data>
+  <data name="LangThai" xml:space="preserve"><value>थाई</value></data>
+  <data name="LangVietnamese" xml:space="preserve"><value>वियतनामी</value></data>
+  <data name="LangArabic" xml:space="preserve"><value>अरबी</value></data>
+  <data name="LangHebrew" xml:space="preserve"><value>हिब्रू</value></data>
+  <data name="LangHindi" xml:space="preserve"><value>हिंदी</value></data>
+  <data name="LangRussian" xml:space="preserve"><value>रूसी</value></data>
+  <data name="LangGreek" xml:space="preserve"><value>यूनानी</value></data>
+  <data name="LangOther" xml:space="preserve"><value>अन्य IME</value></data>
+</root>

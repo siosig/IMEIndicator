@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <!-- App Title -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>IME Indicator Clock</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>설정 - IME Indicator Clock</value>
+  </data>
+
+  <!-- Tab Names -->
+  <data name="TabIMEIndicator" xml:space="preserve">
+    <value>IME 표시기</value>
+  </data>
+  <data name="TabClock" xml:space="preserve">
+    <value>시계</value>
+  </data>
+  <data name="TabMouse" xml:space="preserve">
+    <value>마우스 표시기</value>
+  </data>
+  <data name="TabAbout" xml:space="preserve">
+    <value>정보</value>
+  </data>
+
+  <!-- Common Labels -->
+  <data name="LabelSize" xml:space="preserve">
+    <value>크기</value>
+  </data>
+  <data name="LabelOpacity" xml:space="preserve">
+    <value>투명도</value>
+  </data>
+  <data name="LabelPosition" xml:space="preserve">
+    <value>위치</value>
+  </data>
+  <data name="LabelPositionPreset" xml:space="preserve">
+    <value>위치 프리셋</value>
+  </data>
+  <data name="LabelPositionManual" xml:space="preserve">
+    <value>위치 (수동)</value>
+  </data>
+  <data name="LabelFont" xml:space="preserve">
+    <value>글꼴</value>
+  </data>
+  <data name="LabelFontSize" xml:space="preserve">
+    <value>글꼴 크기</value>
+  </data>
+  <data name="LabelDisplay" xml:space="preserve">
+    <value>디스플레이</value>
+  </data>
+  <data name="LabelLanguage" xml:space="preserve">
+    <value>언어</value>
+  </data>
+
+  <!-- Position Buttons -->
+  <data name="BtnTopLeft" xml:space="preserve">
+    <value>왼쪽 상단</value>
+  </data>
+  <data name="BtnTopRight" xml:space="preserve">
+    <value>오른쪽 상단</value>
+  </data>
+  <data name="BtnBottomLeft" xml:space="preserve">
+    <value>왼쪽 하단</value>
+  </data>
+  <data name="BtnBottomRight" xml:space="preserve">
+    <value>오른쪽 하단</value>
+  </data>
+
+  <!-- IME Indicator -->
+  <data name="LabelLanguageColors" xml:space="preserve">
+    <value>언어별 색상 설정</value>
+  </data>
+  <data name="BtnEditLanguageColors" xml:space="preserve">
+    <value>언어별 색상 편집...</value>
+  </data>
+
+  <!-- Clock Settings -->
+  <data name="LabelWindowSettings" xml:space="preserve">
+    <value>창 설정</value>
+  </data>
+  <data name="LabelDisplaySettings" xml:space="preserve">
+    <value>표시 설정</value>
+  </data>
+  <data name="LabelFontSettings" xml:space="preserve">
+    <value>글꼴 설정</value>
+  </data>
+  <data name="LabelColorSettings" xml:space="preserve">
+    <value>색상 설정</value>
+  </data>
+  <data name="LabelStyle" xml:space="preserve">
+    <value>스타일</value>
+  </data>
+  <data name="StyleDigital" xml:space="preserve">
+    <value>디지털</value>
+  </data>
+  <data name="StyleAnalog" xml:space="preserve">
+    <value>아날로그</value>
+  </data>
+  <data name="LabelWindowSize" xml:space="preserve">
+    <value>창 크기</value>
+  </data>
+  <data name="LabelWidth" xml:space="preserve">
+    <value>너비</value>
+  </data>
+  <data name="LabelHeight" xml:space="preserve">
+    <value>높이</value>
+  </data>
+  <data name="LabelBackgroundColor" xml:space="preserve">
+    <value>배경색</value>
+  </data>
+  <data name="LabelIMEOff" xml:space="preserve">
+    <value>IME 끔</value>
+  </data>
+  <data name="LabelIMEOn" xml:space="preserve">
+    <value>IME 켬</value>
+  </data>
+  <data name="LabelShowSeconds" xml:space="preserve">
+    <value>초 표시</value>
+  </data>
+  <data name="LabelAnalogClockSettings" xml:space="preserve">
+    <value>아날로그 시계 설정</value>
+  </data>
+  <data name="LabelAnalogClockSize" xml:space="preserve">
+    <value>아날로그 시계 크기</value>
+  </data>
+  <data name="LabelAnalogClockColor" xml:space="preserve">
+    <value>아날로그 시계 색상</value>
+  </data>
+  <data name="LabelAnalogClockHandsColor" xml:space="preserve">
+    <value>시계 바늘</value>
+  </data>
+  <data name="LabelAnalogClockTextColor" xml:space="preserve">
+    <value>눈금 색상</value>
+  </data>
+  <data name="LabelDateFormat" xml:space="preserve">
+    <value>날짜 형식</value>
+  </data>
+  <data name="LabelTimeFormat" xml:space="preserve">
+    <value>시간 형식</value>
+  </data>
+  <data name="LabelLayout" xml:space="preserve">
+    <value>날짜/시간 레이아웃</value>
+  </data>
+  <data name="LabelSelectFromSamples" xml:space="preserve">
+    <value>샘플에서 선택:</value>
+  </data>
+  <data name="LabelOrInputDirectly" xml:space="preserve">
+    <value>또는 직접 입력:</value>
+  </data>
+
+  <!-- Format Presets -->
+  <data name="FormatFull" xml:space="preserve">
+    <value>전체</value>
+  </data>
+  <data name="FormatNormal" xml:space="preserve">
+    <value>보통</value>
+  </data>
+  <data name="FormatShort" xml:space="preserve">
+    <value>짧게</value>
+  </data>
+  <data name="FormatCustom1" xml:space="preserve">
+    <value>사용자 정의 1</value>
+  </data>
+  <data name="FormatCustom2" xml:space="preserve">
+    <value>사용자 정의 2</value>
+  </data>
+
+  <!-- Layout Options -->
+  <data name="LayoutVerticalDateFirst" xml:space="preserve">
+    <value>세로(날짜, 시간)</value>
+  </data>
+  <data name="LayoutVerticalTimeFirst" xml:space="preserve">
+    <value>세로(시간, 날짜)</value>
+  </data>
+  <data name="LayoutHorizontalDateFirst" xml:space="preserve">
+    <value>가로(날짜, 시간)</value>
+  </data>
+  <data name="LayoutHorizontalTimeFirst" xml:space="preserve">
+    <value>가로(시간, 날짜)</value>
+  </data>
+  <data name="LayoutDateOnly" xml:space="preserve">
+    <value>날짜만</value>
+  </data>
+  <data name="LayoutTimeOnly" xml:space="preserve">
+    <value>시간만</value>
+  </data>
+
+  <!-- Mouse Settings -->
+  <data name="LabelOffsetX" xml:space="preserve">
+    <value>오프셋 X</value>
+  </data>
+  <data name="LabelOffsetY" xml:space="preserve">
+    <value>오프셋 Y</value>
+  </data>
+
+  <!-- About -->
+  <data name="LabelVersion" xml:space="preserve">
+    <value>버전</value>
+  </data>
+  <data name="BtnResetSettings" xml:space="preserve">
+    <value>설정 초기화</value>
+  </data>
+  <data name="LabelDebugMode" xml:space="preserve">
+    <value>디버그 로그 활성화</value>
+  </data>
+
+  <!-- Buttons -->
+  <data name="BtnSave" xml:space="preserve">
+    <value>저장</value>
+  </data>
+  <data name="BtnClose" xml:space="preserve">
+    <value>닫기</value>
+  </data>
+  <data name="BtnOK" xml:space="preserve">
+    <value>확인</value>
+  </data>
+  <data name="BtnCancel" xml:space="preserve">
+    <value>취소</value>
+  </data>
+
+  <!-- Context Menu -->
+  <data name="MenuIMEIndicator" xml:space="preserve">
+    <value>IME 표시기</value>
+  </data>
+  <data name="MenuClock" xml:space="preserve">
+    <value>시계</value>
+  </data>
+  <data name="MenuMouseIndicator" xml:space="preserve">
+    <value>마우스 표시기</value>
+  </data>
+  <data name="MenuSettings" xml:space="preserve">
+    <value>설정...</value>
+  </data>
+  <data name="MenuExit" xml:space="preserve">
+    <value>종료</value>
+  </data>
+
+  <!-- Messages -->
+  <data name="MsgSaveComplete" xml:space="preserve">
+    <value>설정이 저장되었습니다.</value>
+  </data>
+  <data name="MsgSaveCompleteTitle" xml:space="preserve">
+    <value>저장 완료</value>
+  </data>
+  <data name="MsgResetConfirm" xml:space="preserve">
+    <value>모든 설정을 기본값으로 되돌리시겠습니까?</value>
+  </data>
+  <data name="MsgResetTitle" xml:space="preserve">
+    <value>설정 초기화</value>
+  </data>
+  <data name="MsgResetComplete" xml:space="preserve">
+    <value>설정이 초기화되었습니다.</value>
+  </data>
+  <data name="MsgComplete" xml:space="preserve">
+    <value>완료</value>
+  </data>
+
+  <!-- Display -->
+  <data name="DisplayPrimary" xml:space="preserve">
+    <value>(기본)</value>
+  </data>
+  <data name="DisplayFormat" xml:space="preserve">
+    <value>디스플레이 {0}{1} - {2}x{3}</value>
+  </data>
+
+</root>

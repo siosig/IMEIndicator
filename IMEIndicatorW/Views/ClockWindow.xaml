@@ -1,0 +1,133 @@
+<Window x:Class="IMEIndicatorClock.Views.ClockWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:IMEIndicatorClock.ViewModels"
+        xmlns:models="clr-namespace:IMEIndicatorClock.Models"
+        xmlns:converters="clr-namespace:IMEIndicatorClock.Resources"
+        Title="Clock"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual"
+        Width="{Binding Width, Mode=TwoWay}"
+        Height="{Binding Height, Mode=TwoWay}"
+        Left="{Binding PositionX, Mode=TwoWay}"
+        Top="{Binding PositionY, Mode=TwoWay}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:FontSizeReducerConverter x:Key="FontSizeReducerConverter"/>
+        <converters:DisplayModeToTimeVisibilityConverter x:Key="DisplayModeToTimeVisibilityConverter"/>
+        <converters:DisplayModeToDateVisibilityConverter x:Key="DisplayModeToDateVisibilityConverter"/>
+        <converters:LayoutToTimeVisibilityConverter x:Key="LayoutToTimeVisibilityConverter"/>
+        <converters:LayoutToDateVisibilityConverter x:Key="LayoutToDateVisibilityConverter"/>
+        <converters:LayoutToOrientationConverter x:Key="LayoutToOrientationConverter"/>
+    </Window.Resources>
+
+    <Border CornerRadius="10" Opacity="{Binding Opacity}"
+            Background="Transparent"
+            MouseLeftButtonDown="Border_MouseLeftButtonDown"
+            MouseRightButtonDown="Border_MouseRightButtonDown">
+        <Border CornerRadius="10">
+            <Border.Background>
+                <SolidColorBrush Color="{Binding BackgroundColor.Color}"/>
+            </Border.Background>
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" ShadowDepth="3" Opacity="0.4"/>
+            </Border.Effect>
+
+            <Grid Margin="10">
+                <!-- アナログ時計（背景として表示） -->
+                <Viewbox x:Name="AnalogClock" Visibility="Collapsed"
+                         Width="{Binding AnalogClockSize}" Height="{Binding AnalogClockSize}"
+                         Stretch="Uniform" Margin="5">
+                    <Canvas Width="100" Height="100">
+                        <!-- 文字盤の背景 -->
+                        <Ellipse Width="100" Height="100" Fill="Transparent"/>
+
+                        <!-- 時刻マーク（12個） -->
+                        <Line X1="50" Y1="5" X2="50" Y2="10" Stroke="{Binding AnalogClockColor}" StrokeThickness="2"/>
+                        <Line X1="75" Y1="6.7" X2="72.5" Y2="11" Stroke="{Binding AnalogClockColor}" StrokeThickness="1"/>
+                        <Line X1="93.3" Y1="25" X2="89" Y2="27.5" Stroke="{Binding AnalogClockColor}" StrokeThickness="1"/>
+                        <Line X1="95" Y1="50" X2="90" Y2="50" Stroke="{Binding AnalogClockColor}" StrokeThickness="2"/>
+                        <Line X1="93.3" Y1="75" X2="89" Y2="72.5" Stroke="{Binding AnalogClockColor}" StrokeThickness="1"/>
+                        <Line X1="75" Y1="93.3" X2="72.5" Y2="89" Stroke="{Binding AnalogClockColor}" StrokeThickness="1"/>
+                        <Line X1="50" Y1="95" X2="50" Y2="90" Stroke="{Binding AnalogClockColor}" StrokeThickness="2"/>
+                        <Line X1="25" Y1="93.3" X2="27.5" Y2="89" Stroke="{Binding AnalogClockColor}" StrokeThickness="1"/>
+                        <Line X1="6.7" Y1="75" X2="11" Y2="72.5" Stroke="{Binding AnalogClockColor}" StrokeThickness="1"/>
+                        <Line X1="5" Y1="50" X2="10" Y2="50" Stroke="{Binding AnalogClockColor}" StrokeThickness="2"/>
+                        <Line X1="6.7" Y1="25" X2="11" Y2="27.5" Stroke="{Binding AnalogClockColor}" StrokeThickness="1"/>
+                        <Line X1="25" Y1="6.7" X2="27.5" Y2="11" Stroke="{Binding AnalogClockColor}" StrokeThickness="1"/>
+
+                        <!-- 時針 -->
+                        <Line X1="50" Y1="50" X2="50" Y2="25"
+                              Stroke="{Binding AnalogClockColor}" StrokeThickness="4" StrokeEndLineCap="Round">
+                            <Line.RenderTransform>
+                                <RotateTransform Angle="{Binding HourAngle}" CenterX="50" CenterY="50"/>
+                            </Line.RenderTransform>
+                        </Line>
+
+                        <!-- 分針 -->
+                        <Line X1="50" Y1="50" X2="50" Y2="15"
+                              Stroke="{Binding AnalogClockColor}" StrokeThickness="3" StrokeEndLineCap="Round">
+                            <Line.RenderTransform>
+                                <RotateTransform Angle="{Binding MinuteAngle}" CenterX="50" CenterY="50"/>
+                            </Line.RenderTransform>
+                        </Line>
+
+                        <!-- 秒針 -->
+                        <Line X1="50" Y1="50" X2="50" Y2="12"
+                              Stroke="{Binding AnalogClockColor}" StrokeThickness="1.5" StrokeEndLineCap="Round"
+                              Visibility="{Binding ShowSeconds, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Line.RenderTransform>
+                                <RotateTransform Angle="{Binding SecondAngle}" CenterX="50" CenterY="50"/>
+                            </Line.RenderTransform>
+                        </Line>
+
+                        <!-- 中心点 -->
+                        <Ellipse Width="8" Height="8" Fill="{Binding AnalogClockColor}" Canvas.Left="46" Canvas.Top="46"/>
+                    </Canvas>
+                </Viewbox>
+
+                <!-- 日付/時刻テキスト（常に前面に表示） -->
+                <StackPanel x:Name="TextOverlay" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Orientation="{Binding Layout, Converter={StaticResource LayoutToOrientationConverter}}">
+                    <!-- 時刻 -->
+                    <TextBlock x:Name="TimeTextBlock"
+                               Text="{Binding TimeText}"
+                               FontSize="{Binding FontSize}"
+                               FontFamily="{Binding FontFamily}"
+                               FontWeight="SemiBold"
+                               Foreground="{Binding TextColor}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Margin="5"
+                               Visibility="{Binding Layout, Converter={StaticResource LayoutToTimeVisibilityConverter}}">
+                        <TextBlock.Effect>
+                            <DropShadowEffect BlurRadius="2" ShadowDepth="1" Opacity="0.3"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+
+                    <!-- 日付 -->
+                    <TextBlock x:Name="DateTextBlock"
+                               Text="{Binding DateText}"
+                               FontSize="{Binding FontSize}"
+                               FontFamily="{Binding FontFamily}"
+                               FontWeight="SemiBold"
+                               Foreground="{Binding TextColor}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Margin="5"
+                               Visibility="{Binding Layout, Converter={StaticResource LayoutToDateVisibilityConverter}}">
+                        <TextBlock.Effect>
+                            <DropShadowEffect BlurRadius="2" ShadowDepth="1" Opacity="0.3"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Border>
+</Window>

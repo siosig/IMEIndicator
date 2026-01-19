@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <!-- App Title -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>IME Indicator Clock</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>การตั้งค่า - IME Indicator Clock</value>
+  </data>
+
+  <!-- Tab Names -->
+  <data name="TabIMEIndicator" xml:space="preserve">
+    <value>ตัวบ่งชี้ IME</value>
+  </data>
+  <data name="TabClock" xml:space="preserve">
+    <value>นาฬิกา</value>
+  </data>
+  <data name="TabMouse" xml:space="preserve">
+    <value>ตัวบ่งชี้เคอร์เซอร์</value>
+  </data>
+  <data name="LabelMouseDescription" xml:space="preserve">
+    <value>ใช้การตั้งค่าสีภาษาจากตัวบ่งชี้ IME</value>
+  </data>
+  <data name="TabAbout" xml:space="preserve">
+    <value>เกี่ยวกับ</value>
+  </data>
+
+  <!-- Common Labels -->
+  <data name="LabelVisible" xml:space="preserve">
+    <value>แสดง</value>
+  </data>
+  <data name="LabelSize" xml:space="preserve">
+    <value>ขนาด</value>
+  </data>
+  <data name="LabelOpacity" xml:space="preserve">
+    <value>ความโปร่งใส</value>
+  </data>
+  <data name="LabelPosition" xml:space="preserve">
+    <value>ตำแหน่ง</value>
+  </data>
+  <data name="LabelPositionPreset" xml:space="preserve">
+    <value>ตำแหน่งที่ตั้งไว้</value>
+  </data>
+  <data name="LabelPositionManual" xml:space="preserve">
+    <value>ตำแหน่ง (กำหนดเอง)</value>
+  </data>
+  <data name="LabelFont" xml:space="preserve">
+    <value>ฟอนต์</value>
+  </data>
+  <data name="LabelFontSize" xml:space="preserve">
+    <value>ขนาดฟอนต์</value>
+  </data>
+  <data name="LabelDisplay" xml:space="preserve">
+    <value>จอแสดงผล</value>
+  </data>
+  <data name="LabelLanguage" xml:space="preserve">
+    <value>ภาษา</value>
+  </data>
+
+  <!-- Position Buttons -->
+  <data name="BtnTopLeft" xml:space="preserve">
+    <value>บนซ้าย</value>
+  </data>
+  <data name="BtnTopRight" xml:space="preserve">
+    <value>บนขวา</value>
+  </data>
+  <data name="BtnBottomLeft" xml:space="preserve">
+    <value>ล่างซ้าย</value>
+  </data>
+  <data name="BtnBottomRight" xml:space="preserve">
+    <value>ล่างขวา</value>
+  </data>
+
+  <!-- IME Indicator -->
+  <data name="LabelLanguageColors" xml:space="preserve">
+    <value>สีตามภาษา</value>
+  </data>
+  <data name="GlobalFont" xml:space="preserve">
+    <value>ฟอนต์เริ่มต้น:</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>ภาษา</value>
+  </data>
+  <data name="Font" xml:space="preserve">
+    <value>ฟอนต์</value>
+  </data>
+  <data name="Size" xml:space="preserve">
+    <value>ขนาด</value>
+  </data>
+  <data name="FontSize" xml:space="preserve">
+    <value>ขนาด</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>สี</value>
+  </data>
+  <data name="Text" xml:space="preserve">
+    <value>ข้อความ</value>
+  </data>
+
+  <!-- Clock Settings -->
+  <data name="LabelWindowSettings" xml:space="preserve">
+    <value>การตั้งค่าหน้าต่าง</value>
+  </data>
+  <data name="LabelDisplaySettings" xml:space="preserve">
+    <value>การตั้งค่าการแสดงผล</value>
+  </data>
+  <data name="LabelFontSettings" xml:space="preserve">
+    <value>การตั้งค่าฟอนต์</value>
+  </data>
+  <data name="LabelColorSettings" xml:space="preserve">
+    <value>การตั้งค่าสี</value>
+  </data>
+  <data name="LabelStyle" xml:space="preserve">
+    <value>รูปแบบ</value>
+  </data>
+  <data name="StyleDigital" xml:space="preserve">
+    <value>ดิจิทัล</value>
+  </data>
+  <data name="StyleAnalog" xml:space="preserve">
+    <value>แอนะล็อก</value>
+  </data>
+  <data name="LabelWindowSize" xml:space="preserve">
+    <value>ขนาดหน้าต่าง</value>
+  </data>
+  <data name="LabelWidth" xml:space="preserve">
+    <value>ความกว้าง</value>
+  </data>
+  <data name="LabelHeight" xml:space="preserve">
+    <value>ความสูง</value>
+  </data>
+  <data name="LabelBackgroundColor" xml:space="preserve">
+    <value>สีพื้นหลัง</value>
+  </data>
+  <data name="LabelUseIMEIndicatorColors" xml:space="preserve">
+    <value>ใช้สีภาษาจากตัวบ่งชี้ IME</value>
+  </data>
+  <data name="LabelIMEOff" xml:space="preserve">
+    <value>IME ปิด</value>
+  </data>
+  <data name="LabelIMEOn" xml:space="preserve">
+    <value>IME เปิด</value>
+  </data>
+  <data name="LabelShowSeconds" xml:space="preserve">
+    <value>แสดงเข็มวินาที</value>
+  </data>
+  <data name="LabelAnalogClockSize" xml:space="preserve">
+    <value>ขนาดนาฬิกาแอนะล็อก</value>
+  </data>
+  <data name="LabelAnalogClockColor" xml:space="preserve">
+    <value>นาฬิกาแอนะล็อก</value>
+  </data>
+  <data name="LabelAnalogClockHandsColor" xml:space="preserve">
+    <value>เข็มนาฬิกา</value>
+  </data>
+  <data name="LabelAnalogClockTextColor" xml:space="preserve">
+    <value>ตัวเลขชั่วโมง</value>
+  </data>
+  <data name="LabelClockTextColor" xml:space="preserve">
+    <value>วันที่/เวลา</value>
+  </data>
+  <data name="LabelDateFormat" xml:space="preserve">
+    <value>รูปแบบวันที่</value>
+  </data>
+  <data name="LabelTimeFormat" xml:space="preserve">
+    <value>รูปแบบเวลา</value>
+  </data>
+  <data name="LabelLayout" xml:space="preserve">
+    <value>เค้าโครงวันที่/เวลา</value>
+  </data>
+  <data name="LabelSelectFromSamples" xml:space="preserve">
+    <value>เลือกจากตัวอย่าง:</value>
+  </data>
+  <data name="LabelOrInputDirectly" xml:space="preserve">
+    <value>หรือป้อนโดยตรง:</value>
+  </data>
+
+  <!-- Format Presets -->
+  <data name="FormatFull" xml:space="preserve">
+    <value>เต็ม</value>
+  </data>
+  <data name="FormatNormal" xml:space="preserve">
+    <value>ปกติ</value>
+  </data>
+  <data name="FormatShort" xml:space="preserve">
+    <value>สั้น</value>
+  </data>
+  <data name="FormatCustom1" xml:space="preserve">
+    <value>กำหนดเอง 1</value>
+  </data>
+  <data name="FormatCustom2" xml:space="preserve">
+    <value>กำหนดเอง 2</value>
+  </data>
+
+  <!-- Layout Options -->
+  <data name="LayoutVerticalDateFirst" xml:space="preserve">
+    <value>แนวตั้ง (วันที่, เวลา)</value>
+  </data>
+  <data name="LayoutVerticalTimeFirst" xml:space="preserve">
+    <value>แนวตั้ง (เวลา, วันที่)</value>
+  </data>
+  <data name="LayoutHorizontalDateFirst" xml:space="preserve">
+    <value>แนวนอน (วันที่, เวลา)</value>
+  </data>
+  <data name="LayoutHorizontalTimeFirst" xml:space="preserve">
+    <value>แนวนอน (เวลา, วันที่)</value>
+  </data>
+  <data name="LayoutDateOnly" xml:space="preserve">
+    <value>วันที่เท่านั้น</value>
+  </data>
+  <data name="LayoutTimeOnly" xml:space="preserve">
+    <value>เวลาเท่านั้น</value>
+  </data>
+
+  <!-- Mouse Settings -->
+  <data name="LabelOffsetX" xml:space="preserve">
+    <value>ออฟเซ็ต X</value>
+  </data>
+  <data name="LabelOffsetY" xml:space="preserve">
+    <value>ออฟเซ็ต Y</value>
+  </data>
+
+  <!-- About -->
+  <data name="LabelVersion" xml:space="preserve">
+    <value>เวอร์ชัน</value>
+  </data>
+  <data name="BtnResetSettings" xml:space="preserve">
+    <value>รีเซ็ตการตั้งค่า</value>
+  </data>
+  <data name="LabelDebugMode" xml:space="preserve">
+    <value>เปิดใช้งานบันทึกการดีบัก</value>
+  </data>
+
+  <!-- Buttons -->
+  <data name="BtnSave" xml:space="preserve">
+    <value>บันทึก</value>
+  </data>
+  <data name="BtnClose" xml:space="preserve">
+    <value>ปิด</value>
+  </data>
+  <data name="BtnOK" xml:space="preserve">
+    <value>ตกลง</value>
+  </data>
+  <data name="BtnCancel" xml:space="preserve">
+    <value>ยกเลิก</value>
+  </data>
+
+  <!-- Context Menu -->
+  <data name="MenuIMEIndicator" xml:space="preserve">
+    <value>ตัวบ่งชี้ IME</value>
+  </data>
+  <data name="MenuClock" xml:space="preserve">
+    <value>นาฬิกา</value>
+  </data>
+  <data name="MenuMouseIndicator" xml:space="preserve">
+    <value>ตัวบ่งชี้เคอร์เซอร์</value>
+  </data>
+  <data name="MenuSettings" xml:space="preserve">
+    <value>การตั้งค่า...</value>
+  </data>
+  <data name="MenuExit" xml:space="preserve">
+    <value>ออก</value>
+  </data>
+
+  <!-- Messages -->
+  <data name="MsgSaveComplete" xml:space="preserve">
+    <value>บันทึกการตั้งค่าแล้ว</value>
+  </data>
+  <data name="MsgSaveCompleteTitle" xml:space="preserve">
+    <value>บันทึกเสร็จสิ้น</value>
+  </data>
+  <data name="MsgResetConfirm" xml:space="preserve">
+    <value>รีเซ็ตการตั้งค่าทั้งหมดเป็นค่าเริ่มต้น?</value>
+  </data>
+  <data name="MsgResetTitle" xml:space="preserve">
+    <value>รีเซ็ตการตั้งค่า</value>
+  </data>
+  <data name="MsgResetComplete" xml:space="preserve">
+    <value>รีเซ็ตการตั้งค่าแล้ว</value>
+  </data>
+  <data name="MsgComplete" xml:space="preserve">
+    <value>เสร็จสิ้น</value>
+  </data>
+
+  <!-- Display -->
+  <data name="DisplayPrimary" xml:space="preserve">
+    <value>(หลัก)</value>
+  </data>
+  <data name="DisplayFormat" xml:space="preserve">
+    <value>จอแสดงผล {0}{1} - {2}x{3}</value>
+  </data>
+
+  <!-- About Tab -->
+  <data name="AppDescription" xml:space="preserve">
+    <value>ยูทิลิตี้แสดงสถานะ IME และนาฬิกาบนเดสก์ท็อป</value>
+  </data>
+  <data name="LabelSupportedLanguages" xml:space="preserve">
+    <value>🌐 ภาษาที่รองรับ</value>
+  </data>
+  <data name="LabelCustomize" xml:space="preserve">
+    <value>⚙ ปรับแต่ง</value>
+  </data>
+  <data name="BtnGoToIMEIndicator" xml:space="preserve">
+    <value>การตั้งค่าตัวบ่งชี้ IME...</value>
+  </data>
+  <data name="BtnGoToClock" xml:space="preserve">
+    <value>การตั้งค่านาฬิกา...</value>
+  </data>
+  <data name="BtnGoToMouse" xml:space="preserve">
+    <value>การตั้งค่าตัวบ่งชี้เคอร์เซอร์...</value>
+  </data>
+
+  <!-- Language Names -->
+  <data name="LangEnglish" xml:space="preserve">
+    <value>อังกฤษ (IME ปิด)</value>
+  </data>
+  <data name="LangJapanese" xml:space="preserve">
+    <value>ญี่ปุ่น</value>
+  </data>
+  <data name="LangKorean" xml:space="preserve">
+    <value>เกาหลี</value>
+  </data>
+  <data name="LangChineseSimplified" xml:space="preserve">
+    <value>จีน (ตัวย่อ)</value>
+  </data>
+  <data name="LangChineseTraditional" xml:space="preserve">
+    <value>จีน (ตัวเต็ม)</value>
+  </data>
+  <data name="LangThai" xml:space="preserve">
+    <value>ไทย</value>
+  </data>
+  <data name="LangVietnamese" xml:space="preserve">
+    <value>เวียดนาม</value>
+  </data>
+  <data name="LangArabic" xml:space="preserve">
+    <value>อาหรับ</value>
+  </data>
+  <data name="LangHebrew" xml:space="preserve">
+    <value>ฮีบรู</value>
+  </data>
+  <data name="LangHindi" xml:space="preserve">
+    <value>ฮินดี</value>
+  </data>
+  <data name="LangRussian" xml:space="preserve">
+    <value>รัสเซีย</value>
+  </data>
+  <data name="LangGreek" xml:space="preserve">
+    <value>กรีก</value>
+  </data>
+  <data name="LangOther" xml:space="preserve">
+    <value>IME อื่นๆ</value>
+  </data>
+
+</root>

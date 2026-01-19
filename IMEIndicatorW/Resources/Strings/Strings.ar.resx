@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <data name="AppTitle" xml:space="preserve"><value>IME Indicator Clock</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>الإعدادات - IME Indicator Clock</value></data>
+  <data name="TabIMEIndicator" xml:space="preserve"><value>مؤشر IME</value></data>
+  <data name="TabClock" xml:space="preserve"><value>الساعة</value></data>
+  <data name="TabMouse" xml:space="preserve"><value>مؤشر المؤشر</value></data>
+  <data name="LabelMouseDescription" xml:space="preserve"><value>يستخدم إعدادات لون اللغة من مؤشر IME</value></data>
+  <data name="TabAbout" xml:space="preserve"><value>حول</value></data>
+  <data name="LabelVisible" xml:space="preserve"><value>مرئي</value></data>
+  <data name="LabelSize" xml:space="preserve"><value>الحجم</value></data>
+  <data name="LabelOpacity" xml:space="preserve"><value>الشفافية</value></data>
+  <data name="LabelPosition" xml:space="preserve"><value>الموقع</value></data>
+  <data name="LabelPositionPreset" xml:space="preserve"><value>موقع مسبق</value></data>
+  <data name="LabelPositionManual" xml:space="preserve"><value>الموقع (يدوي)</value></data>
+  <data name="LabelFont" xml:space="preserve"><value>الخط</value></data>
+  <data name="LabelFontSize" xml:space="preserve"><value>حجم الخط</value></data>
+  <data name="LabelDisplay" xml:space="preserve"><value>الشاشة</value></data>
+  <data name="LabelLanguage" xml:space="preserve"><value>اللغة</value></data>
+  <data name="BtnTopLeft" xml:space="preserve"><value>أعلى اليسار</value></data>
+  <data name="BtnTopRight" xml:space="preserve"><value>أعلى اليمين</value></data>
+  <data name="BtnBottomLeft" xml:space="preserve"><value>أسفل اليسار</value></data>
+  <data name="BtnBottomRight" xml:space="preserve"><value>أسفل اليمين</value></data>
+  <data name="LabelLanguageColors" xml:space="preserve"><value>ألوان اللغة</value></data>
+  <data name="GlobalFont" xml:space="preserve"><value>الخط الافتراضي:</value></data>
+  <data name="Language" xml:space="preserve"><value>اللغة</value></data>
+  <data name="Font" xml:space="preserve"><value>الخط</value></data>
+  <data name="Size" xml:space="preserve"><value>الحجم</value></data>
+  <data name="FontSize" xml:space="preserve"><value>الحجم</value></data>
+  <data name="Color" xml:space="preserve"><value>اللون</value></data>
+  <data name="Text" xml:space="preserve"><value>النص</value></data>
+  <data name="LabelWindowSettings" xml:space="preserve"><value>إعدادات النافذة</value></data>
+  <data name="LabelDisplaySettings" xml:space="preserve"><value>إعدادات العرض</value></data>
+  <data name="LabelColorSettings" xml:space="preserve"><value>إعدادات اللون</value></data>
+  <data name="LabelStyle" xml:space="preserve"><value>النمط</value></data>
+  <data name="StyleDigital" xml:space="preserve"><value>رقمي</value></data>
+  <data name="StyleAnalog" xml:space="preserve"><value>تناظري</value></data>
+  <data name="LabelWidth" xml:space="preserve"><value>العرض</value></data>
+  <data name="LabelHeight" xml:space="preserve"><value>الارتفاع</value></data>
+  <data name="LabelBackgroundColor" xml:space="preserve"><value>لون الخلفية</value></data>
+  <data name="LabelUseIMEIndicatorColors" xml:space="preserve"><value>استخدام ألوان لغة مؤشر IME</value></data>
+  <data name="LabelIMEOff" xml:space="preserve"><value>IME مغلق</value></data>
+  <data name="LabelIMEOn" xml:space="preserve"><value>IME مفتوح</value></data>
+  <data name="LabelShowSeconds" xml:space="preserve"><value>إظهار عقرب الثواني</value></data>
+  <data name="LabelAnalogClockSize" xml:space="preserve"><value>حجم الساعة التناظرية</value></data>
+  <data name="LabelDateFormat" xml:space="preserve"><value>تنسيق التاريخ</value></data>
+  <data name="LabelTimeFormat" xml:space="preserve"><value>تنسيق الوقت</value></data>
+  <data name="LabelLayout" xml:space="preserve"><value>تخطيط التاريخ/الوقت</value></data>
+  <data name="FormatFull" xml:space="preserve"><value>كامل</value></data>
+  <data name="FormatNormal" xml:space="preserve"><value>عادي</value></data>
+  <data name="FormatShort" xml:space="preserve"><value>قصير</value></data>
+  <data name="FormatCustom1" xml:space="preserve"><value>مخصص 1</value></data>
+  <data name="FormatCustom2" xml:space="preserve"><value>مخصص 2</value></data>
+  <data name="LayoutVerticalDateFirst" xml:space="preserve"><value>عمودي (التاريخ، الوقت)</value></data>
+  <data name="LayoutVerticalTimeFirst" xml:space="preserve"><value>عمودي (الوقت، التاريخ)</value></data>
+  <data name="LayoutHorizontalDateFirst" xml:space="preserve"><value>أفقي (التاريخ، الوقت)</value></data>
+  <data name="LayoutHorizontalTimeFirst" xml:space="preserve"><value>أفقي (الوقت، التاريخ)</value></data>
+  <data name="LayoutDateOnly" xml:space="preserve"><value>التاريخ فقط</value></data>
+  <data name="LayoutTimeOnly" xml:space="preserve"><value>الوقت فقط</value></data>
+  <data name="LabelOffsetX" xml:space="preserve"><value>الإزاحة X</value></data>
+  <data name="LabelOffsetY" xml:space="preserve"><value>الإزاحة Y</value></data>
+  <data name="LabelVersion" xml:space="preserve"><value>الإصدار</value></data>
+  <data name="BtnResetSettings" xml:space="preserve"><value>إعادة تعيين الإعدادات</value></data>
+  <data name="LabelDebugMode" xml:space="preserve"><value>تمكين سجل التصحيح</value></data>
+  <data name="BtnSave" xml:space="preserve"><value>حفظ</value></data>
+  <data name="BtnClose" xml:space="preserve"><value>إغلاق</value></data>
+  <data name="BtnOK" xml:space="preserve"><value>موافق</value></data>
+  <data name="BtnCancel" xml:space="preserve"><value>إلغاء</value></data>
+  <data name="MenuIMEIndicator" xml:space="preserve"><value>مؤشر IME</value></data>
+  <data name="MenuClock" xml:space="preserve"><value>الساعة</value></data>
+  <data name="MenuMouseIndicator" xml:space="preserve"><value>مؤشر المؤشر</value></data>
+  <data name="MenuSettings" xml:space="preserve"><value>الإعدادات...</value></data>
+  <data name="MenuExit" xml:space="preserve"><value>خروج</value></data>
+  <data name="MsgSaveComplete" xml:space="preserve"><value>تم حفظ الإعدادات.</value></data>
+  <data name="MsgSaveCompleteTitle" xml:space="preserve"><value>تم الحفظ</value></data>
+  <data name="MsgResetConfirm" xml:space="preserve"><value>إعادة تعيين جميع الإعدادات إلى الافتراضي؟</value></data>
+  <data name="MsgResetTitle" xml:space="preserve"><value>إعادة تعيين الإعدادات</value></data>
+  <data name="MsgResetComplete" xml:space="preserve"><value>تم إعادة تعيين الإعدادات.</value></data>
+  <data name="MsgComplete" xml:space="preserve"><value>تم</value></data>
+  <data name="DisplayPrimary" xml:space="preserve"><value>(رئيسي)</value></data>
+  <data name="DisplayFormat" xml:space="preserve"><value>الشاشة {0}{1} - {2}x{3}</value></data>
+  <data name="AppDescription" xml:space="preserve"><value>أداة لعرض حالة IME وساعة سطح المكتب</value></data>
+  <data name="LabelSupportedLanguages" xml:space="preserve"><value>🌐 اللغات المدعومة</value></data>
+  <data name="LabelCustomize" xml:space="preserve"><value>⚙ تخصيص</value></data>
+  <data name="BtnGoToIMEIndicator" xml:space="preserve"><value>إعدادات مؤشر IME...</value></data>
+  <data name="BtnGoToClock" xml:space="preserve"><value>إعدادات الساعة...</value></data>
+  <data name="BtnGoToMouse" xml:space="preserve"><value>إعدادات مؤشر المؤشر...</value></data>
+  <data name="LangEnglish" xml:space="preserve"><value>الإنجليزية (IME مغلق)</value></data>
+  <data name="LangJapanese" xml:space="preserve"><value>اليابانية</value></data>
+  <data name="LangKorean" xml:space="preserve"><value>الكورية</value></data>
+  <data name="LangChineseSimplified" xml:space="preserve"><value>الصينية (المبسطة)</value></data>
+  <data name="LangChineseTraditional" xml:space="preserve"><value>الصينية (التقليدية)</value></data>
+  <data name="LangThai" xml:space="preserve"><value>التايلاندية</value></data>
+  <data name="LangVietnamese" xml:space="preserve"><value>الفيتنامية</value></data>
+  <data name="LangArabic" xml:space="preserve"><value>العربية</value></data>
+  <data name="LangHebrew" xml:space="preserve"><value>العبرية</value></data>
+  <data name="LangHindi" xml:space="preserve"><value>الهندية</value></data>
+  <data name="LangRussian" xml:space="preserve"><value>الروسية</value></data>
+  <data name="LangGreek" xml:space="preserve"><value>اليونانية</value></data>
+  <data name="LangOther" xml:space="preserve"><value>IME آخر</value></data>
+</root>

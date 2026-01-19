@@ -1,0 +1,146 @@
+<Window x:Class="IMEIndicatorClock.Views.UIAutomationTestWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="UI Automation Test - IME Indicator Explorer"
+        Width="800" Height="700"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True">
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 説明 -->
+        <TextBlock Grid.Row="0" TextWrapping="Wrap" Margin="0,0,0,10">
+            Windows システムトレイの「IME Indicator」をUI Automationで探索します。
+            発見した要素はログファイルに記録され、「初めて見た」要素は強調表示されます。
+        </TextBlock>
+
+        <!-- コントロール -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="BtnSearch" Content="探索開始" Width="100" Click="BtnSearch_Click"/>
+                <Button x:Name="BtnSearchIMEMark" Content="★ Button全検索" Width="130" Margin="10,0,0,0"
+                        Click="BtnSearchIMEMark_Click" Background="#FF6666" Foreground="White" FontWeight="Bold"/>
+                <TextBox x:Name="TxtSearchText" Width="100" Margin="10,0,0,0" VerticalContentAlignment="Center" Text="한"/>
+                <Button x:Name="BtnSearchText" Content="テキスト検索" Width="100" Margin="5,0,0,0"
+                        Click="BtnSearchText_Click" Background="#6699FF" Foreground="White" FontWeight="Bold"/>
+                <Button x:Name="BtnCaptureBmp" Content="BMP取得" Width="80" Margin="10,0,0,0"
+                        Click="BtnCaptureBmp_Click" Background="#66CC66" Foreground="White" FontWeight="Bold"/>
+                <Button x:Name="BtnSave" Content="保存" Width="60" Margin="10,0,0,0" Click="BtnSave_Click"/>
+                <Button x:Name="BtnClear" Content="クリア" Width="60" Margin="10,0,0,0" Click="BtnClear_Click"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                <CheckBox x:Name="ChkAutoRefresh" Content="自動更新" VerticalAlignment="Center"
+                          Checked="ChkAutoRefresh_Changed" Unchecked="ChkAutoRefresh_Changed"/>
+                <ComboBox x:Name="CmbInterval" Width="70" Margin="5,0,0,0" SelectedIndex="2">
+                    <ComboBoxItem Content="0.5秒" Tag="500"/>
+                    <ComboBoxItem Content="1秒" Tag="1000"/>
+                    <ComboBoxItem Content="2秒" Tag="2000"/>
+                    <ComboBoxItem Content="5秒" Tag="5000"/>
+                    <ComboBoxItem Content="10秒" Tag="10000"/>
+                </ComboBox>
+                <CheckBox x:Name="ChkDebugImageSave" Content="調整用取得画像保存(5秒周期)" Margin="20,0,0,0"
+                          VerticalAlignment="Center" Checked="ChkDebugImageSave_Changed" Unchecked="ChkDebugImageSave_Changed"/>
+                <TextBlock x:Name="TxtStatus" Margin="20,0,0,0" VerticalAlignment="Center" Foreground="Gray"/>
+                <TextBlock x:Name="TxtNewCount" Margin="20,0,0,0" VerticalAlignment="Center" Foreground="Red" FontWeight="Bold"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- 結果表示 -->
+        <TabControl Grid.Row="2">
+            <TabItem Header="ツリービュー">
+                <TreeView x:Name="TreeResult" FontFamily="Consolas"/>
+            </TabItem>
+            <TabItem Header="IMEマーク候補" x:Name="TabIMEMark">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Margin="5" TextWrapping="Wrap">
+                        IMEマーク（「あ」「A」「한」の横にあるアイコン/ボタン）と思われる要素:
+                        ButtonControlType かつ Name に「IME」「インジケーター」「入力」を含む要素
+                    </TextBlock>
+                    <ListBox x:Name="ListIMEMarks" Grid.Row="1" FontFamily="Consolas" FontSize="11"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="初めて見た要素">
+                <ListBox x:Name="ListNewElements" FontFamily="Consolas" FontSize="11">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" Foreground="Red"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </TabItem>
+            <TabItem Header="記録済み要素">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
+                        <TextBlock x:Name="TxtRecordCount" VerticalAlignment="Center"/>
+                        <Button Content="ログファイルを開く" Margin="20,0,0,0" Click="BtnOpenLogFile_Click"/>
+                        <Button Content="記録をクリア" Margin="10,0,0,0" Click="BtnClearLog_Click" Foreground="Red"/>
+                    </StackPanel>
+                    <DataGrid x:Name="GridRecords" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True"
+                              FontFamily="Consolas" FontSize="10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="100"/>
+                            <DataGridTextColumn Header="Type" Binding="{Binding LocalizedControlType}" Width="60"/>
+                            <DataGridTextColumn Header="Parent" Binding="{Binding ParentName}" Width="100"/>
+                            <DataGridTextColumn Header="FirstSeen" Binding="{Binding FirstSeen, StringFormat=MM/dd HH:mm}" Width="90"/>
+                            <DataGridTextColumn Header="Count" Binding="{Binding SeenCount}" Width="50"/>
+                            <DataGridTextColumn Header="Key" Binding="{Binding Key}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="テキスト出力">
+                <TextBox x:Name="TxtOutput" IsReadOnly="True" VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="11"/>
+            </TabItem>
+            <TabItem Header="テキスト検索結果" x:Name="TabTextSearch">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Margin="5" x:Name="TxtTextSearchInfo"/>
+                    <DataGrid x:Name="GridTextSearchResults" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True"
+                              FontFamily="Consolas" FontSize="10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="150"/>
+                            <DataGridTextColumn Header="Parent" Binding="{Binding ParentName}" Width="150"/>
+                            <DataGridTextColumn Header="ClassName" Binding="{Binding ClassName}" Width="100"/>
+                            <DataGridTextColumn Header="ControlType" Binding="{Binding ControlTypeName}" Width="130"/>
+                            <DataGridTextColumn Header="LocalizedType" Binding="{Binding LocalizedControlType}" Width="70"/>
+                            <DataGridTextColumn Header="Rect" Binding="{Binding RectStr}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- アクティブウィンドウ情報 -->
+        <Border Grid.Row="3" BorderBrush="LightGray" BorderThickness="1" Padding="5" Margin="0,10,0,0">
+            <StackPanel>
+                <TextBlock FontWeight="Bold">アクティブウィンドウ情報:</TextBlock>
+                <TextBlock x:Name="TxtActiveWindow" FontFamily="Consolas" FontSize="10"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ログ -->
+        <Expander Grid.Row="4" Header="デバッグログ" IsExpanded="True" Margin="0,10,0,0">
+            <TextBox x:Name="TxtLog" Height="100" IsReadOnly="True" VerticalScrollBarVisibility="Auto"
+                     FontFamily="Consolas" FontSize="10"/>
+        </Expander>
+    </Grid>
+</Window>

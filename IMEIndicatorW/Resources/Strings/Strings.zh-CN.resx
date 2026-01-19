@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <!-- App Title -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>IME Indicator Clock</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>设置 - IME Indicator Clock</value>
+  </data>
+
+  <!-- Tab Names -->
+  <data name="TabIMEIndicator" xml:space="preserve">
+    <value>输入法指示器</value>
+  </data>
+  <data name="TabClock" xml:space="preserve">
+    <value>时钟</value>
+  </data>
+  <data name="TabMouse" xml:space="preserve">
+    <value>鼠标指示器</value>
+  </data>
+  <data name="TabAbout" xml:space="preserve">
+    <value>关于</value>
+  </data>
+
+  <!-- Common Labels -->
+  <data name="LabelSize" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="LabelOpacity" xml:space="preserve">
+    <value>透明度</value>
+  </data>
+  <data name="LabelPosition" xml:space="preserve">
+    <value>位置</value>
+  </data>
+  <data name="LabelPositionPreset" xml:space="preserve">
+    <value>预设位置</value>
+  </data>
+  <data name="LabelPositionManual" xml:space="preserve">
+    <value>位置（手动）</value>
+  </data>
+  <data name="LabelFont" xml:space="preserve">
+    <value>字体</value>
+  </data>
+  <data name="LabelFontSize" xml:space="preserve">
+    <value>字体大小</value>
+  </data>
+  <data name="LabelDisplay" xml:space="preserve">
+    <value>显示器</value>
+  </data>
+  <data name="LabelLanguage" xml:space="preserve">
+    <value>语言</value>
+  </data>
+
+  <!-- Position Buttons -->
+  <data name="BtnTopLeft" xml:space="preserve">
+    <value>左上</value>
+  </data>
+  <data name="BtnTopRight" xml:space="preserve">
+    <value>右上</value>
+  </data>
+  <data name="BtnBottomLeft" xml:space="preserve">
+    <value>左下</value>
+  </data>
+  <data name="BtnBottomRight" xml:space="preserve">
+    <value>右下</value>
+  </data>
+
+  <!-- IME Indicator -->
+  <data name="LabelLanguageColors" xml:space="preserve">
+    <value>语言颜色设置</value>
+  </data>
+  <data name="BtnEditLanguageColors" xml:space="preserve">
+    <value>编辑语言颜色...</value>
+  </data>
+
+  <!-- Clock Settings -->
+  <data name="LabelWindowSettings" xml:space="preserve">
+    <value>窗口设置</value>
+  </data>
+  <data name="LabelDisplaySettings" xml:space="preserve">
+    <value>显示设置</value>
+  </data>
+  <data name="LabelFontSettings" xml:space="preserve">
+    <value>字体设置</value>
+  </data>
+  <data name="LabelColorSettings" xml:space="preserve">
+    <value>颜色设置</value>
+  </data>
+  <data name="LabelStyle" xml:space="preserve">
+    <value>样式</value>
+  </data>
+  <data name="StyleDigital" xml:space="preserve">
+    <value>数字</value>
+  </data>
+  <data name="StyleAnalog" xml:space="preserve">
+    <value>模拟</value>
+  </data>
+  <data name="LabelWindowSize" xml:space="preserve">
+    <value>窗口大小</value>
+  </data>
+  <data name="LabelWidth" xml:space="preserve">
+    <value>宽度</value>
+  </data>
+  <data name="LabelHeight" xml:space="preserve">
+    <value>高度</value>
+  </data>
+  <data name="LabelBackgroundColor" xml:space="preserve">
+    <value>背景颜色</value>
+  </data>
+  <data name="LabelIMEOff" xml:space="preserve">
+    <value>输入法关闭时</value>
+  </data>
+  <data name="LabelIMEOn" xml:space="preserve">
+    <value>输入法开启时</value>
+  </data>
+  <data name="LabelShowSeconds" xml:space="preserve">
+    <value>显示秒</value>
+  </data>
+  <data name="LabelAnalogClockSettings" xml:space="preserve">
+    <value>模拟时钟设置</value>
+  </data>
+  <data name="LabelAnalogClockSize" xml:space="preserve">
+    <value>模拟时钟大小</value>
+  </data>
+  <data name="LabelAnalogClockColor" xml:space="preserve">
+    <value>模拟时钟颜色</value>
+  </data>
+  <data name="LabelAnalogClockHandsColor" xml:space="preserve">
+    <value>指针颜色</value>
+  </data>
+  <data name="LabelAnalogClockTextColor" xml:space="preserve">
+    <value>刻度颜色</value>
+  </data>
+  <data name="LabelDateFormat" xml:space="preserve">
+    <value>日期格式</value>
+  </data>
+  <data name="LabelTimeFormat" xml:space="preserve">
+    <value>时间格式</value>
+  </data>
+  <data name="LabelLayout" xml:space="preserve">
+    <value>日期/时间排列</value>
+  </data>
+  <data name="LabelSelectFromSamples" xml:space="preserve">
+    <value>从示例选择：</value>
+  </data>
+  <data name="LabelOrInputDirectly" xml:space="preserve">
+    <value>或直接输入：</value>
+  </data>
+
+  <!-- Format Presets -->
+  <data name="FormatFull" xml:space="preserve">
+    <value>完整</value>
+  </data>
+  <data name="FormatNormal" xml:space="preserve">
+    <value>普通</value>
+  </data>
+  <data name="FormatShort" xml:space="preserve">
+    <value>简短</value>
+  </data>
+  <data name="FormatCustom1" xml:space="preserve">
+    <value>自定义1</value>
+  </data>
+  <data name="FormatCustom2" xml:space="preserve">
+    <value>自定义2</value>
+  </data>
+
+  <!-- Layout Options -->
+  <data name="LayoutVerticalDateFirst" xml:space="preserve">
+    <value>垂直(日期、时间)</value>
+  </data>
+  <data name="LayoutVerticalTimeFirst" xml:space="preserve">
+    <value>垂直(时间、日期)</value>
+  </data>
+  <data name="LayoutHorizontalDateFirst" xml:space="preserve">
+    <value>水平(日期、时间)</value>
+  </data>
+  <data name="LayoutHorizontalTimeFirst" xml:space="preserve">
+    <value>水平(时间、日期)</value>
+  </data>
+  <data name="LayoutDateOnly" xml:space="preserve">
+    <value>仅日期</value>
+  </data>
+  <data name="LayoutTimeOnly" xml:space="preserve">
+    <value>仅时间</value>
+  </data>
+
+  <!-- Mouse Settings -->
+  <data name="LabelOffsetX" xml:space="preserve">
+    <value>偏移 X</value>
+  </data>
+  <data name="LabelOffsetY" xml:space="preserve">
+    <value>偏移 Y</value>
+  </data>
+
+  <!-- About -->
+  <data name="LabelVersion" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="BtnResetSettings" xml:space="preserve">
+    <value>重置设置</value>
+  </data>
+  <data name="LabelDebugMode" xml:space="preserve">
+    <value>启用调试日志</value>
+  </data>
+
+  <!-- Buttons -->
+  <data name="BtnSave" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="BtnClose" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="BtnOK" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="BtnCancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+
+  <!-- Context Menu -->
+  <data name="MenuIMEIndicator" xml:space="preserve">
+    <value>输入法指示器</value>
+  </data>
+  <data name="MenuClock" xml:space="preserve">
+    <value>时钟</value>
+  </data>
+  <data name="MenuMouseIndicator" xml:space="preserve">
+    <value>鼠标指示器</value>
+  </data>
+  <data name="MenuSettings" xml:space="preserve">
+    <value>设置...</value>
+  </data>
+  <data name="MenuExit" xml:space="preserve">
+    <value>退出</value>
+  </data>
+
+  <!-- Messages -->
+  <data name="MsgSaveComplete" xml:space="preserve">
+    <value>设置已保存。</value>
+  </data>
+  <data name="MsgSaveCompleteTitle" xml:space="preserve">
+    <value>保存完成</value>
+  </data>
+  <data name="MsgResetConfirm" xml:space="preserve">
+    <value>是否将所有设置重置为默认值？</value>
+  </data>
+  <data name="MsgResetTitle" xml:space="preserve">
+    <value>重置设置</value>
+  </data>
+  <data name="MsgResetComplete" xml:space="preserve">
+    <value>设置已重置。</value>
+  </data>
+  <data name="MsgComplete" xml:space="preserve">
+    <value>完成</value>
+  </data>
+
+  <!-- Display -->
+  <data name="DisplayPrimary" xml:space="preserve">
+    <value>(主要)</value>
+  </data>
+  <data name="DisplayFormat" xml:space="preserve">
+    <value>显示器 {0}{1} - {2}x{3}</value>
+  </data>
+
+</root>

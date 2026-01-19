@@ -1,0 +1,31 @@
+<Window x:Class="IMEIndicatorClock.Views.MouseCursorIndicatorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Mouse Cursor Indicator"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        IsHitTestVisible="False">
+
+    <Grid Width="{Binding Size}" Height="{Binding Size}">
+        <!-- メインの円 -->
+        <Ellipse Opacity="{Binding Opacity}">
+            <Ellipse.Fill>
+                <SolidColorBrush Color="{Binding BackgroundColor.Color}"/>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <!-- テキスト -->
+        <TextBlock Text="{Binding DisplayText}"
+                   FontSize="{Binding FontSize}"
+                   FontFamily="{Binding FontFamily}"
+                   FontWeight="Bold"
+                   Foreground="White"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"/>
+    </Grid>
+</Window>

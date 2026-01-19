@@ -1,0 +1,22 @@
+// WPF型を優先的に使用
+global using Application = System.Windows.Application;
+global using Brush = System.Windows.Media.Brush;
+global using Color = System.Windows.Media.Color;
+global using FontFamily = System.Windows.Media.FontFamily;
+global using UserControl = System.Windows.Controls.UserControl;
+global using Window = System.Windows.Window;
+global using MessageBox = System.Windows.MessageBox;
+global using Point = System.Windows.Point;
+global using TextBox = System.Windows.Controls.TextBox;
+global using Button = System.Windows.Controls.Button;
+global using Label = System.Windows.Controls.Label;
+global using CheckBox = System.Windows.Controls.CheckBox;
+global using ComboBox = System.Windows.Controls.ComboBox;
+global using ToolTip = System.Windows.Controls.ToolTip;
+global using Clipboard = System.Windows.Clipboard;
+global using Cursor = System.Windows.Input.Cursor;
+global using MenuItem = System.Windows.Controls.MenuItem;
+global using ContextMenu = System.Windows.Controls.ContextMenu;
+global using Separator = System.Windows.Controls.Separator;
+global using Rectangle = System.Windows.Shapes.Rectangle;
+global using Cursors = System.Windows.Input.Cursors;

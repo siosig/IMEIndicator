@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <!-- App Title -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>IME Indicator Clock</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>設定 - IME Indicator Clock</value>
+  </data>
+
+  <!-- Tab Names -->
+  <data name="TabIMEIndicator" xml:space="preserve">
+    <value>IMEインジケーター</value>
+  </data>
+  <data name="TabClock" xml:space="preserve">
+    <value>時計</value>
+  </data>
+  <data name="TabMouse" xml:space="preserve">
+    <value>マウスカーソルインジケーター</value>
+  </data>
+  <data name="LabelMouseDescription" xml:space="preserve">
+    <value>IMEインジケータ設定の言語別色設定を使用します</value>
+  </data>
+  <data name="TabAbout" xml:space="preserve">
+    <value>バージョン情報</value>
+  </data>
+
+  <!-- Common Labels -->
+  <data name="LabelVisible" xml:space="preserve">
+    <value>表示</value>
+  </data>
+  <data name="LabelSize" xml:space="preserve">
+    <value>サイズ</value>
+  </data>
+  <data name="LabelOpacity" xml:space="preserve">
+    <value>透明度</value>
+  </data>
+  <data name="LabelPosition" xml:space="preserve">
+    <value>位置</value>
+  </data>
+  <data name="LabelPositionPreset" xml:space="preserve">
+    <value>位置プリセット</value>
+  </data>
+  <data name="LabelPositionManual" xml:space="preserve">
+    <value>位置（手動）</value>
+  </data>
+  <data name="LabelFont" xml:space="preserve">
+    <value>フォント</value>
+  </data>
+  <data name="LabelFontSize" xml:space="preserve">
+    <value>フォントサイズ</value>
+  </data>
+  <data name="LabelDisplay" xml:space="preserve">
+    <value>表示ディスプレイ</value>
+  </data>
+  <data name="LabelLanguage" xml:space="preserve">
+    <value>言語</value>
+  </data>
+
+  <!-- Position Buttons -->
+  <data name="BtnTopLeft" xml:space="preserve">
+    <value>左上</value>
+  </data>
+  <data name="BtnTopRight" xml:space="preserve">
+    <value>右上</value>
+  </data>
+  <data name="BtnBottomLeft" xml:space="preserve">
+    <value>左下</value>
+  </data>
+  <data name="BtnBottomRight" xml:space="preserve">
+    <value>右下</value>
+  </data>
+
+  <!-- IME Indicator -->
+  <data name="LabelLanguageColors" xml:space="preserve">
+    <value>言語別色設定</value>
+  </data>
+  <data name="BtnEditLanguageColors" xml:space="preserve">
+    <value>言語別の色を設定...</value>
+  </data>
+  <data name="LanguageColors" xml:space="preserve">
+    <value>言語別色設定</value>
+  </data>
+  <data name="LanguageColorsDescription" xml:space="preserve">
+    <value>各言語のインジケーター色、表示テキスト、フォントを設定します。</value>
+  </data>
+  <data name="GlobalFont" xml:space="preserve">
+    <value>共通フォント:</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>言語</value>
+  </data>
+  <data name="Font" xml:space="preserve">
+    <value>フォント</value>
+  </data>
+  <data name="Size" xml:space="preserve">
+    <value>サイズ</value>
+  </data>
+  <data name="FontSize" xml:space="preserve">
+    <value>サイズ</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>色</value>
+  </data>
+  <data name="Text" xml:space="preserve">
+    <value>文字</value>
+  </data>
+
+  <!-- Clock Settings -->
+  <data name="LabelWindowSettings" xml:space="preserve">
+    <value>ウィンドウ設定</value>
+  </data>
+  <data name="LabelDisplaySettings" xml:space="preserve">
+    <value>表示内容設定</value>
+  </data>
+  <data name="LabelFontSettings" xml:space="preserve">
+    <value>フォント設定</value>
+  </data>
+  <data name="LabelColorSettings" xml:space="preserve">
+    <value>色設定</value>
+  </data>
+  <data name="LabelStyle" xml:space="preserve">
+    <value>スタイル</value>
+  </data>
+  <data name="StyleDigital" xml:space="preserve">
+    <value>デジタル</value>
+  </data>
+  <data name="StyleAnalog" xml:space="preserve">
+    <value>アナログ</value>
+  </data>
+  <data name="LabelWindowSize" xml:space="preserve">
+    <value>ウィンドウサイズ</value>
+  </data>
+  <data name="LabelWidth" xml:space="preserve">
+    <value>幅</value>
+  </data>
+  <data name="LabelHeight" xml:space="preserve">
+    <value>高さ</value>
+  </data>
+  <data name="LabelBackgroundColor" xml:space="preserve">
+    <value>背景色</value>
+  </data>
+  <data name="LabelUseIMEIndicatorColors" xml:space="preserve">
+    <value>IMEインジケータ設定の言語別色設定を使用</value>
+  </data>
+  <data name="LabelIMEOff" xml:space="preserve">
+    <value>IME OFF時</value>
+  </data>
+  <data name="LabelIMEOn" xml:space="preserve">
+    <value>IME ON時</value>
+  </data>
+  <data name="LabelShowSeconds" xml:space="preserve">
+    <value>秒針を表示</value>
+  </data>
+  <data name="LabelAnalogClockSettings" xml:space="preserve">
+    <value>アナログ時計設定</value>
+  </data>
+  <data name="LabelAnalogClockSize" xml:space="preserve">
+    <value>アナログ時計サイズ</value>
+  </data>
+  <data name="LabelAnalogClockColor" xml:space="preserve">
+    <value>アナログ時計</value>
+  </data>
+  <data name="LabelAnalogClockHandsColor" xml:space="preserve">
+    <value>時計の針</value>
+  </data>
+  <data name="LabelAnalogClockTextColor" xml:space="preserve">
+    <value>目印の色</value>
+  </data>
+  <data name="LabelClockTextColor" xml:space="preserve">
+    <value>日付時刻</value>
+  </data>
+  <data name="LabelDateFormat" xml:space="preserve">
+    <value>日付フォーマット</value>
+  </data>
+  <data name="LabelTimeFormat" xml:space="preserve">
+    <value>時刻フォーマット</value>
+  </data>
+  <data name="LabelLayout" xml:space="preserve">
+    <value>日付/時刻の並び</value>
+  </data>
+  <data name="LabelSelectFromSamples" xml:space="preserve">
+    <value>サンプルから選択:</value>
+  </data>
+  <data name="LabelOrInputDirectly" xml:space="preserve">
+    <value>または直接入力:</value>
+  </data>
+
+  <!-- Format Presets -->
+  <data name="FormatFull" xml:space="preserve">
+    <value>フル</value>
+  </data>
+  <data name="FormatNormal" xml:space="preserve">
+    <value>普通</value>
+  </data>
+  <data name="FormatShort" xml:space="preserve">
+    <value>短い</value>
+  </data>
+  <data name="FormatCustom1" xml:space="preserve">
+    <value>カスタム1</value>
+  </data>
+  <data name="FormatCustom2" xml:space="preserve">
+    <value>カスタム2</value>
+  </data>
+
+  <!-- Layout Options -->
+  <data name="LayoutVerticalDateFirst" xml:space="preserve">
+    <value>縦(日付、時刻)</value>
+  </data>
+  <data name="LayoutVerticalTimeFirst" xml:space="preserve">
+    <value>縦(時刻、日付)</value>
+  </data>
+  <data name="LayoutHorizontalDateFirst" xml:space="preserve">
+    <value>横(日付、時刻)</value>
+  </data>
+  <data name="LayoutHorizontalTimeFirst" xml:space="preserve">
+    <value>横(時刻、日付)</value>
+  </data>
+  <data name="LayoutDateOnly" xml:space="preserve">
+    <value>日付のみ</value>
+  </data>
+  <data name="LayoutTimeOnly" xml:space="preserve">
+    <value>時刻のみ</value>
+  </data>
+
+  <!-- Mouse Settings -->
+  <data name="LabelOffsetX" xml:space="preserve">
+    <value>オフセット X</value>
+  </data>
+  <data name="LabelOffsetY" xml:space="preserve">
+    <value>オフセット Y</value>
+  </data>
+
+  <!-- About -->
+  <data name="LabelVersion" xml:space="preserve">
+    <value>バージョン</value>
+  </data>
+  <data name="BtnResetSettings" xml:space="preserve">
+    <value>設定をリセット</value>
+  </data>
+  <data name="LabelDebugMode" xml:space="preserve">
+    <value>デバッグログを有効にする</value>
+  </data>
+
+  <!-- Buttons -->
+  <data name="BtnSave" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="BtnClose" xml:space="preserve">
+    <value>閉じる</value>
+  </data>
+  <data name="BtnOK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="BtnCancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+
+  <!-- Context Menu -->
+  <data name="MenuIMEIndicator" xml:space="preserve">
+    <value>IMEインジケーター</value>
+  </data>
+  <data name="MenuClock" xml:space="preserve">
+    <value>時計</value>
+  </data>
+  <data name="MenuMouseIndicator" xml:space="preserve">
+    <value>マウスカーソルインジケーター</value>
+  </data>
+  <data name="MenuSettings" xml:space="preserve">
+    <value>設定...</value>
+  </data>
+  <data name="MenuExit" xml:space="preserve">
+    <value>終了</value>
+  </data>
+
+  <!-- Messages -->
+  <data name="MsgSaveComplete" xml:space="preserve">
+    <value>設定を保存しました。</value>
+  </data>
+  <data name="MsgSaveCompleteTitle" xml:space="preserve">
+    <value>保存完了</value>
+  </data>
+  <data name="MsgResetConfirm" xml:space="preserve">
+    <value>すべての設定をデフォルトに戻しますか？</value>
+  </data>
+  <data name="MsgResetTitle" xml:space="preserve">
+    <value>設定のリセット</value>
+  </data>
+  <data name="MsgResetComplete" xml:space="preserve">
+    <value>設定をリセットしました。</value>
+  </data>
+  <data name="MsgComplete" xml:space="preserve">
+    <value>完了</value>
+  </data>
+
+  <!-- Display -->
+  <data name="DisplayPrimary" xml:space="preserve">
+    <value>(プライマリ)</value>
+  </data>
+  <data name="DisplayFormat" xml:space="preserve">
+    <value>ディスプレイ {0}{1} - {2}x{3}</value>
+  </data>
+
+  <!-- About Tab -->
+  <data name="AppDescription" xml:space="preserve">
+    <value>IMEの状態表示とデスクトップ時計（背景色でIME状態も）を提供するユーティリティ</value>
+  </data>
+  <data name="LabelSupportedLanguages" xml:space="preserve">
+    <value>🌐 対応言語</value>
+  </data>
+  <data name="LabelCustomize" xml:space="preserve">
+    <value>⚙ カスタマイズ</value>
+  </data>
+  <data name="BtnGoToIMEIndicator" xml:space="preserve">
+    <value>IMEインジケータ設定...</value>
+  </data>
+  <data name="BtnGoToClock" xml:space="preserve">
+    <value>時計設定...</value>
+  </data>
+  <data name="BtnGoToMouse" xml:space="preserve">
+    <value>マウスカーソルインジケータ設定...</value>
+  </data>
+
+  <!-- Language Names -->
+  <data name="LangEnglish" xml:space="preserve">
+    <value>英語 (IME OFF)</value>
+  </data>
+  <data name="LangJapanese" xml:space="preserve">
+    <value>日本語</value>
+  </data>
+  <data name="LangKorean" xml:space="preserve">
+    <value>韓国語</value>
+  </data>
+  <data name="LangChineseSimplified" xml:space="preserve">
+    <value>中国語（簡体字）</value>
+  </data>
+  <data name="LangChineseTraditional" xml:space="preserve">
+    <value>中国語（繁体字）</value>
+  </data>
+  <data name="LangVietnamese" xml:space="preserve">
+    <value>ベトナム語</value>
+  </data>
+  <data name="LangThai" xml:space="preserve">
+    <value>タイ語</value>
+  </data>
+  <data name="LangHindi" xml:space="preserve">
+    <value>ヒンディー語</value>
+  </data>
+  <data name="LangBengali" xml:space="preserve">
+    <value>ベンガル語</value>
+  </data>
+  <data name="LangTamil" xml:space="preserve">
+    <value>タミル語</value>
+  </data>
+  <data name="LangTelugu" xml:space="preserve">
+    <value>テルグ語</value>
+  </data>
+  <data name="LangNepali" xml:space="preserve">
+    <value>ネパール語</value>
+  </data>
+  <data name="LangSinhala" xml:space="preserve">
+    <value>シンハラ語</value>
+  </data>
+  <data name="LangMyanmar" xml:space="preserve">
+    <value>ミャンマー語</value>
+  </data>
+  <data name="LangKhmer" xml:space="preserve">
+    <value>クメール語</value>
+  </data>
+  <data name="LangLao" xml:space="preserve">
+    <value>ラオ語</value>
+  </data>
+  <data name="LangMongolian" xml:space="preserve">
+    <value>モンゴル語</value>
+  </data>
+  <data name="LangArabic" xml:space="preserve">
+    <value>アラビア語</value>
+  </data>
+  <data name="LangPersian" xml:space="preserve">
+    <value>ペルシャ語</value>
+  </data>
+  <data name="LangHebrew" xml:space="preserve">
+    <value>ヘブライ語</value>
+  </data>
+  <data name="LangUkrainian" xml:space="preserve">
+    <value>ウクライナ語</value>
+  </data>
+  <data name="LangRussian" xml:space="preserve">
+    <value>ロシア語</value>
+  </data>
+  <data name="LangGreek" xml:space="preserve">
+    <value>ギリシャ語</value>
+  </data>
+  <data name="LangOther" xml:space="preserve">
+    <value>その他のIME</value>
+  </data>
+
+  <!-- Pixel Verification -->
+  <data name="LabelPixelVerification" xml:space="preserve">
+    <value>定期ピクセル検証</value>
+  </data>
+  <data name="LabelPixelVerificationHint" xml:space="preserve">
+    <value>(マウス操作でIME切替時に必要)</value>
+  </data>
+
+</root>

@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- App Title -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>IME Indicator Clock</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Settings - IME Indicator Clock</value>
+  </data>
+
+  <!-- Tab Names -->
+  <data name="TabIMEIndicator" xml:space="preserve">
+    <value>IME Indicator</value>
+  </data>
+  <data name="TabClock" xml:space="preserve">
+    <value>Clock</value>
+  </data>
+  <data name="TabMouse" xml:space="preserve">
+    <value>Mouse Cursor Indicator</value>
+  </data>
+  <data name="LabelMouseDescription" xml:space="preserve">
+    <value>Uses language color settings from IME Indicator</value>
+  </data>
+  <data name="TabAbout" xml:space="preserve">
+    <value>About</value>
+  </data>
+
+  <!-- Common Labels -->
+  <data name="LabelVisible" xml:space="preserve">
+    <value>Visible</value>
+  </data>
+  <data name="LabelSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="LabelOpacity" xml:space="preserve">
+    <value>Opacity</value>
+  </data>
+  <data name="LabelPosition" xml:space="preserve">
+    <value>Position</value>
+  </data>
+  <data name="LabelPositionPreset" xml:space="preserve">
+    <value>Position Preset</value>
+  </data>
+  <data name="LabelPositionManual" xml:space="preserve">
+    <value>Position (Manual)</value>
+  </data>
+  <data name="LabelFont" xml:space="preserve">
+    <value>Font</value>
+  </data>
+  <data name="LabelFontSize" xml:space="preserve">
+    <value>Font Size</value>
+  </data>
+  <data name="LabelDisplay" xml:space="preserve">
+    <value>Display</value>
+  </data>
+  <data name="LabelLanguage" xml:space="preserve">
+    <value>Language</value>
+  </data>
+
+  <!-- Position Buttons -->
+  <data name="BtnTopLeft" xml:space="preserve">
+    <value>Top Left</value>
+  </data>
+  <data name="BtnTopRight" xml:space="preserve">
+    <value>Top Right</value>
+  </data>
+  <data name="BtnBottomLeft" xml:space="preserve">
+    <value>Bottom Left</value>
+  </data>
+  <data name="BtnBottomRight" xml:space="preserve">
+    <value>Bottom Right</value>
+  </data>
+
+  <!-- IME Indicator -->
+  <data name="LabelLanguageColors" xml:space="preserve">
+    <value>Language Colors</value>
+  </data>
+  <data name="BtnEditLanguageColors" xml:space="preserve">
+    <value>Edit Language Colors...</value>
+  </data>
+  <data name="LanguageColors" xml:space="preserve">
+    <value>Language Color Settings</value>
+  </data>
+  <data name="LanguageColorsDescription" xml:space="preserve">
+    <value>Set the indicator color, text, and font for each language.</value>
+  </data>
+  <data name="GlobalFont" xml:space="preserve">
+    <value>Default Font:</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Font" xml:space="preserve">
+    <value>Font</value>
+  </data>
+  <data name="Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="FontSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="Text" xml:space="preserve">
+    <value>Text</value>
+  </data>
+
+  <!-- Clock Settings -->
+  <data name="LabelWindowSettings" xml:space="preserve">
+    <value>Window Settings</value>
+  </data>
+  <data name="LabelDisplaySettings" xml:space="preserve">
+    <value>Display Settings</value>
+  </data>
+  <data name="LabelFontSettings" xml:space="preserve">
+    <value>Font Settings</value>
+  </data>
+  <data name="LabelColorSettings" xml:space="preserve">
+    <value>Color Settings</value>
+  </data>
+  <data name="LabelStyle" xml:space="preserve">
+    <value>Style</value>
+  </data>
+  <data name="StyleDigital" xml:space="preserve">
+    <value>Digital</value>
+  </data>
+  <data name="StyleAnalog" xml:space="preserve">
+    <value>Analog</value>
+  </data>
+  <data name="LabelWindowSize" xml:space="preserve">
+    <value>Window Size</value>
+  </data>
+  <data name="LabelWidth" xml:space="preserve">
+    <value>Width</value>
+  </data>
+  <data name="LabelHeight" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="LabelBackgroundColor" xml:space="preserve">
+    <value>Background Color</value>
+  </data>
+  <data name="LabelUseIMEIndicatorColors" xml:space="preserve">
+    <value>Use IME Indicator language colors</value>
+  </data>
+  <data name="LabelIMEOff" xml:space="preserve">
+    <value>IME OFF</value>
+  </data>
+  <data name="LabelIMEOn" xml:space="preserve">
+    <value>IME ON</value>
+  </data>
+  <data name="LabelShowSeconds" xml:space="preserve">
+    <value>Show Second Hand</value>
+  </data>
+  <data name="LabelAnalogClockSettings" xml:space="preserve">
+    <value>Analog Clock Settings</value>
+  </data>
+  <data name="LabelAnalogClockSize" xml:space="preserve">
+    <value>Analog Clock Size</value>
+  </data>
+  <data name="LabelAnalogClockColor" xml:space="preserve">
+    <value>Analog Clock</value>
+  </data>
+  <data name="LabelAnalogClockHandsColor" xml:space="preserve">
+    <value>Clock Hands</value>
+  </data>
+  <data name="LabelAnalogClockTextColor" xml:space="preserve">
+    <value>Hour Marks</value>
+  </data>
+  <data name="LabelClockTextColor" xml:space="preserve">
+    <value>Date/Time</value>
+  </data>
+  <data name="LabelDateFormat" xml:space="preserve">
+    <value>Date Format</value>
+  </data>
+  <data name="LabelTimeFormat" xml:space="preserve">
+    <value>Time Format</value>
+  </data>
+  <data name="LabelLayout" xml:space="preserve">
+    <value>Date/Time Layout</value>
+  </data>
+  <data name="LabelSelectFromSamples" xml:space="preserve">
+    <value>Select from samples:</value>
+  </data>
+  <data name="LabelOrInputDirectly" xml:space="preserve">
+    <value>Or input directly:</value>
+  </data>
+
+  <!-- Format Presets -->
+  <data name="FormatFull" xml:space="preserve">
+    <value>Full</value>
+  </data>
+  <data name="FormatNormal" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="FormatShort" xml:space="preserve">
+    <value>Short</value>
+  </data>
+  <data name="FormatCustom1" xml:space="preserve">
+    <value>Custom 1</value>
+  </data>
+  <data name="FormatCustom2" xml:space="preserve">
+    <value>Custom 2</value>
+  </data>
+
+  <!-- Layout Options -->
+  <data name="LayoutVerticalDateFirst" xml:space="preserve">
+    <value>Vertical (Date, Time)</value>
+  </data>
+  <data name="LayoutVerticalTimeFirst" xml:space="preserve">
+    <value>Vertical (Time, Date)</value>
+  </data>
+  <data name="LayoutHorizontalDateFirst" xml:space="preserve">
+    <value>Horizontal (Date, Time)</value>
+  </data>
+  <data name="LayoutHorizontalTimeFirst" xml:space="preserve">
+    <value>Horizontal (Time, Date)</value>
+  </data>
+  <data name="LayoutDateOnly" xml:space="preserve">
+    <value>Date Only</value>
+  </data>
+  <data name="LayoutTimeOnly" xml:space="preserve">
+    <value>Time Only</value>
+  </data>
+
+  <!-- Mouse Settings -->
+  <data name="LabelOffsetX" xml:space="preserve">
+    <value>Offset X</value>
+  </data>
+  <data name="LabelOffsetY" xml:space="preserve">
+    <value>Offset Y</value>
+  </data>
+
+  <!-- About -->
+  <data name="LabelVersion" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="BtnResetSettings" xml:space="preserve">
+    <value>Reset Settings</value>
+  </data>
+  <data name="LabelDebugMode" xml:space="preserve">
+    <value>Enable Debug Log</value>
+  </data>
+
+  <!-- Buttons -->
+  <data name="BtnSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="BtnClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="BtnOK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="BtnCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+
+  <!-- Context Menu -->
+  <data name="MenuIMEIndicator" xml:space="preserve">
+    <value>IME Indicator</value>
+  </data>
+  <data name="MenuClock" xml:space="preserve">
+    <value>Clock</value>
+  </data>
+  <data name="MenuMouseIndicator" xml:space="preserve">
+    <value>Mouse Cursor Indicator</value>
+  </data>
+  <data name="MenuSettings" xml:space="preserve">
+    <value>Settings...</value>
+  </data>
+  <data name="MenuExit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+
+  <!-- Messages -->
+  <data name="MsgSaveComplete" xml:space="preserve">
+    <value>Settings saved.</value>
+  </data>
+  <data name="MsgSaveCompleteTitle" xml:space="preserve">
+    <value>Save Complete</value>
+  </data>
+  <data name="MsgResetConfirm" xml:space="preserve">
+    <value>Reset all settings to default?</value>
+  </data>
+  <data name="MsgResetTitle" xml:space="preserve">
+    <value>Reset Settings</value>
+  </data>
+  <data name="MsgResetComplete" xml:space="preserve">
+    <value>Settings have been reset.</value>
+  </data>
+  <data name="MsgComplete" xml:space="preserve">
+    <value>Complete</value>
+  </data>
+
+  <!-- Display -->
+  <data name="DisplayPrimary" xml:space="preserve">
+    <value>(Primary)</value>
+  </data>
+  <data name="DisplayFormat" xml:space="preserve">
+    <value>Display {0}{1} - {2}x{3}</value>
+  </data>
+
+  <!-- About Tab -->
+  <data name="AppDescription" xml:space="preserve">
+    <value>A utility that provides IME status indicator and desktop clock (with background color showing IME status)</value>
+  </data>
+  <data name="LabelSupportedLanguages" xml:space="preserve">
+    <value>🌐 Supported Languages</value>
+  </data>
+  <data name="LabelCustomize" xml:space="preserve">
+    <value>⚙ Customize</value>
+  </data>
+  <data name="BtnGoToIMEIndicator" xml:space="preserve">
+    <value>IME Indicator Settings...</value>
+  </data>
+  <data name="BtnGoToClock" xml:space="preserve">
+    <value>Clock Settings...</value>
+  </data>
+  <data name="BtnGoToMouse" xml:space="preserve">
+    <value>Mouse Cursor Indicator Settings...</value>
+  </data>
+
+  <!-- Language Names -->
+  <data name="LangEnglish" xml:space="preserve">
+    <value>English (IME OFF)</value>
+  </data>
+  <data name="LangJapanese" xml:space="preserve">
+    <value>Japanese</value>
+  </data>
+  <data name="LangKorean" xml:space="preserve">
+    <value>Korean</value>
+  </data>
+  <data name="LangChineseSimplified" xml:space="preserve">
+    <value>Chinese (Simplified)</value>
+  </data>
+  <data name="LangChineseTraditional" xml:space="preserve">
+    <value>Chinese (Traditional)</value>
+  </data>
+  <data name="LangVietnamese" xml:space="preserve">
+    <value>Vietnamese</value>
+  </data>
+  <data name="LangThai" xml:space="preserve">
+    <value>Thai</value>
+  </data>
+  <data name="LangHindi" xml:space="preserve">
+    <value>Hindi</value>
+  </data>
+  <data name="LangBengali" xml:space="preserve">
+    <value>Bengali</value>
+  </data>
+  <data name="LangTamil" xml:space="preserve">
+    <value>Tamil</value>
+  </data>
+  <data name="LangTelugu" xml:space="preserve">
+    <value>Telugu</value>
+  </data>
+  <data name="LangNepali" xml:space="preserve">
+    <value>Nepali</value>
+  </data>
+  <data name="LangSinhala" xml:space="preserve">
+    <value>Sinhala</value>
+  </data>
+  <data name="LangMyanmar" xml:space="preserve">
+    <value>Myanmar (Burmese)</value>
+  </data>
+  <data name="LangKhmer" xml:space="preserve">
+    <value>Khmer</value>
+  </data>
+  <data name="LangLao" xml:space="preserve">
+    <value>Lao</value>
+  </data>
+  <data name="LangMongolian" xml:space="preserve">
+    <value>Mongolian</value>
+  </data>
+  <data name="LangArabic" xml:space="preserve">
+    <value>Arabic</value>
+  </data>
+  <data name="LangPersian" xml:space="preserve">
+    <value>Persian (Farsi)</value>
+  </data>
+  <data name="LangHebrew" xml:space="preserve">
+    <value>Hebrew</value>
+  </data>
+  <data name="LangUkrainian" xml:space="preserve">
+    <value>Ukrainian</value>
+  </data>
+  <data name="LangRussian" xml:space="preserve">
+    <value>Russian</value>
+  </data>
+  <data name="LangGreek" xml:space="preserve">
+    <value>Greek</value>
+  </data>
+  <data name="LangOther" xml:space="preserve">
+    <value>Other IME</value>
+  </data>
+
+  <!-- Pixel Verification -->
+  <data name="LabelPixelVerification" xml:space="preserve">
+    <value>Periodic Pixel Verification</value>
+  </data>
+  <data name="LabelPixelVerificationHint" xml:space="preserve">
+    <value>(Required when switching IME via mouse)</value>
+  </data>
+
+</root>

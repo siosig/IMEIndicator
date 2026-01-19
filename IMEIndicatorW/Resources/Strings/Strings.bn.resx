@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <data name="AppTitle" xml:space="preserve"><value>IME Indicator Clock</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>সেটিংস - IME Indicator Clock</value></data>
+  <data name="TabIMEIndicator" xml:space="preserve"><value>IME সূচক</value></data>
+  <data name="TabClock" xml:space="preserve"><value>ঘড়ি</value></data>
+  <data name="TabMouse" xml:space="preserve"><value>কার্সার সূচক</value></data>
+  <data name="LabelMouseDescription" xml:space="preserve"><value>IME সূচক থেকে ভাষা রঙ সেটিংস ব্যবহার করে</value></data>
+  <data name="TabAbout" xml:space="preserve"><value>সম্পর্কে</value></data>
+  <data name="LabelVisible" xml:space="preserve"><value>দৃশ্যমান</value></data>
+  <data name="LabelSize" xml:space="preserve"><value>আকার</value></data>
+  <data name="LabelOpacity" xml:space="preserve"><value>স্বচ্ছতা</value></data>
+  <data name="LabelPosition" xml:space="preserve"><value>অবস্থান</value></data>
+  <data name="LabelFont" xml:space="preserve"><value>ফন্ট</value></data>
+  <data name="LabelFontSize" xml:space="preserve"><value>ফন্ট আকার</value></data>
+  <data name="LabelDisplay" xml:space="preserve"><value>ডিসপ্লে</value></data>
+  <data name="LabelLanguage" xml:space="preserve"><value>ভাষা</value></data>
+  <data name="BtnTopLeft" xml:space="preserve"><value>উপরে বাম</value></data>
+  <data name="BtnTopRight" xml:space="preserve"><value>উপরে ডান</value></data>
+  <data name="BtnBottomLeft" xml:space="preserve"><value>নিচে বাম</value></data>
+  <data name="BtnBottomRight" xml:space="preserve"><value>নিচে ডান</value></data>
+  <data name="LabelLanguageColors" xml:space="preserve"><value>ভাষা রঙ</value></data>
+  <data name="GlobalFont" xml:space="preserve"><value>ডিফল্ট ফন্ট:</value></data>
+  <data name="Language" xml:space="preserve"><value>ভাষা</value></data>
+  <data name="Font" xml:space="preserve"><value>ফন্ট</value></data>
+  <data name="Size" xml:space="preserve"><value>আকার</value></data>
+  <data name="Color" xml:space="preserve"><value>রঙ</value></data>
+  <data name="Text" xml:space="preserve"><value>টেক্সট</value></data>
+  <data name="LabelStyle" xml:space="preserve"><value>স্টাইল</value></data>
+  <data name="StyleDigital" xml:space="preserve"><value>ডিজিটাল</value></data>
+  <data name="StyleAnalog" xml:space="preserve"><value>অ্যানালগ</value></data>
+  <data name="LabelWidth" xml:space="preserve"><value>প্রস্থ</value></data>
+  <data name="LabelHeight" xml:space="preserve"><value>উচ্চতা</value></data>
+  <data name="LabelBackgroundColor" xml:space="preserve"><value>পটভূমি রঙ</value></data>
+  <data name="LabelIMEOff" xml:space="preserve"><value>IME বন্ধ</value></data>
+  <data name="LabelIMEOn" xml:space="preserve"><value>IME চালু</value></data>
+  <data name="LabelShowSeconds" xml:space="preserve"><value>সেকেন্ড কাঁটা দেখান</value></data>
+  <data name="LabelDateFormat" xml:space="preserve"><value>তারিখ ফরম্যাট</value></data>
+  <data name="LabelTimeFormat" xml:space="preserve"><value>সময় ফরম্যাট</value></data>
+  <data name="FormatFull" xml:space="preserve"><value>পূর্ণ</value></data>
+  <data name="FormatNormal" xml:space="preserve"><value>সাধারণ</value></data>
+  <data name="FormatShort" xml:space="preserve"><value>সংক্ষিপ্ত</value></data>
+  <data name="LayoutDateOnly" xml:space="preserve"><value>শুধু তারিখ</value></data>
+  <data name="LayoutTimeOnly" xml:space="preserve"><value>শুধু সময়</value></data>
+  <data name="LabelVersion" xml:space="preserve"><value>সংস্করণ</value></data>
+  <data name="BtnResetSettings" xml:space="preserve"><value>সেটিংস রিসেট</value></data>
+  <data name="BtnSave" xml:space="preserve"><value>সংরক্ষণ</value></data>
+  <data name="BtnClose" xml:space="preserve"><value>বন্ধ</value></data>
+  <data name="BtnOK" xml:space="preserve"><value>ঠিক আছে</value></data>
+  <data name="BtnCancel" xml:space="preserve"><value>বাতিল</value></data>
+  <data name="MenuSettings" xml:space="preserve"><value>সেটিংস...</value></data>
+  <data name="MenuExit" xml:space="preserve"><value>প্রস্থান</value></data>
+  <data name="MsgSaveComplete" xml:space="preserve"><value>সেটিংস সংরক্ষিত।</value></data>
+  <data name="MsgResetConfirm" xml:space="preserve"><value>সব সেটিংস ডিফল্টে রিসেট করবেন?</value></data>
+  <data name="MsgComplete" xml:space="preserve"><value>সম্পন্ন</value></data>
+  <data name="DisplayPrimary" xml:space="preserve"><value>(প্রাথমিক)</value></data>
+  <data name="DisplayFormat" xml:space="preserve"><value>ডিসপ্লে {0}{1} - {2}x{3}</value></data>
+  <data name="AppDescription" xml:space="preserve"><value>IME স্থিতি প্রদর্শন এবং ডেস্কটপ ঘড়ি ইউটিলিটি</value></data>
+  <data name="LabelSupportedLanguages" xml:space="preserve"><value>🌐 সমর্থিত ভাষা</value></data>
+  <data name="LabelCustomize" xml:space="preserve"><value>⚙ কাস্টমাইজ</value></data>
+  <data name="LangEnglish" xml:space="preserve"><value>ইংরেজি (IME বন্ধ)</value></data>
+  <data name="LangJapanese" xml:space="preserve"><value>জাপানি</value></data>
+  <data name="LangKorean" xml:space="preserve"><value>কোরিয়ান</value></data>
+  <data name="LangHindi" xml:space="preserve"><value>হিন্দি</value></data>
+  <data name="LangOther" xml:space="preserve"><value>অন্যান্য IME</value></data>
+</root>

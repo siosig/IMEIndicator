@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <data name="AppTitle" xml:space="preserve"><value>IME Indicator Clock</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>ဆက်တင်များ - IME Indicator Clock</value></data>
+  <data name="TabIMEIndicator" xml:space="preserve"><value>IME ညွှန်ပြ</value></data>
+  <data name="TabClock" xml:space="preserve"><value>နာရီ</value></data>
+  <data name="TabMouse" xml:space="preserve"><value>ကာဆာညွှန်ပြ</value></data>
+  <data name="TabAbout" xml:space="preserve"><value>အကြောင်း</value></data>
+  <data name="LabelVisible" xml:space="preserve"><value>ပြသရန်</value></data>
+  <data name="LabelSize" xml:space="preserve"><value>အရွယ်အစား</value></data>
+  <data name="LabelPosition" xml:space="preserve"><value>တည်နေရာ</value></data>
+  <data name="LabelFont" xml:space="preserve"><value>ဖောင့်</value></data>
+  <data name="LabelLanguage" xml:space="preserve"><value>ဘာသာစကား</value></data>
+  <data name="BtnTopLeft" xml:space="preserve"><value>ထိပ်ဘယ်</value></data>
+  <data name="BtnTopRight" xml:space="preserve"><value>ထိပ်ညာ</value></data>
+  <data name="BtnBottomLeft" xml:space="preserve"><value>အောက်ဘယ်</value></data>
+  <data name="BtnBottomRight" xml:space="preserve"><value>အောက်ညာ</value></data>
+  <data name="Language" xml:space="preserve"><value>ဘာသာစကား</value></data>
+  <data name="Color" xml:space="preserve"><value>အရောင်</value></data>
+  <data name="Text" xml:space="preserve"><value>စာသား</value></data>
+  <data name="LabelWidth" xml:space="preserve"><value>အကျယ်</value></data>
+  <data name="LabelHeight" xml:space="preserve"><value>အမြင့်</value></data>
+  <data name="LabelBackgroundColor" xml:space="preserve"><value>နောက်ခံအရောင်</value></data>
+  <data name="LabelVersion" xml:space="preserve"><value>ဗားရှင်း</value></data>
+  <data name="BtnSave" xml:space="preserve"><value>သိမ်းမည်</value></data>
+  <data name="BtnClose" xml:space="preserve"><value>ပိတ်မည်</value></data>
+  <data name="BtnOK" xml:space="preserve"><value>အိုကေ</value></data>
+  <data name="BtnCancel" xml:space="preserve"><value>မလုပ်တော့</value></data>
+  <data name="MenuSettings" xml:space="preserve"><value>ဆက်တင်များ...</value></data>
+  <data name="MenuExit" xml:space="preserve"><value>ထွက်မည်</value></data>
+  <data name="MsgComplete" xml:space="preserve"><value>ပြီးပါပြီ</value></data>
+  <data name="DisplayPrimary" xml:space="preserve"><value>(ပင်မ)</value></data>
+  <data name="DisplayFormat" xml:space="preserve"><value>မျက်နှာပြင် {0}{1} - {2}x{3}</value></data>
+  <data name="LabelSupportedLanguages" xml:space="preserve"><value>🌐 ထောက်ပံ့သောဘာသာစကားများ</value></data>
+  <data name="LangEnglish" xml:space="preserve"><value>အင်္ဂလိပ် (IME ပိတ်)</value></data>
+  <data name="LangOther" xml:space="preserve"><value>အခြား IME</value></data>
+</root>

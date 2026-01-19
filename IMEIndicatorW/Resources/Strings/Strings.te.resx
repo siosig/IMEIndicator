@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+
+  <data name="AppTitle" xml:space="preserve"><value>IME Indicator Clock</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>సెట్టింగ్‌లు - IME Indicator Clock</value></data>
+  <data name="TabIMEIndicator" xml:space="preserve"><value>IME సూచిక</value></data>
+  <data name="TabClock" xml:space="preserve"><value>గడియారం</value></data>
+  <data name="TabMouse" xml:space="preserve"><value>కర్సర్ సూచిక</value></data>
+  <data name="TabAbout" xml:space="preserve"><value>గురించి</value></data>
+  <data name="LabelVisible" xml:space="preserve"><value>చూపించు</value></data>
+  <data name="LabelSize" xml:space="preserve"><value>పరిమాణం</value></data>
+  <data name="LabelPosition" xml:space="preserve"><value>స్థానం</value></data>
+  <data name="LabelFont" xml:space="preserve"><value>ఫాంట్</value></data>
+  <data name="LabelLanguage" xml:space="preserve"><value>భాష</value></data>
+  <data name="BtnTopLeft" xml:space="preserve"><value>ఎగువ ఎడమ</value></data>
+  <data name="BtnTopRight" xml:space="preserve"><value>ఎగువ కుడి</value></data>
+  <data name="BtnBottomLeft" xml:space="preserve"><value>దిగువ ఎడమ</value></data>
+  <data name="BtnBottomRight" xml:space="preserve"><value>దిగువ కుడి</value></data>
+  <data name="Language" xml:space="preserve"><value>భాష</value></data>
+  <data name="Color" xml:space="preserve"><value>రంగు</value></data>
+  <data name="Text" xml:space="preserve"><value>టెక్స్ట్</value></data>
+  <data name="LabelWidth" xml:space="preserve"><value>వెడల్పు</value></data>
+  <data name="LabelHeight" xml:space="preserve"><value>ఎత్తు</value></data>
+  <data name="LabelBackgroundColor" xml:space="preserve"><value>నేపథ్య రంగు</value></data>
+  <data name="LabelVersion" xml:space="preserve"><value>వెర్షన్</value></data>
+  <data name="BtnSave" xml:space="preserve"><value>సేవ్</value></data>
+  <data name="BtnClose" xml:space="preserve"><value>మూసివేయి</value></data>
+  <data name="BtnOK" xml:space="preserve"><value>సరే</value></data>
+  <data name="BtnCancel" xml:space="preserve"><value>రద్దు</value></data>
+  <data name="MenuSettings" xml:space="preserve"><value>సెట్టింగ్‌లు...</value></data>
+  <data name="MenuExit" xml:space="preserve"><value>నిష్క్రమించు</value></data>
+  <data name="MsgComplete" xml:space="preserve"><value>పూర్తయింది</value></data>
+  <data name="DisplayPrimary" xml:space="preserve"><value>(ప్రాథమిక)</value></data>
+  <data name="DisplayFormat" xml:space="preserve"><value>డిస్‌ప్లే {0}{1} - {2}x{3}</value></data>
+  <data name="LabelSupportedLanguages" xml:space="preserve"><value>🌐 మద్దతు ఉన్న భాషలు</value></data>
+  <data name="LangEnglish" xml:space="preserve"><value>ఇంగ్లీష్ (IME ఆఫ్)</value></data>
+  <data name="LangHindi" xml:space="preserve"><value>హిందీ</value></data>
+  <data name="LangOther" xml:space="preserve"><value>ఇతర IME</value></data>
+</root>
