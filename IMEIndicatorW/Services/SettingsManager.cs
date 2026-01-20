@@ -12,7 +12,7 @@ public class SettingsManager
 {
     private static readonly string SettingsDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "IMEIndicatorW"
+        AppConstants.AppName
     );
 
 #if DEBUG

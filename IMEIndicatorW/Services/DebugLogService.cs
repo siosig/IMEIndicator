@@ -234,7 +234,7 @@ public static class DebugLogService
         }
 
         string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        string appDirectory = Path.Combine(appData, "IMEIndicatorW");
+        string appDirectory = Path.Combine(appData, AppConstants.AppName);
 #if DEBUG
         string logFileName = "debug-d.log";
 #else

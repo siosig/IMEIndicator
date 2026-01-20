@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <AssemblyName>IMEIndicatorW</AssemblyName>
+    <AssemblyName>IMEIndicatorClockW</AssemblyName>
     <RootNamespace>IMEIndicatorClock</RootNamespace>
     <Version>1.0.0</Version>
     <Authors>obott9</Authors>

@@ -12,7 +12,7 @@ public class UIADiscoveryService
 {
     private static readonly string LogFilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "IMEIndicatorW",
+        AppConstants.AppName,
         "uia_discovery_log.json");
 
     private static readonly JsonSerializerOptions JsonOptions = new()

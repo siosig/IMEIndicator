@@ -435,7 +435,7 @@ public partial class PixelIMEDetector : IDisposable
 
             var saveDir = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "IMEIndicatorW",
+                AppConstants.AppName,
                 "debug");
 
             if (!System.IO.Directory.Exists(saveDir))

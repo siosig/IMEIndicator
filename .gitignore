@@ -36,6 +36,8 @@ $RECYCLE.BIN/
 
 # Publish
 publish/
+release/
+release-self-contained/
 
 # User-specific files
 *.rsuser
