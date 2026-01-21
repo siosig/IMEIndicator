@@ -202,3 +202,37 @@ public class LayoutToDateFirstConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// FontSizeからテキストのマージンを計算するコンバーター
+/// parameter: "time" = 時刻用（下マージン負）, "date" = 日付用（上マージン負）
+/// </summary>
+public class FontSizeToTextMarginConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is double fontSize)
+        {
+            // フォントサイズの20%を負のマージンとして適用
+            double margin = fontSize * 0.2;
+            string param = parameter as string ?? "";
+
+            if (param == "time")
+            {
+                // 時刻: 下マージンを負に
+                return new Thickness(3, 0, 3, -margin);
+            }
+            else if (param == "date")
+            {
+                // 日付: 上マージンを負に
+                return new Thickness(3, -margin, 3, 0);
+            }
+        }
+        return new Thickness(3, 0, 3, 0);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

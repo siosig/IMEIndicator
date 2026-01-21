@@ -51,7 +51,7 @@
                         <Separator Margin="0,0,0,15"/>
                         
                         <!-- サイズ -->
-                        <TextBlock x:Name="LblIMESize" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBlock x:Name="LblIMESize" FontWeight="SemiBold" Margin="0,0,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -65,7 +65,7 @@
                         </Grid>
 
                         <!-- 透明度 -->
-                        <TextBlock x:Name="LblIMEOpacity" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblIMEOpacity" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -79,11 +79,11 @@
                         </Grid>
 
                         <!-- ディスプレイ選択 -->
-                        <TextBlock x:Name="LblIMEDisplay" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblIMEDisplay" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <ComboBox x:Name="IMEIndicatorDisplayCombo" SelectionChanged="IMEIndicatorDisplay_SelectionChanged"/>
 
                         <!-- 位置（手動） -->
-                        <TextBlock x:Name="LblIMEPositionManual" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblIMEPositionManual" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -100,16 +100,16 @@
                         </Grid>
 
                         <!-- 位置プリセット -->
-                        <TextBlock x:Name="LblIMEPositionPreset" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblIMEPositionPreset" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <WrapPanel>
-                            <Button x:Name="BtnIMETopLeft" Width="70" Margin="0,0,5,5" Click="IMEIndicator_TopLeft_Click"/>
-                            <Button x:Name="BtnIMETopRight" Width="70" Margin="0,0,5,5" Click="IMEIndicator_TopRight_Click"/>
-                            <Button x:Name="BtnIMEBottomLeft" Width="70" Margin="0,0,5,5" Click="IMEIndicator_BottomLeft_Click"/>
-                            <Button x:Name="BtnIMEBottomRight" Width="70" Margin="0,0,5,5" Click="IMEIndicator_BottomRight_Click"/>
+                            <Button x:Name="BtnIMETopLeft" Width="70" Margin="0,0,5,3" Click="IMEIndicator_TopLeft_Click"/>
+                            <Button x:Name="BtnIMETopRight" Width="70" Margin="0,0,5,3" Click="IMEIndicator_TopRight_Click"/>
+                            <Button x:Name="BtnIMEBottomLeft" Width="70" Margin="0,0,5,3" Click="IMEIndicator_BottomLeft_Click"/>
+                            <Button x:Name="BtnIMEBottomRight" Width="70" Margin="0,0,5,3" Click="IMEIndicator_BottomRight_Click"/>
                         </WrapPanel>
 
                         <!-- 言語別色設定 -->
-                        <TextBlock x:Name="LblLanguageColors" FontWeight="Bold" Margin="0,25,0,10" FontSize="13"/>
+                        <TextBlock x:Name="LblLanguageColors" FontWeight="Bold" Margin="0,15,0,5" FontSize="13"/>
 
                         <!-- グローバルフォント設定 -->
                         <Border BorderBrush="LightGray" BorderThickness="1" Padding="10" Margin="0,0,0,10">
@@ -167,31 +167,32 @@
                         <Separator Margin="0,0,0,15"/>
                         
                         <!-- スタイル -->
-                        <TextBlock x:Name="LblClockStyle" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBlock x:Name="LblClockStyle" FontWeight="SemiBold" Margin="0,0,0,3"/>
                         <ComboBox x:Name="ClockStyleCombo" SelectedIndex="0" SelectionChanged="ClockStyle_SelectionChanged">
                             <ComboBoxItem x:Name="StyleDigitalItem"/>
                             <ComboBoxItem x:Name="StyleAnalogItem"/>
                         </ComboBox>
 
                         <!-- 秒針表示 -->
-                        <CheckBox x:Name="ShowSecondsCheck" Margin="0,15,0,0"
+                        <CheckBox x:Name="ShowSecondsCheck" Margin="0,10,0,0"
                                   Checked="ShowSeconds_Changed" Unchecked="ShowSeconds_Changed"/>
 
                         <!-- ========== ウィンドウ設定 ========== -->
-                        <TextBlock x:Name="LblClockWindowSettings" FontWeight="Bold" Margin="0,25,0,10" FontSize="13"/>
-                        
+                        <TextBlock x:Name="LblClockWindowSettings" FontWeight="Bold" Margin="0,15,0,5" FontSize="13"/>
+
                         <!-- ディスプレイ選択 -->
-                        <TextBlock x:Name="LblClockDisplay" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBlock x:Name="LblClockDisplay" FontWeight="SemiBold" Margin="0,0,0,3"/>
                         <ComboBox x:Name="ClockDisplayCombo" SelectionChanged="ClockDisplay_SelectionChanged"/>
 
                         <!-- ウィンドウ幅 -->
-                        <TextBlock x:Name="LblClockWindowSize" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblClockWindowSize" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="50"/>
                             </Grid.ColumnDefinitions>
                             <Slider x:Name="ClockWidthSlider" Minimum="100" Maximum="500"
+                                    Value="{Binding ClockViewModel.Width, Mode=TwoWay}"
                                     TickFrequency="20" IsSnapToTickEnabled="True"
                                     ValueChanged="ClockWidthSlider_ValueChanged"/>
                             <TextBlock Grid.Column="1" Text="{Binding ClockViewModel.Width, StringFormat={}{0:F0}}"
@@ -199,13 +200,14 @@
                         </Grid>
 
                         <!-- ウィンドウ高さ -->
-                        <TextBlock x:Name="LblClockHeight" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblClockHeight" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="50"/>
                             </Grid.ColumnDefinitions>
                             <Slider x:Name="ClockHeightSlider" Minimum="100" Maximum="500"
+                                    Value="{Binding ClockViewModel.Height, Mode=TwoWay}"
                                     TickFrequency="20" IsSnapToTickEnabled="True"
                                     ValueChanged="ClockHeightSlider_ValueChanged"/>
                             <TextBlock Grid.Column="1" Text="{Binding ClockViewModel.Height, StringFormat={}{0:F0}}"
@@ -213,7 +215,7 @@
                         </Grid>
 
                         <!-- アナログ時計サイズ -->
-                        <TextBlock x:Name="LblAnalogClockSize" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblAnalogClockSize" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -227,7 +229,7 @@
                         </Grid>
 
                         <!-- 位置（手動） -->
-                        <TextBlock x:Name="LblClockPositionManual" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblClockPositionManual" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -244,16 +246,16 @@
                         </Grid>
 
                         <!-- 位置プリセット -->
-                        <TextBlock x:Name="LblClockPositionPreset" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblClockPositionPreset" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <WrapPanel>
-                            <Button x:Name="BtnClockTopLeft" Width="70" Margin="0,0,5,5" Click="Clock_TopLeft_Click"/>
-                            <Button x:Name="BtnClockTopRight" Width="70" Margin="0,0,5,5" Click="Clock_TopRight_Click"/>
-                            <Button x:Name="BtnClockBottomLeft" Width="70" Margin="0,0,5,5" Click="Clock_BottomLeft_Click"/>
-                            <Button x:Name="BtnClockBottomRight" Width="70" Margin="0,0,5,5" Click="Clock_BottomRight_Click"/>
+                            <Button x:Name="BtnClockTopLeft" Width="70" Margin="0,0,5,3" Click="Clock_TopLeft_Click"/>
+                            <Button x:Name="BtnClockTopRight" Width="70" Margin="0,0,5,3" Click="Clock_TopRight_Click"/>
+                            <Button x:Name="BtnClockBottomLeft" Width="70" Margin="0,0,5,3" Click="Clock_BottomLeft_Click"/>
+                            <Button x:Name="BtnClockBottomRight" Width="70" Margin="0,0,5,3" Click="Clock_BottomRight_Click"/>
                         </WrapPanel>
 
                         <!-- 透明度 -->
-                        <TextBlock x:Name="LblClockOpacity" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblClockOpacity" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -267,10 +269,10 @@
                         </Grid>
 
                         <!-- ========== 表示内容設定 ========== -->
-                        <TextBlock x:Name="LblClockDisplaySettings" FontWeight="Bold" Margin="0,25,0,10" FontSize="13"/>
+                        <TextBlock x:Name="LblClockDisplaySettings" FontWeight="Bold" Margin="0,15,0,5" FontSize="13"/>
 
                         <!-- 日付/時刻の並び -->
-                        <TextBlock x:Name="LblLayout" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBlock x:Name="LblLayout" FontWeight="SemiBold" Margin="0,0,0,3"/>
                         <ComboBox x:Name="LayoutCombo" SelectionChanged="Layout_SelectionChanged">
                             <ComboBoxItem x:Name="LayoutVerticalDateFirstItem"/>
                             <ComboBoxItem x:Name="LayoutVerticalTimeFirstItem"/>
@@ -281,7 +283,7 @@
                         </ComboBox>
 
                         <!-- 日付フォーマット -->
-                        <TextBlock x:Name="LblDateFormat" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblDateFormat" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <ComboBox x:Name="DateFormatPresetCombo" SelectionChanged="DateFormatPreset_SelectionChanged">
                             <ComboBoxItem x:Name="DateFormatFullItem"/>
                             <ComboBoxItem x:Name="DateFormatNormalItem"/>
@@ -289,15 +291,15 @@
                             <ComboBoxItem x:Name="DateFormatCustom1Item"/>
                             <ComboBoxItem x:Name="DateFormatCustom2Item"/>
                         </ComboBox>
-                        <StackPanel x:Name="CustomDateFormatPanel" Visibility="Collapsed" Margin="0,5,0,0">
-                            <TextBlock x:Name="LblDateSelectFromSamples" Margin="0,0,0,3" Opacity="0.7"/>
+                        <StackPanel x:Name="CustomDateFormatPanel" Visibility="Collapsed" Margin="0,3,0,0">
+                            <TextBlock x:Name="LblDateSelectFromSamples" Margin="0,0,0,2" Opacity="0.7"/>
                             <ComboBox x:Name="DateFormatSampleCombo" SelectionChanged="DateFormatSample_SelectionChanged"/>
-                            <TextBlock x:Name="LblDateOrInputDirectly" Margin="0,8,0,3" Opacity="0.7"/>
+                            <TextBlock x:Name="LblDateOrInputDirectly" Margin="0,5,0,2" Opacity="0.7"/>
                             <TextBox x:Name="DateFormatBox" TextChanged="DateFormat_TextChanged"/>
                         </StackPanel>
 
                         <!-- 時刻フォーマット -->
-                        <TextBlock x:Name="LblTimeFormat" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblTimeFormat" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <ComboBox x:Name="TimeFormatPresetCombo" SelectionChanged="TimeFormatPreset_SelectionChanged">
                             <ComboBoxItem x:Name="TimeFormatFullItem"/>
                             <ComboBoxItem x:Name="TimeFormatNormalItem"/>
@@ -305,25 +307,25 @@
                             <ComboBoxItem x:Name="TimeFormatCustom1Item"/>
                             <ComboBoxItem x:Name="TimeFormatCustom2Item"/>
                         </ComboBox>
-                        <StackPanel x:Name="CustomTimeFormatPanel" Visibility="Collapsed" Margin="0,5,0,0">
-                            <TextBlock x:Name="LblTimeSelectFromSamples" Margin="0,0,0,3" Opacity="0.7"/>
+                        <StackPanel x:Name="CustomTimeFormatPanel" Visibility="Collapsed" Margin="0,3,0,0">
+                            <TextBlock x:Name="LblTimeSelectFromSamples" Margin="0,0,0,2" Opacity="0.7"/>
                             <ComboBox x:Name="TimeFormatSampleCombo" SelectionChanged="TimeFormatSample_SelectionChanged"/>
-                            <TextBlock x:Name="LblTimeOrInputDirectly" Margin="0,8,0,3" Opacity="0.7"/>
+                            <TextBlock x:Name="LblTimeOrInputDirectly" Margin="0,5,0,2" Opacity="0.7"/>
                             <TextBox x:Name="TimeFormatBox" TextChanged="TimeFormat_TextChanged"/>
                         </StackPanel>
 
                         <!-- フォント -->
-                        <TextBlock x:Name="LblClockFont" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblClockFont" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <ComboBox x:Name="ClockFontCombo" SelectionChanged="ClockFont_SelectionChanged"/>
 
                         <!-- フォントサイズ -->
-                        <TextBlock x:Name="LblClockFontSize" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblClockFontSize" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="60"/>
                             </Grid.ColumnDefinitions>
-                            <Slider Minimum="12" Maximum="72"
+                            <Slider Minimum="12" Maximum="100"
                                     Value="{Binding ClockViewModel.FontSize}"
                                     TickFrequency="2" IsSnapToTickEnabled="True"/>
                             <TextBlock Grid.Column="1" Text="{Binding ClockViewModel.FontSize, StringFormat={}{0:F0}pt}"
@@ -331,7 +333,7 @@
                         </Grid>
 
                         <!-- ========== 色設定 ========== -->
-                        <TextBlock x:Name="LblClockColorSettings" FontWeight="Bold" Margin="0,25,0,10" FontSize="13"/>
+                        <TextBlock x:Name="LblClockColorSettings" FontWeight="Bold" Margin="0,15,0,5" FontSize="13"/>
 
                         <!-- アナログ時計色・日付時刻色 -->
                         <Grid Margin="0,0,0,0">
@@ -340,17 +342,17 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                <TextBlock x:Name="LblAnalogClockColor" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <TextBlock x:Name="LblAnalogClockColor" FontWeight="SemiBold" Margin="0,0,0,3"/>
                                 <local:ColorPickerButton x:Name="AnalogClockColorPicker" ColorChanged="AnalogClockColor_Changed"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1">
-                                <TextBlock x:Name="LblClockTextColor" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <TextBlock x:Name="LblClockTextColor" FontWeight="SemiBold" Margin="0,0,0,3"/>
                                 <local:ColorPickerButton x:Name="ClockTextColorPicker" ColorChanged="ClockTextColor_Changed"/>
                             </StackPanel>
                         </Grid>
 
                         <!-- 背景色 -->
-                        <TextBlock x:Name="LblClockBackgroundColor" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblClockBackgroundColor" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <CheckBox x:Name="UseIMEIndicatorColorsCheck" Margin="0,0,0,10"
                                   IsChecked="{Binding ClockViewModel.UseIMEIndicatorColors, Mode=TwoWay}"
                                   Checked="UseIMEIndicatorColors_Changed" Unchecked="UseIMEIndicatorColors_Changed"/>
@@ -385,7 +387,7 @@
                         <TextBlock x:Name="LblMouseDescription" TextWrapping="Wrap" Margin="0,0,0,15" Opacity="0.8"/>
 
                         <!-- サイズ -->
-                        <TextBlock x:Name="LblMouseSize" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBlock x:Name="LblMouseSize" FontWeight="SemiBold" Margin="0,0,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -399,7 +401,7 @@
                         </Grid>
 
                         <!-- オフセット XY -->
-                        <TextBlock x:Name="LblMouseOffset" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblMouseOffset" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -436,7 +438,7 @@
                         </Grid>
 
                         <!-- 透明度 -->
-                        <TextBlock x:Name="LblMouseOpacity" FontWeight="SemiBold" Margin="0,15,0,5"/>
+                        <TextBlock x:Name="LblMouseOpacity" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -482,15 +484,17 @@
                         <Separator Margin="0,20,0,15"/>
 
                         <!-- カスタマイズ -->
-                        <TextBlock x:Name="LblCustomize" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBlock x:Name="LblCustomize" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
                         <StackPanel HorizontalAlignment="Center">
-                            <TextBlock x:Name="BtnGoToIMEIndicator" Margin="0,3" HorizontalAlignment="Center" Opacity="0.8"/>
-                            <TextBlock x:Name="BtnGoToClock" Margin="0,3" HorizontalAlignment="Center" Opacity="0.8"/>
-                            <TextBlock x:Name="BtnGoToMouse" Margin="0,3" HorizontalAlignment="Center" Opacity="0.8"/>
+                            <TextBlock x:Name="BtnGoToIMEIndicator" Margin="0,2" HorizontalAlignment="Center" Opacity="0.8"/>
+                            <TextBlock x:Name="BtnGoToClock" Margin="0,2" HorizontalAlignment="Center" Opacity="0.8"/>
+                            <TextBlock x:Name="BtnGoToMouse" Margin="0,2" HorizontalAlignment="Center" Opacity="0.8"/>
                         </StackPanel>
 
+                        <Separator Margin="0,15,0,10"/>
+
                         <!-- デバッグログスイッチ -->
-                        <CheckBox x:Name="DebugModeCheck" HorizontalAlignment="Center" Margin="0,15,0,0"
+                        <CheckBox x:Name="DebugModeCheck" HorizontalAlignment="Center" Margin="0,0,0,0"
                                   Checked="DebugMode_Changed" Unchecked="DebugMode_Changed"/>
 
                         <!-- 以下はデバッグ版のみ表示 -->
