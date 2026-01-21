@@ -85,10 +85,10 @@ public partial class PixelIMEDetector : IDisposable
     public static bool EnableDebugImageSave { get; set; } = false;
 #endif
 
-    // 入力インジケーター位置のキャッシュ
+    // 入力インジケーターのキャッシュ
     private System.Windows.Rect _cachedIndicatorRect = System.Windows.Rect.Empty;
     private DateTime _lastIndicatorSearch = DateTime.MinValue;
-    private const int IndicatorCacheSeconds = 10; // 10秒間キャッシュ
+    private const int IndicatorSearchIntervalMs = 10000; // 10秒間隔で再検索
 
     // 判定結果のキャッシュ
     private DateTime _lastPixelCheck = DateTime.MinValue;
@@ -164,6 +164,70 @@ public partial class PixelIMEDetector : IDisposable
         {
             DbgLog.Log(5, $"PixelIME: 例外 - {ex.Message}");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// DetectIMEState2の計測結果
+    /// </summary>
+    public record DetectIMEState2Result(
+        bool? IsOn,
+        double GetRectTimeMs,
+        double AnalyzeTimeMs,
+        double TotalTimeMs
+    );
+
+    /// <summary>
+    /// ピクセル判定でIME ON/OFF状態を検出（キャッシュなし版・時間計測付き）
+    /// </summary>
+    /// <param name="language">言語タイプ</param>
+    /// <returns>IME状態と各処理の計測時間</returns>
+    public DetectIMEState2Result DetectIMEState2(LanguageType language)
+    {
+        var swTotal = System.Diagnostics.Stopwatch.StartNew();
+        double getRectTime = 0;
+        double analyzeTime = 0;
+
+        // 日本語、韓国語、中国語のみ対応
+        if (language != LanguageType.Japanese &&
+            language != LanguageType.Korean &&
+            language != LanguageType.ChineseSimplified &&
+            language != LanguageType.ChineseTraditional)
+        {
+            swTotal.Stop();
+            return new DetectIMEState2Result(null, 0, 0, swTotal.Elapsed.TotalMilliseconds);
+        }
+
+        try
+        {
+            // 入力インジケーターの位置を取得（時間計測）
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var rect = GetIndicatorRect();
+            sw.Stop();
+            getRectTime = sw.Elapsed.TotalMilliseconds;
+
+            if (rect.IsEmpty || rect.Width < 5 || rect.Height < 5)
+            {
+                DbgLog.Log(5, "PixelIME2: インジケーター位置取得失敗");
+                swTotal.Stop();
+                return new DetectIMEState2Result(null, getRectTime, 0, swTotal.Elapsed.TotalMilliseconds);
+            }
+
+            // BitBltでインジケーター領域をキャプチャして分析（時間計測）
+            sw.Restart();
+            bool isOn = AnalyzeIndicatorWithBitBlt(rect, language);
+            sw.Stop();
+            analyzeTime = sw.Elapsed.TotalMilliseconds;
+
+            swTotal.Stop();
+            DbgLog.Log(5, $"PixelIME2: {language} -> {(isOn ? "ON" : "OFF")} (GetRect={getRectTime:F2}ms, Analyze={analyzeTime:F2}ms)");
+            return new DetectIMEState2Result(isOn, getRectTime, analyzeTime, swTotal.Elapsed.TotalMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            DbgLog.Log(5, $"PixelIME2: 例外 - {ex.Message}");
+            swTotal.Stop();
+            return new DetectIMEState2Result(null, getRectTime, analyzeTime, swTotal.Elapsed.TotalMilliseconds);
         }
     }
 
@@ -329,81 +393,79 @@ public partial class PixelIMEDetector : IDisposable
     }
 
     /// <summary>
-    /// 入力インジケーターの位置を取得（キャッシュ付き）
+    /// 入力インジケーターの位置を取得（時間ベースキャッシュ）
     /// </summary>
     private System.Windows.Rect GetIndicatorRect()
     {
+        // キャッシュが有効期間内ならそのまま返す
         var now = DateTime.Now;
-
-        // キャッシュが有効ならそれを返す
         if (!_cachedIndicatorRect.IsEmpty &&
-            (now - _lastIndicatorSearch).TotalSeconds < IndicatorCacheSeconds)
+            (now - _lastIndicatorSearch).TotalMilliseconds < IndicatorSearchIntervalMs)
         {
             return _cachedIndicatorRect;
         }
 
-        // UI Automationで検索
-        var indicator = FindWindowsInputIndicator();
-        if (indicator == null)
-        {
-            _cachedIndicatorRect = System.Windows.Rect.Empty;
-            _lastIndicatorSearch = now;
-            return System.Windows.Rect.Empty;
-        }
-
-        try
-        {
-            _cachedIndicatorRect = indicator.Current.BoundingRectangle;
-            _lastIndicatorSearch = now;
-            DbgLog.Log(6, $"PixelIME: インジケーター位置更新 {_cachedIndicatorRect}");
-            return _cachedIndicatorRect;
-        }
-        catch
-        {
-            _cachedIndicatorRect = System.Windows.Rect.Empty;
-            _lastIndicatorSearch = now;
-            return System.Windows.Rect.Empty;
-        }
+        // 再検索
+        return SearchAndCacheIndicator();
     }
 
     /// <summary>
-    /// Windowsシステムの入力インジケーターを探す（FindAll + フィルタ方式で高速化）
+    /// UI Automationで検索してキャッシュに保存
     /// </summary>
-    private static AutomationElement? FindWindowsInputIndicator()
+    private System.Windows.Rect SearchAndCacheIndicator()
+    {
+        _lastIndicatorSearch = DateTime.Now;
+        var result = FindWindowsInputIndicator();
+        if (result == null)
+        {
+            _cachedIndicatorRect = System.Windows.Rect.Empty;
+            return System.Windows.Rect.Empty;
+        }
+
+        var (name, rect) = result.Value;
+        _cachedIndicatorRect = rect;
+        DbgLog.Log(5, $"PixelIME: インジケーター検索完了 name=\"{name}\"");
+        return rect;
+    }
+
+    /// <summary>
+    /// Windowsシステムの入力インジケーターを探す（FindWindow + FromHandle方式で高速化）
+    /// </summary>
+    /// <returns>name, rect のタプル。見つからない場合はnull</returns>
+    private static (string name, System.Windows.Rect rect)? FindWindowsInputIndicator()
     {
         try
         {
-            var rootElement = AutomationElement.RootElement;
+            // FindWindowでShell_TrayWndを直接取得（UI Automationより速い）
+            var trayHwnd = NativeMethods.FindWindow("Shell_TrayWnd", null);
+            if (trayHwnd == IntPtr.Zero)
+            {
+                DbgLog.Log(5, "PixelIME: Shell_TrayWnd が見つかりません");
+                return null;
+            }
 
-            // FindAll で全子要素を一括取得（FindFirst より速い）
-            var rootChildren = rootElement.FindAll(TreeScope.Children, AutomationCondition.TrueCondition);
+            // hWndからAutomationElementを取得
+            var trayElement = AutomationElement.FromHandle(trayHwnd);
+            if (trayElement == null)
+            {
+                DbgLog.Log(5, "PixelIME: Shell_TrayWnd の AutomationElement 取得失敗");
+                return null;
+            }
 
-            // メモリ上でフィルタリング
-            foreach (AutomationElement child in rootChildren)
+            // 子孫から入力インジケーターを探す
+            var descendants = trayElement.FindAll(TreeScope.Descendants, AutomationCondition.TrueCondition);
+
+            foreach (AutomationElement desc in descendants)
             {
                 try
                 {
-                    var className = child.Current.ClassName ?? "";
+                    var name = desc.Current.Name ?? "";
 
-                    if (className == "Shell_TrayWnd")
+                    // 「トレイ入力インジケーター」または「Input indicator」を含む要素
+                    if (name.Contains("入力インジケーター") || name.Contains("Input indicator"))
                     {
-                        // 子孫から入力関連の要素を探す
-                        var descendants = child.FindAll(TreeScope.Descendants, AutomationCondition.TrueCondition);
-
-                        foreach (AutomationElement desc in descendants)
-                        {
-                            try
-                            {
-                                var name = desc.Current.Name ?? "";
-
-                                // 「トレイ入力インジケーター」または「Input indicator」を含む要素
-                                if (name.Contains("入力インジケーター") || name.Contains("Input indicator"))
-                                {
-                                    return desc;
-                                }
-                            }
-                            catch { }
-                        }
+                        var rect = desc.Current.BoundingRectangle;
+                        return (name, rect);
                     }
                 }
                 catch { }

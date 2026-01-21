@@ -130,6 +130,10 @@ public partial class SettingsWindow : Window
         App.Instance.IsSettingsWindowOpen = true;
         Closed += OnWindowClosed;
 
+        // ViewModelのプロパティ変更を購読（ディスプレイ選択の自動更新用）
+        _viewModel.IMEIndicatorViewModel.PropertyChanged += OnIMEIndicatorViewModelPropertyChanged;
+        _viewModel.ClockViewModel.PropertyChanged += OnClockViewModelPropertyChanged;
+
         ApplyLocalization();
         LoadFonts();
         LoadDisplays();
@@ -501,9 +505,53 @@ public partial class SettingsWindow : Window
     private void OnWindowClosed(object? sender, EventArgs e)
     {
         App.Instance.IsSettingsWindowOpen = false;
-        
+
+        // PropertyChanged購読解除
+        _viewModel.IMEIndicatorViewModel.PropertyChanged -= OnIMEIndicatorViewModelPropertyChanged;
+        _viewModel.ClockViewModel.PropertyChanged -= OnClockViewModelPropertyChanged;
+
         // 設定を自動保存
         _viewModel.SaveSettings();
+    }
+
+    private void OnIMEIndicatorViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(IMEIndicatorViewModel.DisplayIndex))
+        {
+            // UIスレッドで更新
+            Dispatcher.BeginInvoke(() =>
+            {
+                var screens = System.Windows.Forms.Screen.AllScreens;
+                var index = _viewModel.IMEIndicatorViewModel.DisplayIndex;
+                if (index >= 0 && index < screens.Length && IMEIndicatorDisplayCombo.SelectedIndex != index)
+                {
+                    _isInitializing = true;
+                    IMEIndicatorDisplayCombo.SelectedIndex = index;
+                    _isInitializing = false;
+                    DbgLog.Log(4, $"SettingsWindow: IMEIndicatorDisplayCombo更新 → {index}");
+                }
+            });
+        }
+    }
+
+    private void OnClockViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ClockViewModel.DisplayIndex))
+        {
+            // UIスレッドで更新
+            Dispatcher.BeginInvoke(() =>
+            {
+                var screens = System.Windows.Forms.Screen.AllScreens;
+                var index = _viewModel.ClockViewModel.DisplayIndex;
+                if (index >= 0 && index < screens.Length && ClockDisplayCombo.SelectedIndex != index)
+                {
+                    _isInitializing = true;
+                    ClockDisplayCombo.SelectedIndex = index;
+                    _isInitializing = false;
+                    DbgLog.Log(4, $"SettingsWindow: ClockDisplayCombo更新 → {index}");
+                }
+            });
+        }
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)

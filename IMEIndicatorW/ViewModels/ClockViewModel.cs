@@ -216,42 +216,68 @@ public partial class ClockViewModel : ObservableObject, IDisposable
     {
         try
         {
-            DbgLog.Log(3, $"ClockVM.LoadSettings: Settings.PositionX={Settings.PositionX}, Settings.PositionY={Settings.PositionY}");
-            Width = Settings.Width;
-            Height = Settings.Height;
-            Opacity = Settings.Opacity;
-            FontSize = Settings.FontSize;
-            FontFamily = new FontFamily(Settings.FontName ?? "Segoe UI");
-            TextColor = new SolidColorBrush(ColorHelper.ParseColor(Settings.TextColor ?? "#FFFFFF"));
-            DisplayIndex = Settings.DisplayIndex;
-            DisplayMode = Settings.DisplayMode;
-            ClockStyle = Settings.Style;
-            ShowSeconds = Settings.ShowSeconds;
-            TimeFormat = Settings.TimeFormat ?? "HH:mm:ss";
-            DateFormat = Settings.DateFormat ?? "yyyy/MM/dd";
-            Layout = Settings.Layout;
-            DateFormatPreset = Settings.DateFormatPreset;
-            TimeFormatPreset = Settings.TimeFormatPreset;
-            UseIMEIndicatorColors = Settings.UseIMEIndicatorColors;
-
-            // 位置が-1の場合は画面右上に自動配置（初回起動時）
-            if (Settings.PositionX < 0 || Settings.PositionY < 0)
+            // Settings参照をキャッシュ（途中でnullになる問題を防ぐ）
+            var settings = _settingsManager?.Settings?.Clock;
+            if (settings == null)
             {
+                DbgLog.W("ClockVM.LoadSettings: Settings.Clock is null");
+                return;
+            }
+
+            DbgLog.Log(3, $"ClockVM.LoadSettings: settings.PositionX={settings.PositionX}, settings.PositionY={settings.PositionY}");
+
+            // 位置設定を最初に読み込む（他の設定で例外が発生しても位置は復元される）
+            Width = settings.Width;
+            Height = settings.Height;
+
+            if (settings.PositionX == -1 || settings.PositionY == -1)
+            {
+                // 初回起動時
+                DisplayIndex = settings.DisplayIndex;
                 InitializeDefaultPosition();
             }
             else
             {
-                PositionX = Settings.PositionX;
-                PositionY = Settings.PositionY;
-                DbgLog.Log(3, $"ClockVM.LoadSettings: After load - PositionX={PositionX}, PositionY={PositionY}");
-                // 位置の境界チェック
-                EnsurePositionWithinBounds();
+                // 座標とディスプレイの検証
+                var (validX, validY, validDisplay) = DisplayHelper.GetValidPosition(
+                    settings.PositionX, settings.PositionY,
+                    Width, Height,
+                    settings.DisplayIndex,
+                    useTopRight: true);
+
+                PositionX = validX;
+                PositionY = validY;
+                DisplayIndex = validDisplay;
+
+                // 設定も更新（モニター構成変更時）
+                if (validDisplay != settings.DisplayIndex)
+                {
+                    settings.DisplayIndex = validDisplay;
+                    DbgLog.Log(3, $"ClockVM.LoadSettings: DisplayIndex補正 {settings.DisplayIndex} → {validDisplay}");
+                }
+
+                DbgLog.Log(3, $"ClockVM.LoadSettings: After load - PositionX={PositionX}, PositionY={PositionY}, DisplayIndex={DisplayIndex}");
             }
 
+            // その他の設定
+            Opacity = settings.Opacity;
+            FontSize = settings.FontSize;
+            FontFamily = new FontFamily(settings.FontName ?? "Segoe UI");
+            TextColor = new SolidColorBrush(ColorHelper.ParseColor(settings.TextColor ?? "#FFFFFF"));
+            DisplayMode = settings.DisplayMode;
+            ClockStyle = settings.Style;
+            ShowSeconds = settings.ShowSeconds;
+            TimeFormat = settings.TimeFormat ?? "HH:mm:ss";
+            DateFormat = settings.DateFormat ?? "yyyy/MM/dd";
+            Layout = settings.Layout;
+            DateFormatPreset = settings.DateFormatPreset;
+            TimeFormatPreset = settings.TimeFormatPreset;
+            UseIMEIndicatorColors = settings.UseIMEIndicatorColors;
+
             // アナログ時計設定の読み込み
-            AnalogClockSize = Settings.AnalogClockSize;
-            var analogClockColorHex = Settings.AnalogClockColor ?? "#FFFF00";
-            var analogTextColorHex = Settings.AnalogTextColor ?? "#FFFFFF";
+            AnalogClockSize = settings.AnalogClockSize;
+            var analogClockColorHex = settings.AnalogClockColor ?? "#FFFF00";
+            var analogTextColorHex = settings.AnalogTextColor ?? "#FFFFFF";
             DbgLog.Log(1, $"LoadSettings: AnalogClockSize={AnalogClockSize}, AnalogClockColor={analogClockColorHex}, AnalogTextColor={analogTextColorHex}");
 
             AnalogClockColor = new SolidColorBrush(ColorHelper.ParseColor(analogClockColorHex));
@@ -432,33 +458,41 @@ public partial class ClockViewModel : ObservableObject, IDisposable
 
     private void UpdateBackgroundColor()
     {
-        string colorHex;
+        string colorHex = "#3B82F6";  // デフォルト値
 
-        if (UseIMEIndicatorColors)
+        try
         {
-            // IMEインジケータの言語別色設定を使用
-            var imeSettings = _settingsManager.Settings.IMEIndicator;
-            var languageKey = _currentLanguage.ToString();
-
-            // IME OFFの場合は英語表示
-            if (!IsIMEOn && _currentLanguage != LanguageType.English)
+            if (UseIMEIndicatorColors)
             {
-                languageKey = "English";
-            }
+                // IMEインジケータの言語別色設定を使用
+                var imeSettings = _settingsManager?.Settings?.IMEIndicator;
+                var languageColors = imeSettings?.LanguageColors;
 
-            if (imeSettings.LanguageColors.TryGetValue(languageKey, out var langSettings))
-            {
-                colorHex = langSettings.Color ?? "#3B82F6";
+                if (languageColors != null)
+                {
+                    var languageKey = _currentLanguage.ToString();
+
+                    // IME OFFの場合は英語表示
+                    if (!IsIMEOn && _currentLanguage != LanguageType.English)
+                    {
+                        languageKey = "English";
+                    }
+
+                    if (languageColors.TryGetValue(languageKey, out var langSettings))
+                    {
+                        colorHex = langSettings.Color ?? "#3B82F6";
+                    }
+                }
             }
             else
             {
-                colorHex = "#3B82F6";
+                // 従来のIME ON/OFF色を使用
+                colorHex = IsIMEOn ? Settings.BackgroundColorIMEOn : Settings.BackgroundColorIMEOff;
             }
         }
-        else
+        catch (Exception ex)
         {
-            // 従来のIME ON/OFF色を使用
-            colorHex = IsIMEOn ? Settings.BackgroundColorIMEOn : Settings.BackgroundColorIMEOff;
+            DbgLog.W($"UpdateBackgroundColor エラー: {ex.Message}");
         }
 
         BackgroundColor = new SolidColorBrush(ColorHelper.ParseColor(colorHex));
@@ -588,5 +622,20 @@ public partial class ClockViewModel : ObservableObject, IDisposable
     {
         LoadSettings();
         UpdateTimerInterval();
+    }
+
+    /// <summary>
+    /// 現在の位置からディスプレイインデックスを自動検出・更新
+    /// </summary>
+    public void UpdateDisplayFromPosition()
+    {
+        int detectedDisplay = DisplayHelper.GetDisplayIndexFromPosition(
+            PositionX, PositionY, Width, Height);
+
+        if (detectedDisplay >= 0 && detectedDisplay != DisplayIndex)
+        {
+            DbgLog.Log(3, $"ClockVM: ディスプレイ自動検出 {DisplayIndex} → {detectedDisplay}");
+            DisplayIndex = detectedDisplay;
+        }
     }
 }

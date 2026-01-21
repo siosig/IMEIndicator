@@ -37,6 +37,9 @@ public partial class UIAutomationTestWindow : Window
     [LibraryImport("user32.dll")]
     private static partial uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
 
+    [LibraryImport("user32.dll", EntryPoint = "FindWindowW", StringMarshalling = StringMarshalling.Utf16)]
+    private static partial IntPtr FindWindow(string? lpClassName, string? lpWindowName);
+
     // スクリーンキャプチャ用API
     [LibraryImport("user32.dll")]
     private static partial IntPtr GetDC(IntPtr hWnd);
@@ -84,6 +87,11 @@ public partial class UIAutomationTestWindow : Window
     private DispatcherTimer? _autoRefreshTimer;
     private readonly List<string> _newElementsThisSession = new();
     private int _newCountThisSearch = 0;
+
+    // ハンドル監視用
+    private DispatcherTimer? _handleMonitorTimer;
+    private bool _isMonitoring;
+    private IntPtr _lastActiveWindowHandle;
 
     public UIAutomationTestWindow()
     {
@@ -520,21 +528,22 @@ public partial class UIAutomationTestWindow : Window
             Log("BMP取得開始...");
 
             // Windowsシステムの入力インジケーターを探す
-            var inputIndicator = FindWindowsInputIndicator();
+            var result = FindWindowsInputIndicator();
 
-            if (inputIndicator == null)
+            if (result == null)
             {
                 Log("Windows入力インジケーターが見つかりません");
                 MessageBox.Show("Windows入力インジケーターが見つかりません", "エラー", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
+            var (_, _, rect) = result.Value;
+
             // キーボードレイアウトから言語を判別（UI Automationではテキスト取得不可のため）
             var language = DetectLanguageFromKeyboardLayout();
             Log($"検出言語: {language}");
 
             // BoundingRectangleから位置を取得
-            var rect = inputIndicator.Current.BoundingRectangle;
             if (rect.IsEmpty)
             {
                 Log("入力インジケーターの位置を取得できません");
@@ -564,7 +573,8 @@ public partial class UIAutomationTestWindow : Window
     /// <summary>
     /// Windowsシステムの入力インジケーターを探す（FindAll + フィルタ方式で高速化）
     /// </summary>
-    private AutomationElement? FindWindowsInputIndicator()
+    /// <returns>hWnd, name, rect のタプル。見つからない場合はnull</returns>
+    private (IntPtr hWnd, string name, System.Windows.Rect rect)? FindWindowsInputIndicator()
     {
         var rootElement = AutomationElement.RootElement;
 
@@ -599,8 +609,10 @@ public partial class UIAutomationTestWindow : Window
                             if (name.Contains("入力インジケーター") || name.Contains("Input indicator"))
                             {
                                 var descClassName = desc.Current.ClassName ?? "";
-                                Log($"  発見: Name=\"{name}\" ClassName=\"{descClassName}\"");
-                                return desc;
+                                var hWnd = new IntPtr(desc.Current.NativeWindowHandle);
+                                var rect = desc.Current.BoundingRectangle;
+                                Log($"  発見: Name=\"{name}\" ClassName=\"{descClassName}\" hWnd=0x{hWnd:X}");
+                                return (hWnd, name, rect);
                             }
                         }
                         catch { }
@@ -1481,6 +1493,79 @@ public partial class UIAutomationTestWindow : Window
     }
 #endif
 
+    /// <summary>
+    /// ハンドル監視ボタンクリック - DetectIMEState2の時間計測
+    /// </summary>
+    private void BtnMonitorHandle_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isMonitoring)
+        {
+            // 監視停止
+            _handleMonitorTimer?.Stop();
+            _handleMonitorTimer = null;
+            _isMonitoring = false;
+            BtnMonitorHandle.Content = "ハンドル監視";
+            BtnMonitorHandle.Background = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0xCC, 0x66, 0xCC));
+            Log("ハンドル監視を停止しました");
+            TxtStatus.Text = "監視停止";
+        }
+        else
+        {
+            // タイマー開始（500ms間隔）
+            _handleMonitorTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(500)
+            };
+            _handleMonitorTimer.Tick += HandleMonitorTimer_Tick;
+            _handleMonitorTimer.Start();
+
+            _isMonitoring = true;
+            BtnMonitorHandle.Content = "監視停止";
+            BtnMonitorHandle.Background = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0xFF, 0x66, 0x66));
+            Log("ハンドル監視を開始しました（500ms間隔）");
+            TxtStatus.Text = "監視中...";
+        }
+    }
+
+    /// <summary>
+    /// ハンドル監視タイマーのTick処理 - DetectIMEState2の時間計測
+    /// </summary>
+    private void HandleMonitorTimer_Tick(object? sender, EventArgs e)
+    {
+        try
+        {
+            // アクティブウィンドウの変化検出
+            var currentActiveWindow = GetForegroundWindow();
+            if (currentActiveWindow != _lastActiveWindowHandle)
+            {
+                _lastActiveWindowHandle = currentActiveWindow;
+                Span<char> buffer = stackalloc char[256];
+                int len = GetWindowText(currentActiveWindow, buffer);
+                var title = len > 0 ? new string(buffer[..len]) : "(no title)";
+                _ = GetWindowThreadProcessId(currentActiveWindow, out var processId);
+                string processName = "";
+                try
+                {
+                    var process = Process.GetProcessById((int)processId);
+                    processName = process.ProcessName;
+                }
+                catch { }
+                Log($"★ Window変化: {processName} - {title}");
+            }
+
+            var result = Services.PixelIMEDetector.Instance.DetectIMEState2(Services.LanguageType.Japanese);
+
+            var state = result.IsOn.HasValue ? (result.IsOn.Value ? "ON" : "OFF") : "N/A";
+            Log($"Total={result.TotalTimeMs:F2}ms (GetRect={result.GetRectTimeMs:F2}ms, Analyze={result.AnalyzeTimeMs:F2}ms) [{state}]");
+        }
+        catch (Exception ex)
+        {
+            Log($"監視エラー: {ex.Message}");
+        }
+    }
+
     private void SearchIMEIndicator(bool focusIMEMark)
     {
         // 砂時計カーソル
@@ -1700,6 +1785,7 @@ public partial class UIAutomationTestWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _autoRefreshTimer?.Stop();
+        _handleMonitorTimer?.Stop();
 
         // 終了時に常に保存
         try

@@ -77,23 +77,46 @@ public partial class IMEIndicatorViewModel : ObservableObject
 
     private void LoadSettings()
     {
-        Size = Settings.Size;
-        Opacity = Settings.Opacity;
-        FontFamily = new FontFamily(Settings.FontName ?? "Segoe UI");
-        DisplayIndex = Settings.DisplayIndex;
+        // Settings参照をキャッシュ（途中でnullになる問題を防ぐ）
+        var settings = _settingsManager?.Settings?.IMEIndicator;
+        if (settings == null)
+        {
+            DbgLog.W("IMEIndicatorVM.LoadSettings: Settings.IMEIndicator is null");
+            return;
+        }
+
+        Size = settings.Size;
+        Opacity = settings.Opacity;
+        FontFamily = new FontFamily(settings.FontName ?? "Segoe UI");
         UpdateFontSize();
 
-        // 位置が-1の場合は画面右下に自動配置（初回起動時）
-        if (Settings.PositionX < 0 || Settings.PositionY < 0)
+        // 位置が-1の場合は画面左上に自動配置（初回起動時）
+        if (settings.PositionX == -1 || settings.PositionY == -1)
         {
+            DisplayIndex = settings.DisplayIndex;
             InitializeDefaultPosition();
         }
         else
         {
-            PositionX = Settings.PositionX;
-            PositionY = Settings.PositionY;
-            // 位置の境界チェック
-            EnsurePositionWithinBounds();
+            // 座標とディスプレイの検証
+            var (validX, validY, validDisplay) = DisplayHelper.GetValidPosition(
+                settings.PositionX, settings.PositionY,
+                Size, Size,
+                settings.DisplayIndex,
+                useTopRight: false);
+
+            PositionX = validX;
+            PositionY = validY;
+            DisplayIndex = validDisplay;
+
+            // 設定も更新（モニター構成変更時）
+            if (validDisplay != settings.DisplayIndex)
+            {
+                settings.DisplayIndex = validDisplay;
+                DbgLog.Log(3, $"IMEIndicatorVM.LoadSettings: DisplayIndex補正 {settings.DisplayIndex} → {validDisplay}");
+            }
+
+            DbgLog.Log(3, $"IMEIndicatorVM.LoadSettings: PositionX={PositionX}, PositionY={PositionY}, DisplayIndex={DisplayIndex}");
         }
 
         // 初期状態は英語
@@ -291,5 +314,20 @@ public partial class IMEIndicatorViewModel : ObservableObject
     public void ReloadSettings()
     {
         LoadSettings();
+    }
+
+    /// <summary>
+    /// 現在の位置からディスプレイインデックスを自動検出・更新
+    /// </summary>
+    public void UpdateDisplayFromPosition()
+    {
+        int detectedDisplay = DisplayHelper.GetDisplayIndexFromPosition(
+            PositionX, PositionY, Size, Size);
+
+        if (detectedDisplay >= 0 && detectedDisplay != DisplayIndex)
+        {
+            DbgLog.Log(3, $"IMEIndicatorVM: ディスプレイ自動検出 {DisplayIndex} → {detectedDisplay}");
+            DisplayIndex = detectedDisplay;
+        }
     }
 }

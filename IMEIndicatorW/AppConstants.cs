@@ -11,5 +11,5 @@ public static class AppConstants
     /// </summary>
     public static readonly string AppName =
         System.Reflection.Assembly.GetExecutingAssembly().GetName().Name
-        ?? "IMEIndicatorClockW";
+        ?? "IMEIndicatorW";
 }

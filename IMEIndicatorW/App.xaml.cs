@@ -214,11 +214,28 @@ public partial class App : Application
 #else
         var iconFileName = "app.ico";
 #endif
+        try
+        {
+            // 埋め込みリソースから読み込み（PublishSingleFile対応）
+            var uri = new Uri($"pack://application:,,,/{iconFileName}", UriKind.Absolute);
+            var streamInfo = GetResourceStream(uri);
+            if (streamInfo != null)
+            {
+                return new System.Drawing.Icon(streamInfo.Stream);
+            }
+        }
+        catch
+        {
+            // 埋め込みリソースから読み込めない場合、外部ファイルを試す
+        }
+
+        // フォールバック: 外部ファイルから読み込み
         var iconPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", iconFileName);
         if (System.IO.File.Exists(iconPath))
         {
             return new System.Drawing.Icon(iconPath);
         }
+
         // デフォルトアイコン（システムアイコン）
         return System.Drawing.SystemIcons.Application;
     }

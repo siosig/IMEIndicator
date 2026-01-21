@@ -32,6 +32,8 @@
                         Click="BtnSearchText_Click" Background="#6699FF" Foreground="White" FontWeight="Bold"/>
                 <Button x:Name="BtnCaptureBmp" Content="BMP取得" Width="80" Margin="10,0,0,0"
                         Click="BtnCaptureBmp_Click" Background="#66CC66" Foreground="White" FontWeight="Bold"/>
+                <Button x:Name="BtnMonitorHandle" Content="ハンドル監視" Width="100" Margin="10,0,0,0"
+                        Click="BtnMonitorHandle_Click" Background="#CC66CC" Foreground="White" FontWeight="Bold"/>
                 <Button x:Name="BtnSave" Content="保存" Width="60" Margin="10,0,0,0" Click="BtnSave_Click"/>
                 <Button x:Name="BtnClear" Content="クリア" Width="60" Margin="10,0,0,0" Click="BtnClear_Click"/>
             </StackPanel>

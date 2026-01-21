@@ -19,6 +19,10 @@ public partial class IMEMonitor : IDisposable
     private WindowHandleStateManager _windowKoreanIMEStates = new();
     private bool _disposed;
 
+    // キー押下デバウンス用
+    private DispatcherTimer? _keyDebounceTimer;
+    private const int KeyDebounceIntervalMs = 100;
+
     // ピクセル判定による状態検証
     private DateTime _lastPixelVerification = DateTime.MinValue;
     private static int _pixelVerificationIntervalMs = 2000;
@@ -57,7 +61,7 @@ public partial class IMEMonitor : IDisposable
     /// <summary>
     /// ポーリング間隔（ミリ秒）
     /// </summary>
-    public int PollingInterval { get; set; } = 100;
+    public int PollingInterval { get; set; } = 300;
 
     /// <summary>
     /// 現在のIME状態
@@ -87,7 +91,7 @@ public partial class IMEMonitor : IDisposable
         _timer.Tick += OnTimerTick;
         _timer.Start();
 
-        CheckIMEState();
+        CheckIMEState2();
     }
 
     /// <summary>
@@ -101,6 +105,10 @@ public partial class IMEMonitor : IDisposable
             _timer.Tick -= OnTimerTick;
             _timer = null;
         }
+
+        // デバウンスタイマーも停止
+        _keyDebounceTimer?.Stop();
+        _keyDebounceTimer = null;
 
         if (_keyboardHook != null)
         {
@@ -116,7 +124,7 @@ public partial class IMEMonitor : IDisposable
 
     private void OnTimerTick(object? sender, EventArgs e)
     {
-        CheckIMEState();
+        CheckIMEState2();
         CheckCursorPosition();
     }
 
@@ -231,6 +239,62 @@ public partial class IMEMonitor : IDisposable
         catch (Exception ex)
         {
             DbgLog.Ex(ex, "IME状態チェックエラー");
+        }
+    }
+
+    /// <summary>
+    /// IME状態をチェック（DetectIMEState2使用版）
+    /// </summary>
+    private void CheckIMEState2(bool forceUpdate = false)
+    {
+        try
+        {
+            var hwndForeground = NativeMethods.GetForegroundWindow();
+            var (currentState, reliableStatus) = IMEDetector_Common.GetCurrentIMEStateEx(
+                _trackedLanguageForTerminal, out string debugInfo);
+
+            bool windowChanged = hwndForeground != _lastForegroundWindow;
+            bool languageChanged = currentState.Language != _lastState.Language;
+
+            bool isKoreanIME = currentState.Language == LanguageType.Korean;
+            bool isChineseIME = currentState.Language == LanguageType.ChineseTraditional ||
+                                currentState.Language == LanguageType.ChineseSimplified;
+            bool isJapaneseIME = currentState.Language == LanguageType.Japanese;
+
+            // 日本語/韓国語/中国語の場合、DetectIMEState2でピクセル判定
+            if (isJapaneseIME || isKoreanIME || isChineseIME)
+            {
+                var result = PixelIMEDetector.Instance.DetectIMEState2(currentState.Language);
+                if (result.IsOn.HasValue)
+                {
+                    currentState = new LanguageInfo(currentState.Language, result.IsOn.Value);
+                    _trackedIMEState = result.IsOn.Value;
+                    debugInfo += $" [Pixel2:{result.IsOn.Value} Total={result.TotalTimeMs:F1}ms GetRect={result.GetRectTimeMs:F1}ms Analyze={result.AnalyzeTimeMs:F1}ms]";
+                }
+            }
+
+            if (windowChanged)
+            {
+                DbgLog.Log(4, $"[Window変更] {debugInfo}");
+                _lastForegroundWindow = hwndForeground;
+            }
+
+            if (currentState.Language != _lastState.Language ||
+                currentState.IsIMEOn != _lastState.IsIMEOn ||
+                forceUpdate)
+            {
+                if (!windowChanged)
+                {
+                    DbgLog.Log(5, debugInfo);
+                }
+                DbgLog.Log(4, $"  → 変更検出: {_lastState.Language}/{_lastState.IsIMEOn} → {currentState.Language}/{currentState.IsIMEOn}");
+                _lastState = currentState;
+                IMEStateChanged?.Invoke(currentState);
+            }
+        }
+        catch (Exception ex)
+        {
+            DbgLog.Ex(ex, "IME状態チェック2エラー");
         }
     }
 

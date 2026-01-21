@@ -167,7 +167,7 @@ public partial class ClockWindow : Window
         _viewModel.PositionX = Left;
         _viewModel.PositionY = Top;
 
-        // デバウンス付きで設定を保存（500ms後）
+        // デバウンス付きでディスプレイ検出と設定保存（500ms後）
         _saveDelayTimer?.Stop();
         _saveDelayTimer = new System.Windows.Threading.DispatcherTimer
         {
@@ -176,6 +176,8 @@ public partial class ClockWindow : Window
         _saveDelayTimer.Tick += (s, args) =>
         {
             _saveDelayTimer?.Stop();
+            // ディスプレイインデックスを自動検出・更新
+            _viewModel.UpdateDisplayFromPosition();
             App.Instance.SettingsManager?.Save();
             DbgLog.Log(4, "ClockWindow: 位置変更を保存");
         };

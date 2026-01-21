@@ -83,11 +83,36 @@ public partial class IMEMonitor
         if (stateChanged)
         {
             DbgLog.Log(4, $"IME状態変更 (KeyHook): {_trackedIMEState}");
-            System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
-            {
-                CheckIMEState(forceUpdate: true);
-            });
+            // デバウンス処理: 最後のキー押下から100ms後にピクセル判定
+            ScheduleDebouncedCheck();
         }
+    }
+
+    /// <summary>
+    /// デバウンス付きでCheckIMEState2をスケジュール
+    /// 連打時は最後のキー押下から100ms後に1回だけ実行
+    /// </summary>
+    private void ScheduleDebouncedCheck()
+    {
+        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            // 既存のタイマーをキャンセル
+            _keyDebounceTimer?.Stop();
+
+            // 新しいタイマーを開始
+            _keyDebounceTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(KeyDebounceIntervalMs)
+            };
+            _keyDebounceTimer.Tick += (s, e) =>
+            {
+                _keyDebounceTimer?.Stop();
+                DbgLog.Log(4, "デバウンスタイマー発火 → CheckIMEState2");
+                CheckIMEState2(forceUpdate: true);
+            };
+            _keyDebounceTimer.Start();
+            DbgLog.Log(5, $"デバウンスタイマー開始 ({KeyDebounceIntervalMs}ms)");
+        });
     }
 
     private void OnLanguageSwitchDetected()
@@ -121,7 +146,7 @@ public partial class IMEMonitor
                 {
                     DbgLog.Log(4, $"言語取得: lang=0x{langId:X4} -> {newLang}");
                 }
-                CheckIMEState(forceUpdate: true);
+                CheckIMEState2(forceUpdate: true);
             });
         }
     }
@@ -161,10 +186,8 @@ public partial class IMEMonitor
                 DbgLog.Log(4, $"中国語IME ON/OFFトグル (Ctrl+Space): {_trackedIMEState}");
             }
 
-            System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
-            {
-                CheckIMEState(forceUpdate: true);
-            });
+            // デバウンス処理
+            ScheduleDebouncedCheck();
         }
         else
         {

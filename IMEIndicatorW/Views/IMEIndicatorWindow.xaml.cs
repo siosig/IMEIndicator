@@ -27,6 +27,8 @@ public partial class IMEIndicatorWindow : Window
     private readonly IMEIndicatorViewModel _viewModel;
     private HwndSource? _hwndSource;
     private bool _suppressTopmost = false;  // コンテキストメニュー表示中はTOPMOST強制を抑制
+    private bool _isLoaded = false;  // ウィンドウ読み込み完了フラグ
+    private System.Windows.Threading.DispatcherTimer? _saveDelayTimer;  // 位置保存用タイマー
 
     public IMEIndicatorWindow(IMEIndicatorViewModel viewModel)
     {
@@ -76,14 +78,39 @@ public partial class IMEIndicatorWindow : Window
 
     private void OnLocationChanged(object? sender, EventArgs e)
     {
+        // ウィンドウ読み込み前は無視
+        if (!_isLoaded) return;
+
         _viewModel.PositionX = Left;
         _viewModel.PositionY = Top;
+
+        // デバウンス付きでディスプレイ検出と設定保存（500ms後）
+        _saveDelayTimer?.Stop();
+        _saveDelayTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(500)
+        };
+        _saveDelayTimer.Tick += (s, args) =>
+        {
+            _saveDelayTimer?.Stop();
+            // ディスプレイインデックスを自動検出・更新
+            _viewModel.UpdateDisplayFromPosition();
+            App.Instance.SettingsManager?.Save();
+            DbgLog.Log(4, "IMEIndicatorWindow: 位置変更を保存");
+        };
+        _saveDelayTimer.Start();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         _hwndSource = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
         _hwndSource?.AddHook(WndProc);
+
+        // 位置設定後にフラグを有効化（少し遅延させる）
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            _isLoaded = true;
+        }), System.Windows.Threading.DispatcherPriority.Loaded);
 
         DbgLog.Log(4, "IMEIndicatorWindow 表示完了");
     }

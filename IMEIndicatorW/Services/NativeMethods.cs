@@ -172,6 +172,9 @@ internal static partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool IsWindow(IntPtr hWnd);
 
+    [LibraryImport("user32.dll", EntryPoint = "FindWindowW", StringMarshalling = StringMarshalling.Utf16)]
+    public static partial IntPtr FindWindow(string? lpClassName, string? lpWindowName);
+
     [LibraryImport("user32.dll")]
     public static partial IntPtr GetWindow(IntPtr hWnd, int uCmd);
 
