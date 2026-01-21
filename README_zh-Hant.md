@@ -81,13 +81,13 @@
 ## 系統需求
 
 - Windows 10/11
-- .NET 8.0 Runtime
+- 無需額外運行時（獨立運行）
 
 ## 安裝
 
 1. 從 [Releases](https://github.com/obott9/IMEIndicatorClockW/releases) 下載最新版本
 2. 解壓縮到任意資料夾
-3. 執行 `IMEIndicatorW.exe`
+3. 執行 `IMEIndicatorClockW.exe`
 
 ## 從原始碼建置
 
@@ -122,7 +122,7 @@ dotnet build
 - **絕不記錄或傳送**按鍵輸入內容
 - 僅偵測輸入法相關按鍵（半形/全形、Ctrl+Space 等）
 - 沒有網路通訊功能
-- 設定資料僅儲存在本機（`%AppData%\IMEIndicatorW`）
+- 設定資料僅儲存在本機（`%AppData%\IMEIndicatorClockW`）
 - 原始碼公開，可供檢視
 
 **關於防毒軟體警告：**

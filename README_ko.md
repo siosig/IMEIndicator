@@ -81,13 +81,13 @@ IME를 사용하는 사용자가 현재 입력 모드를 한눈에 확인할 수
 ## 시스템 요구 사항
 
 - Windows 10/11
-- .NET 8.0 Runtime
+- 추가 런타임 불필요 (단독 실행)
 
 ## 설치
 
 1. [Releases](https://github.com/obott9/IMEIndicatorClockW/releases)에서 최신 버전 다운로드
 2. 원하는 폴더에 압축 해제
-3. `IMEIndicatorW.exe` 실행
+3. `IMEIndicatorClockW.exe` 실행
 
 ## 소스에서 빌드
 
@@ -122,7 +122,7 @@ dotnet build
 - 키 입력 내용은 **절대 기록하거나 전송하지 않습니다**
 - IME 관련 키(한/영, Ctrl+Space 등)만 감지합니다
 - 인터넷 통신 기능이 없습니다
-- 설정 데이터는 로컬(`%AppData%\IMEIndicatorW`)에만 저장됩니다
+- 설정 데이터는 로컬(`%AppData%\IMEIndicatorClockW`)에만 저장됩니다
 - 소스 코드가 공개되어 있어 동작을 확인할 수 있습니다
 
 **백신 소프트웨어 경고에 대하여:**

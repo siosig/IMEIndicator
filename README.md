@@ -80,14 +80,14 @@ We aim to help IME users see their current input mode at a glance.
 
 ## System Requirements
 
-- Windows 10/11
-- .NET 8.0 Runtime
+- Windows 10/11 (64-bit)
+- No additional runtime required (self-contained)
 
 ## Installation
 
 1. Download the latest release from [Releases](https://github.com/obott9/IMEIndicatorClockW/releases)
 2. Extract to any folder
-3. Run `IMEIndicatorW.exe`
+3. Run `IMEIndicatorClockW.exe`
 
 ## Build from Source
 
@@ -122,7 +122,7 @@ This application uses a **low-level keyboard hook** (`SetWindowsHookEx` API) for
 - Key input content is **never recorded or transmitted**
 - Only IME-related keys are detected (Hankaku/Zenkaku, Ctrl+Space, etc.)
 - No internet communication features
-- Settings are stored locally only (`%AppData%\IMEIndicatorW`)
+- Settings are stored locally only (`%AppData%\IMEIndicatorClockW`)
 - Source code is open and verifiable
 
 **About antivirus warnings:**
