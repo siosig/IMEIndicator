@@ -51,3 +51,4 @@ release-self-contained/
 # JetBrains Rider
 *.sln.iml
 publish-standalone/
+release/
