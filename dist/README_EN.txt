@@ -26,6 +26,11 @@ This app runs with administrator privileges.
 This is required to correctly detect IME status even in apps
 running as administrator (e.g., Task Manager).
 
+[Security & Privacy]
+- No keystrokes are recorded (only IME ON/OFF status is detected)
+- No network communication
+- No personal data is collected or transmitted
+
 [Uninstall]
 Simply delete the extracted folder.
 (No registry entries are created)
