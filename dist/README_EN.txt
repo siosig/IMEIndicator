@@ -21,6 +21,11 @@ near the mouse cursor and on a customizable desktop clock.
 - Multi-display support
 - Adjustable size, color, and opacity
 
+[Administrator Privileges]
+This app runs with administrator privileges.
+This is required to correctly detect IME status even in apps
+running as administrator (e.g., Task Manager).
+
 [Uninstall]
 Simply delete the extracted folder.
 (No registry entries are created)
