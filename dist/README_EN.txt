@@ -20,6 +20,12 @@ near the mouse cursor and on a customizable desktop clock.
 - Mouse cursor indicator for convenient input
 - Multi-display support
 - Adjustable size, color, and opacity
+- Auto-start with Windows (via Task Scheduler)
+
+[Auto-Start]
+Select "Start with Windows" from the tray icon menu to register with
+Task Scheduler. The app will start automatically on next Windows boot.
+*If you move the EXE after enabling auto-start, you need to re-enable it.
 
 [Administrator Privileges]
 This app runs with administrator privileges.
@@ -32,8 +38,11 @@ running as administrator (e.g., Task Manager).
 - No personal data is collected or transmitted
 
 [Uninstall]
-Simply delete the extracted folder.
-(No registry entries are created)
+1. If auto-start is enabled, disable it from the menu first
+2. Delete the extracted folder
+*No registry entries are created
+*Settings are stored in %AppData%\IMEIndicatorClockW
+  (Delete this folder for complete removal)
 
 [Support]
 - GitHub: https://github.com/obott9/IMEIndicatorClockW
@@ -41,4 +50,4 @@ Simply delete the extracted folder.
 
 [License]
 MIT License
-Copyright (c) 2025 Hideki Obote
+Copyright (c) 2025 obott9

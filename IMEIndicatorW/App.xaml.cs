@@ -326,6 +326,25 @@ public partial class App : Application
 
         menu.Items.Add(new System.Windows.Controls.Separator());
 
+        // 自動起動
+        var startupItem = new System.Windows.Controls.MenuItem
+        {
+            Header = loc.GetString("MenuStartup"),
+            IsCheckable = true,
+            IsChecked = StartupManager.IsEnabled
+        };
+        startupItem.Click += (s, e) =>
+        {
+            var item = (System.Windows.Controls.MenuItem)s!;
+            var success = StartupManager.SetEnabled(item.IsChecked);
+            if (!success)
+            {
+                // 失敗した場合はチェック状態を戻す
+                item.IsChecked = !item.IsChecked;
+            }
+        };
+        menu.Items.Add(startupItem);
+
         // 設定
         var settingsItem = new System.Windows.Controls.MenuItem { Header = loc.GetString("MenuSettings") };
         settingsItem.Click += (s, e) =>

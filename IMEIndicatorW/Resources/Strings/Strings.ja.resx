@@ -286,6 +286,9 @@
   <data name="MenuSettings" xml:space="preserve">
     <value>設定...</value>
   </data>
+  <data name="MenuStartup" xml:space="preserve">
+    <value>Windows起動時に開始</value>
+  </data>
   <data name="MenuExit" xml:space="preserve">
     <value>終了</value>
   </data>
