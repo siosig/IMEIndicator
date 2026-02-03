@@ -9,7 +9,7 @@ namespace IMEIndicatorClock.Services;
 /// </summary>
 public static class StartupManager
 {
-    private const string TaskName = "IMEIndicatorW";
+    private static string TaskName => AppConstants.AppName;
 
     /// <summary>
     /// 自動起動が有効かどうかを取得
