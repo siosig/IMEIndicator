@@ -50,4 +50,4 @@ IME状態を正しく検出するために必要です。
 
 【ライセンス】
 MIT License
-Copyright (c) 2025 obott9
+Copyright (c) 2026 obott9

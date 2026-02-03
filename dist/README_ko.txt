@@ -51,4 +51,4 @@ IME 상태를 올바르게 감지하기 위해 필요합니다.
 
 [라이선스]
 MIT License
-Copyright (c) 2025 obott9
+Copyright (c) 2026 obott9

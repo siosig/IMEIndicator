@@ -50,4 +50,4 @@ IMEIndicatorClockW - 讀我檔案
 
 [授權]
 MIT License
-Copyright (c) 2025 obott9
+Copyright (c) 2026 obott9
