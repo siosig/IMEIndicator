@@ -34,7 +34,7 @@
 | <img src="docs/images/ime_ja.png" width="48"> | <img src="docs/images/ime_ko.png" width="48"> | <img src="docs/images/ime_zh_hant.png" width="48"> | <img src="docs/images/ime_zh_hans.png" width="48"> | <img src="docs/images/ime_en.png" width="48"> |
 | 红色「あ」 | 紫色「가」 | 深绿色「繁」 | 绿色「简」 | 蓝色「A」 |
 
-- 可自定义位置、大小和透明度
+- 可自定义位置、大小、背景颜色、字体、字体颜色和透明度
 - 支持多显示器
 
 ### 桌面时钟
@@ -45,6 +45,7 @@
 
 ### 鼠标光标指示器
 - 在鼠标光标附近显示输入法状态
+- 以较小尺寸显示输入法指示器
 - 方便文字输入时使用
 
 ### 自动启动

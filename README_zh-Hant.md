@@ -34,7 +34,7 @@
 | <img src="docs/images/ime_ja.png" width="48"> | <img src="docs/images/ime_ko.png" width="48"> | <img src="docs/images/ime_zh_hant.png" width="48"> | <img src="docs/images/ime_zh_hans.png" width="48"> | <img src="docs/images/ime_en.png" width="48"> |
 | 紅色「あ」 | 紫色「가」 | 深綠色「繁」 | 綠色「简」 | 藍色「A」 |
 
-- 可自訂位置、大小和透明度
+- 可自訂位置、大小、背景顏色、字體、字體顏色和透明度
 - 支援多螢幕
 
 ### 桌面時鐘
@@ -45,6 +45,7 @@
 
 ### 滑鼠游標指示器
 - 在滑鼠游標附近顯示輸入法狀態
+- 以較小尺寸顯示輸入法指示器
 - 方便文字輸入時使用
 
 ### 自動啟動

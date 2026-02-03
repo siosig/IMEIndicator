@@ -34,7 +34,7 @@ IMEを使用するユーザーが、現在の入力モードを一目で確認�
 | <img src="docs/images/ime_ja.png" width="48"> | <img src="docs/images/ime_ko.png" width="48"> | <img src="docs/images/ime_zh_hant.png" width="48"> | <img src="docs/images/ime_zh_hans.png" width="48"> | <img src="docs/images/ime_en.png" width="48"> |
 | 赤「あ」 | 紫「가」 | 濃緑「繁」 | 緑「简」 | 青「A」 |
 
-- 表示位置、サイズ、透明度をカスタマイズ可能
+- 表示位置、サイズ、背景色、フォント、フォント色、透明度をカスタマイズ可能
 - マルチディスプレイ対応
 
 ### デスクトップ時計
@@ -45,6 +45,7 @@ IMEを使用するユーザーが、現在の入力モードを一目で確認�
 
 ### マウスカーソルインジケータ
 - マウスカーソル付近にIME状態を表示
+- IMEインジケータを小さく表示
 - テキスト入力時に便利
 
 ### 自動起動

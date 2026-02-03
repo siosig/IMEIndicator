@@ -34,7 +34,7 @@ IME를 사용하는 사용자가 현재 입력 모드를 한눈에 확인할 수
 | <img src="docs/images/ime_ja.png" width="48"> | <img src="docs/images/ime_ko.png" width="48"> | <img src="docs/images/ime_zh_hant.png" width="48"> | <img src="docs/images/ime_zh_hans.png" width="48"> | <img src="docs/images/ime_en.png" width="48"> |
 | 빨강 "あ" | 보라 "가" | 진한 초록 "繁" | 초록 "简" | 파랑 "A" |
 
-- 위치, 크기, 투명도 사용자 정의 가능
+- 위치, 크기, 배경색, 글꼴, 글꼴 색상, 투명도 사용자 정의 가능
 - 멀티 디스플레이 지원
 
 ### 데스크톱 시계
@@ -45,6 +45,7 @@ IME를 사용하는 사용자가 현재 입력 모드를 한눈에 확인할 수
 
 ### 마우스 커서 표시기
 - 마우스 커서 근처에 IME 상태를 표시
+- IME 표시기를 작게 표시
 - 텍스트 입력 시 편리
 
 ### 자동 시작
