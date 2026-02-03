@@ -28,11 +28,12 @@
 
 ### 输入法指示器
 - 在屏幕上可视化显示当前输入法状态
-- 日文输入：红色圆圈显示「あ」
-- 韩文输入：紫色圆圈显示「가」
-- 繁体中文输入：深绿色圆圈显示「繁」
-- 简体中文输入：绿色圆圈显示「简」
-- 英文输入：蓝色圆圈显示「A」
+
+| 日文 | 韩文 | 繁体中文 | 简体中文 | 英文 |
+|:----:|:----:|:-------:|:-------:|:----:|
+| <img src="docs/images/ime_ja.png" width="48"> | <img src="docs/images/ime_ko.png" width="48"> | <img src="docs/images/ime_zh_hant.png" width="48"> | <img src="docs/images/ime_zh_hans.png" width="48"> | <img src="docs/images/ime_en.png" width="48"> |
+| 红色「あ」 | 紫色「가」 | 深绿色「繁」 | 绿色「简」 | 蓝色「A」 |
+
 - 可自定义位置、大小和透明度
 - 支持多显示器
 

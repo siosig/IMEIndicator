@@ -28,11 +28,12 @@ We aim to help IME users see their current input mode at a glance.
 
 ### IME Indicator
 - Visually displays the current input method status on screen
-- Japanese: Red circle with "あ"
-- Korean: Purple circle with "가"
-- Chinese (Traditional): Dark green circle with "繁"
-- Chinese (Simplified): Green circle with "简"
-- English: Blue circle with "A"
+
+| Japanese | Korean | Chinese (Traditional) | Chinese (Simplified) | English |
+|:--------:|:------:|:---------------------:|:--------------------:|:-------:|
+| <img src="docs/images/ime_ja.png" width="48"> | <img src="docs/images/ime_ko.png" width="48"> | <img src="docs/images/ime_zh_hant.png" width="48"> | <img src="docs/images/ime_zh_hans.png" width="48"> | <img src="docs/images/ime_en.png" width="48"> |
+| Red "あ" | Purple "가" | Dark Green "繁" | Green "简" | Blue "A" |
+
 - Customizable position, size, and opacity
 - Multi-display support
 

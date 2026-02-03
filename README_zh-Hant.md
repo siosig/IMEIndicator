@@ -28,11 +28,12 @@
 
 ### 輸入法指示器
 - 在螢幕上可視化顯示當前輸入法狀態
-- 日文輸入：紅色圓圈顯示「あ」
-- 韓文輸入：紫色圓圈顯示「가」
-- 繁體中文輸入：深綠色圓圈顯示「繁」
-- 簡體中文輸入：綠色圓圈顯示「简」
-- 英文輸入：藍色圓圈顯示「A」
+
+| 日文 | 韓文 | 繁體中文 | 簡體中文 | 英文 |
+|:----:|:----:|:-------:|:-------:|:----:|
+| <img src="docs/images/ime_ja.png" width="48"> | <img src="docs/images/ime_ko.png" width="48"> | <img src="docs/images/ime_zh_hant.png" width="48"> | <img src="docs/images/ime_zh_hans.png" width="48"> | <img src="docs/images/ime_en.png" width="48"> |
+| 紅色「あ」 | 紫色「가」 | 深綠色「繁」 | 綠色「简」 | 藍色「A」 |
+
 - 可自訂位置、大小和透明度
 - 支援多螢幕
 

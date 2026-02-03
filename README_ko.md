@@ -28,11 +28,12 @@ IME를 사용하는 사용자가 현재 입력 모드를 한눈에 확인할 수
 
 ### IME 표시기
 - 화면에 현재 입력기 상태를 시각적으로 표시
-- 일본어 입력: 빨간 원에 "あ"
-- 한국어 입력: 보라색 원에 "가"
-- 중국어(번체) 입력: 진한 초록 원에 "繁"
-- 중국어(간체) 입력: 초록 원에 "简"
-- 영어 입력: 파란 원에 "A"
+
+| 일본어 | 한국어 | 중국어(번체) | 중국어(간체) | 영어 |
+|:------:|:------:|:----------:|:----------:|:----:|
+| <img src="docs/images/ime_ja.png" width="48"> | <img src="docs/images/ime_ko.png" width="48"> | <img src="docs/images/ime_zh_hant.png" width="48"> | <img src="docs/images/ime_zh_hans.png" width="48"> | <img src="docs/images/ime_en.png" width="48"> |
+| 빨강 "あ" | 보라 "가" | 진한 초록 "繁" | 초록 "简" | 파랑 "A" |
+
 - 위치, 크기, 투명도 사용자 정의 가능
 - 멀티 디스플레이 지원
 
