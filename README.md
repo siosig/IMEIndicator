@@ -43,6 +43,15 @@ We aim to help IME users see their current input mode at a glance.
 - Displays IME status near the mouse cursor
 - Convenient for text input
 
+### Auto-Start
+- Launch automatically when Windows starts (via Task Scheduler)
+- Enable/disable from the tray icon menu
+- If you move the EXE after enabling, re-enable auto-start
+
+### Administrator Privileges
+- The app runs with administrator privileges
+- Required to correctly detect IME status in elevated apps (e.g., Task Manager)
+
 ## Language Support
 
 ### Full Support (IME Detection + UI)
@@ -107,6 +116,14 @@ dotnet build
 1. Launch the app - an icon appears in the system tray
 2. Right-click the tray icon to access settings
 3. Drag the clock or indicator to your preferred position
+4. To enable auto-start, select "Start with Windows" from the tray icon menu
+
+## Uninstallation
+
+1. If auto-start is enabled, disable it first from the tray icon menu
+2. Delete the extracted folder
+- No registry entries are created
+- Settings are stored in `%AppData%\IMEIndicatorClockW` (delete this folder for complete removal)
 
 ## Security & Privacy
 
