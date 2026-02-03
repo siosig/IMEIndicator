@@ -1,5 +1,5 @@
 =====================================
-IMEIndicatorClockW - README
+IMEIndicatorClockW v1.0.2 - README
 =====================================
 
 [About]
