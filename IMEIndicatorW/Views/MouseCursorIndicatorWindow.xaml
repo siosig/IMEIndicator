@@ -11,13 +11,30 @@
         SizeToContent="WidthAndHeight"
         IsHitTestVisible="False">
 
-    <Grid Width="{Binding Size}" Height="{Binding Size}">
-        <!-- メインの円 -->
-        <Ellipse Opacity="{Binding Opacity}">
+    <Grid Width="{Binding Size}" Height="{Binding Size}"
+          Opacity="{Binding Opacity}">
+        <!-- 外側のグロー効果 -->
+        <Ellipse>
             <Ellipse.Fill>
-                <SolidColorBrush Color="{Binding BackgroundColor.Color}"/>
+                <RadialGradientBrush>
+                    <GradientStop Color="{Binding BackgroundColor.Color}" Offset="0"/>
+                    <GradientStop Color="Transparent" Offset="1"/>
+                </RadialGradientBrush>
             </Ellipse.Fill>
         </Ellipse>
+
+        <!-- メインの円（LinearGradient） -->
+        <Ellipse Margin="3">
+            <Ellipse.Fill>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="{Binding BackgroundColor.Color}" Offset="0"/>
+                    <GradientStop Color="{Binding GlowColor.Color}" Offset="1"/>
+                </LinearGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <!-- 白いボーダー -->
+        <Ellipse Margin="3" Stroke="White" StrokeThickness="1" Opacity="0.3"/>
 
         <!-- テキスト -->
         <TextBlock Text="{Binding DisplayText}"
@@ -26,6 +43,10 @@
                    FontWeight="Bold"
                    Foreground="White"
                    HorizontalAlignment="Center"
-                   VerticalAlignment="Center"/>
+                   VerticalAlignment="Center">
+            <TextBlock.Effect>
+                <DropShadowEffect BlurRadius="1" ShadowDepth="0.5" Opacity="0.3"/>
+            </TextBlock.Effect>
+        </TextBlock>
     </Grid>
 </Window>

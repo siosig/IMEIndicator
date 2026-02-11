@@ -27,6 +27,9 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
     private Brush _backgroundColor = new SolidColorBrush(Color.FromRgb(59, 130, 246));
 
     [ObservableProperty]
+    private Brush _glowColor = new SolidColorBrush(Color.FromArgb(179, 59, 130, 246));
+
+    [ObservableProperty]
     private double _fontSize = 10;
 
     [ObservableProperty]
@@ -87,6 +90,7 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
             DisplayText = activeSettings.DisplayText ?? "?";
             var color = ParseColor(activeSettings.Color ?? "#3B82F6");
             BackgroundColor = new SolidColorBrush(color);
+            GlowColor = new SolidColorBrush(Color.FromArgb(179, color.R, color.G, color.B));
 
             // 言語別フォント設定（空ならグローバル設定を使用）
             var fontName = !string.IsNullOrEmpty(activeSettings.FontName) ? activeSettings.FontName : imeSettings.FontName;

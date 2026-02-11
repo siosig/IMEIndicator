@@ -26,7 +26,7 @@ public partial class IMEIndicatorViewModel : ObservableObject
     private Brush _backgroundColor = new SolidColorBrush(Color.FromRgb(59, 130, 246));
 
     [ObservableProperty]
-    private Brush _glowColor = new SolidColorBrush(Color.FromArgb(128, 59, 130, 246));
+    private Brush _glowColor = new SolidColorBrush(Color.FromArgb(179, 59, 130, 246));
 
     [ObservableProperty]
     private double _fontSize = 30;
@@ -160,7 +160,7 @@ public partial class IMEIndicatorViewModel : ObservableObject
             // デフォルト表示
             DisplayText = "A";
             BackgroundColor = new SolidColorBrush(Color.FromRgb(59, 130, 246));
-            GlowColor = new SolidColorBrush(Color.FromArgb(128, 59, 130, 246));
+            GlowColor = new SolidColorBrush(Color.FromArgb(179, 59, 130, 246));
             return;
         }
 
@@ -185,7 +185,7 @@ public partial class IMEIndicatorViewModel : ObservableObject
             DbgLog.Log(5, $"[IMEIndicatorVM] 設定適用: Text={activeSettings.DisplayText}, Color={activeSettings.Color}");
             DisplayText = activeSettings.DisplayText ?? "?";
             BackgroundColor = new SolidColorBrush(color);
-            GlowColor = new SolidColorBrush(Color.FromArgb(128, color.R, color.G, color.B));
+            GlowColor = new SolidColorBrush(Color.FromArgb(179, color.R, color.G, color.B));
 
             // 言語別フォント設定（空ならグローバル設定を使用）
             var fontName = !string.IsNullOrEmpty(activeSettings.FontName) ? activeSettings.FontName : Settings.FontName;

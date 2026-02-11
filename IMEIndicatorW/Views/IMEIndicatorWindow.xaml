@@ -17,24 +17,24 @@
     <Grid Width="{Binding Size}" Height="{Binding Size}"
           Background="Transparent"
           MouseLeftButtonDown="Grid_MouseLeftButtonDown"
-          MouseRightButtonDown="Grid_MouseRightButtonDown">
+          MouseRightButtonDown="Grid_MouseRightButtonDown"
+          Opacity="{Binding Opacity}">
         <!-- 外側のグロー効果 -->
         <Ellipse IsHitTestVisible="False">
             <Ellipse.Fill>
                 <RadialGradientBrush>
-                    <GradientStop Color="Transparent" Offset="0.6"/>
-                    <GradientStop Color="{Binding GlowColor.Color}" Offset="1"/>
+                    <GradientStop Color="{Binding BackgroundColor.Color}" Offset="0"/>
+                    <GradientStop Color="Transparent" Offset="1"/>
                 </RadialGradientBrush>
             </Ellipse.Fill>
         </Ellipse>
 
-        <!-- メインの円 -->
-        <Ellipse Margin="5" Opacity="{Binding Opacity}" IsHitTestVisible="False">
+        <!-- メインの円（LinearGradient: 上=不透明、下=0.7透明） -->
+        <Ellipse Margin="5" IsHitTestVisible="False">
             <Ellipse.Fill>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                     <GradientStop Color="{Binding BackgroundColor.Color}" Offset="0"/>
-                    <GradientStop Color="{Binding BackgroundColor.Color}" Offset="0.5"/>
-                    <GradientStop Color="{Binding BackgroundColor.Color}" Offset="1"/>
+                    <GradientStop Color="{Binding GlowColor.Color}" Offset="1"/>
                 </LinearGradientBrush>
             </Ellipse.Fill>
             <Ellipse.Effect>
