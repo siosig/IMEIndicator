@@ -64,7 +64,7 @@
                                        HorizontalAlignment="Right" VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- 透明度 -->
+                        <!-- 不透明度 -->
                         <TextBlock x:Name="LblIMEOpacity" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -254,7 +254,7 @@
                             <Button x:Name="BtnClockBottomRight" Width="70" Margin="0,0,5,3" Click="Clock_BottomRight_Click"/>
                         </WrapPanel>
 
-                        <!-- 透明度 -->
+                        <!-- 不透明度 -->
                         <TextBlock x:Name="LblClockOpacity" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -437,7 +437,7 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- 透明度 -->
+                        <!-- 不透明度 -->
                         <TextBlock x:Name="LblMouseOpacity" FontWeight="SemiBold" Margin="0,10,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>

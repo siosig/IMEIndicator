@@ -44,7 +44,7 @@
     <value>크기</value>
   </data>
   <data name="LabelOpacity" xml:space="preserve">
-    <value>투명도</value>
+    <value>불투명도</value>
   </data>
   <data name="LabelPosition" xml:space="preserve">
     <value>위치</value>
