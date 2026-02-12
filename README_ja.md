@@ -103,6 +103,10 @@ IMEを使用するユーザーが、現在の入力モードを一目で確認�
 2. 任意のフォルダに展開
 3. `IMEIndicatorClockW.exe` を実行
 
+### Vector からダウンロード
+
+- [Vector](https://www.vector.co.jp/soft/winnt/writing/se528405.html)
+
 ## ソースからビルド
 
 ### 必要環境

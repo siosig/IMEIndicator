@@ -103,6 +103,10 @@ IME를 사용하는 사용자가 현재 입력 모드를 한눈에 확인할 수
 2. 원하는 폴더에 압축 해제
 3. `IMEIndicatorClockW.exe` 실행
 
+### Vector에서 다운로드
+
+- [Vector](https://www.vector.co.jp/soft/winnt/writing/se528405.html)
+
 ## 소스에서 빌드
 
 ### 요구 사항

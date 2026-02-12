@@ -103,6 +103,10 @@
 2. 解压到任意文件夹
 3. 运行 `IMEIndicatorClockW.exe`
 
+### 从 Vector 下载
+
+- [Vector](https://www.vector.co.jp/soft/winnt/writing/se528405.html)
+
 ## 从源代码构建
 
 ### 要求

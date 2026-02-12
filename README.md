@@ -103,6 +103,10 @@ We aim to help IME users see their current input mode at a glance.
 2. Extract to any folder
 3. Run `IMEIndicatorClockW.exe`
 
+### Download from Vector
+
+- [Vector](https://www.vector.co.jp/soft/winnt/writing/se528405.html)
+
 ## Build from Source
 
 ### Requirements
