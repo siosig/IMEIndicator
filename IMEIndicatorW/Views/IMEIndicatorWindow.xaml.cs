@@ -10,7 +10,15 @@ namespace IMEIndicatorClock.Views;
 public partial class IMEIndicatorWindow : Window
 {
     private const int WM_WINDOWPOSCHANGING = 0x0046;
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
     private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+    private const uint SWP_NOMOVE = 0x0002;
+    private const uint SWP_NOSIZE = 0x0001;
+    private const uint SWP_NOACTIVATE = 0x0010;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct WINDOWPOS
@@ -26,7 +34,9 @@ public partial class IMEIndicatorWindow : Window
 
     private readonly IMEIndicatorViewModel _viewModel;
     private HwndSource? _hwndSource;
+    private IntPtr _hwnd;
     private bool _suppressTopmost = false;  // コンテキストメニュー表示中はTOPMOST強制を抑制
+    private System.Windows.Threading.DispatcherTimer? _topmostTimer;  // 最前面維持タイマー
     private bool _isLoaded = false;  // ウィンドウ読み込み完了フラグ
     private System.Windows.Threading.DispatcherTimer? _saveDelayTimer;  // 位置保存用タイマー
 
@@ -103,8 +113,23 @@ public partial class IMEIndicatorWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _hwndSource = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+        _hwnd = new WindowInteropHelper(this).Handle;
+        _hwndSource = HwndSource.FromHwnd(_hwnd);
         _hwndSource?.AddHook(WndProc);
+
+        // 最前面維持タイマー（5秒間隔でSetWindowPos(HWND_TOPMOST)を呼ぶ）
+        _topmostTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(5)
+        };
+        _topmostTimer.Tick += (s, args) =>
+        {
+            if (_hwnd != IntPtr.Zero && !_suppressTopmost)
+            {
+                SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+            }
+        };
+        _topmostTimer.Start();
 
         // 位置設定後にフラグを有効化（少し遅延させる）
         Dispatcher.BeginInvoke(new Action(() =>
@@ -117,6 +142,8 @@ public partial class IMEIndicatorWindow : Window
 
     private void OnClosed(object? sender, EventArgs e)
     {
+        _topmostTimer?.Stop();
+        _topmostTimer = null;
         _hwndSource?.RemoveHook(WndProc);
         _hwndSource = null;
 
