@@ -337,58 +337,76 @@ public partial class PixelIMEDetector : IDisposable
         DbgLog.Log(5, $"PixelIME: size={width}x{height}, stride={stride}");
 
         // 全体をサンプリング（マージン最小）
-        int marginX = 1;
-        int marginY = 1;
+        // 周囲ピクセルから背景色の輝度を取得（上端1行を除く）
+        // 左端・右端・下端の各5ドットをサンプリング
+        const int borderSize = 5;
+        long bgBrightnessSum = 0;
+        int bgPixelCount = 0;
 
-        int sampleLeft = marginX;
-        int sampleTop = marginY;
-        int sampleWidth = width - marginX * 2;
-        int sampleHeight = height - marginY * 2;
-
-        if (sampleWidth < 3 || sampleHeight < 3)
-        {
-            DbgLog.Log(5, "PixelIME: サンプル領域が小さすぎる");
-            return false;
-        }
-
-        // 全ピクセルスキャンで暗いピクセル（文字）を探す
-        int totalPixels = 0;
-        int darkPixels = 0;
-        for (int y = 0; y < height; y++)
+        for (int y = 1; y < height; y++) // 上端1行をスキップ
         {
             for (int x = 0; x < width; x++)
             {
+                // 左端・右端・下端のborderSizeドット以内のみ
+                bool isBorder = x < borderSize || x >= width - borderSize
+                    || y >= height - borderSize;
+                if (!isBorder) continue;
+
                 int offset = y * stride + x * 4;
                 byte b = pixels[offset];
                 byte g = pixels[offset + 1];
                 byte r = pixels[offset + 2];
-                totalPixels++;
-                // 暗いピクセル（RGB各成分が200未満）をカウント
-                if (r < 200 || g < 200 || b < 200)
+                bgBrightnessSum += (r * 299 + g * 587 + b * 114) / 1000;
+                bgPixelCount++;
+            }
+        }
+
+        if (bgPixelCount == 0) return false;
+        int bgBrightness = (int)(bgBrightnessSum / bgPixelCount);
+
+        // 文字領域（内側のみ）でテキストピクセルをカウント
+        // 上下マージンを広めに取り、文字が集中する中央部に絞って比率差を拡大
+        const int topMargin = 3;
+        const int bottomMargin = 8;
+        const int diffThreshold = 30; // 背景色との輝度差がこれ以上ならテキスト
+        int textPixels = 0;
+        int innerPixels = 0;
+
+        for (int y = topMargin; y < height - bottomMargin; y++)
+        {
+            for (int x = borderSize; x < width - borderSize; x++)
+            {
+                innerPixels++;
+                int offset = y * stride + x * 4;
+                byte b = pixels[offset];
+                byte g = pixels[offset + 1];
+                byte r = pixels[offset + 2];
+                int brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                if (Math.Abs(brightness - bgBrightness) > diffThreshold)
                 {
-                    darkPixels++;
+                    textPixels++;
                 }
             }
         }
 
-        double darkRatio = (double)darkPixels / totalPixels;
-        DbgLog.Log(5, $"PixelIME: darkPixels={darkPixels}/{totalPixels} ({darkRatio:P1})");
+        if (innerPixels == 0) return false;
+        double textRatio = (double)textPixels / innerPixels;
+        DbgLog.Log(5, $"PixelIME: bgBrightness={bgBrightness}, textPixels={textPixels}/{innerPixels} ({textRatio:P1})");
 
-        // 暗いピクセルの割合で判定
-        // 実測値:
-        //   日本語: あ=9.0%, A=6.5% → darkRatio > 7.5% で ON
-        //   韓国語: 가=5.3%, A=6.5% → darkRatio < 6% で ON
-        //   中国語: 中=5.3%, 英=7.5% → darkRatio < 6% で ON
+        // 実測値（内側領域 topMargin=3, bottomMargin=8）:
+        //   日本語: A=7.1%, あ=11.3% → 閾値 8.5%
+        //   韓国語: A=7.1%, 가=5.8% → 閾値 6.5%
+        //   中国語: 英=10.0%, 中=6.0% → 閾値 6.5%
         bool result = language switch
         {
-            LanguageType.Japanese => darkRatio > 0.075,   // 7.5%超でON（あ=9%, A=6.5%）
-            LanguageType.Korean => darkRatio < 0.06,      // 6%未満でON
-            LanguageType.ChineseSimplified => darkRatio < 0.06,  // 6%未満でON
-            LanguageType.ChineseTraditional => darkRatio < 0.06, // 6%未満でON
+            LanguageType.Japanese => textRatio > 0.085,   // 8.5%超でON
+            LanguageType.Korean => textRatio < 0.065,     // 6.5%未満でON
+            LanguageType.ChineseSimplified => textRatio < 0.065,  // 6.5%未満でON
+            LanguageType.ChineseTraditional => textRatio < 0.065, // 6.5%未満でON
             _ => false
         };
 
-        DbgLog.Log(5, $"PixelIME: {language} darkRatio={darkRatio:P1} -> {(result ? "ON" : "OFF")}");
+        DbgLog.Log(5, $"PixelIME: {language} textRatio={textRatio:P1} -> {(result ? "ON" : "OFF")}");
         return result;
     }
 
