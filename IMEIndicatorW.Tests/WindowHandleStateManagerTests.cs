@@ -5,50 +5,88 @@ namespace IMEIndicatorW.Tests;
 
 /// <summary>
 /// WindowHandleStateManagerのユニットテスト
+/// NativeMethodsがモック不可（static P/Invoke）のため、
+/// TryGetStateの成功パスはテストできないが、エントリ管理のロジックは網羅的にテスト
 /// </summary>
 public class WindowHandleStateManagerTests
 {
     [Fact]
-    public void SetState_And_TryGetState_WorksCorrectly()
+    public void SetState_AddsEntry()
     {
-        // Arrange
         var manager = new WindowHandleStateManager();
-        var hwnd = new IntPtr(0x12345);
 
-        // Act
-        manager.SetState(hwnd, true);
+        manager.SetState(new IntPtr(0x12345), true);
 
-        // Assert - ウィンドウが有効でない場合はfalseを返す
-        // 実際のテストではモックが必要だが、基本動作の確認
-        var result = manager.TryGetState(hwnd, out bool state);
-
-        // ウィンドウが存在しない場合はfalse
-        Assert.False(result);
+        Assert.Equal(1, manager.Count);
     }
 
     [Fact]
     public void SetState_WithZeroHandle_DoesNothing()
     {
-        // Arrange
         var manager = new WindowHandleStateManager();
 
-        // Act
         manager.SetState(IntPtr.Zero, true);
 
-        // Assert
         Assert.Equal(0, manager.Count);
+    }
+
+    [Fact]
+    public void SetState_SameHandle_UpdatesState()
+    {
+        var manager = new WindowHandleStateManager();
+        var hwnd = new IntPtr(0x100);
+
+        manager.SetState(hwnd, true);
+        manager.SetState(hwnd, false);
+
+        // 同じハンドルなのでエントリ数は1のまま
+        Assert.Equal(1, manager.Count);
+    }
+
+    [Fact]
+    public void SetState_MultipleHandles_TracksAll()
+    {
+        var manager = new WindowHandleStateManager();
+
+        manager.SetState(new IntPtr(1), true);
+        manager.SetState(new IntPtr(2), false);
+        manager.SetState(new IntPtr(3), true);
+
+        Assert.Equal(3, manager.Count);
     }
 
     [Fact]
     public void TryGetState_WithZeroHandle_ReturnsFalse()
     {
-        // Arrange
         var manager = new WindowHandleStateManager();
 
-        // Act
         var result = manager.TryGetState(IntPtr.Zero, out bool state);
 
-        // Assert
+        Assert.False(result);
+        Assert.False(state);
+    }
+
+    [Fact]
+    public void TryGetState_FakeHwnd_ReturnsFalse()
+    {
+        // 実際のウィンドウハンドルではないため、NativeMethods.IsWindow()がfalseを返し、
+        // エントリは削除されてfalseが返る
+        var manager = new WindowHandleStateManager();
+        var hwnd = new IntPtr(0x12345);
+        manager.SetState(hwnd, true);
+
+        var result = manager.TryGetState(hwnd, out bool state);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void TryGetState_NonExistentHandle_ReturnsFalse()
+    {
+        var manager = new WindowHandleStateManager();
+
+        var result = manager.TryGetState(new IntPtr(0x99999), out bool state);
+
         Assert.False(result);
         Assert.False(state);
     }
@@ -56,15 +94,31 @@ public class WindowHandleStateManagerTests
     [Fact]
     public void Clear_RemovesAllEntries()
     {
-        // Arrange
         var manager = new WindowHandleStateManager();
         manager.SetState(new IntPtr(1), true);
         manager.SetState(new IntPtr(2), false);
 
-        // Act
         manager.Clear();
 
-        // Assert
         Assert.Equal(0, manager.Count);
+    }
+
+    [Fact]
+    public async Task ConcurrentAccess_DoesNotThrow()
+    {
+        var manager = new WindowHandleStateManager();
+
+        var tasks = new List<Task>();
+        for (int i = 0; i < 100; i++)
+        {
+            int handle = i + 1;
+            tasks.Add(Task.Run(() =>
+            {
+                manager.SetState(new IntPtr(handle), handle % 2 == 0);
+                manager.TryGetState(new IntPtr(handle), out _);
+            }));
+        }
+
+        await Task.WhenAll(tasks);
     }
 }

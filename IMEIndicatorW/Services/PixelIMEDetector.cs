@@ -260,7 +260,19 @@ public partial class PixelIMEDetector : IDisposable
 
             // メモリDCとビットマップを作成
             memDC = CreateCompatibleDC(screenDC);
+            if (memDC == IntPtr.Zero)
+            {
+                DbgLog.Log(5, "PixelIME: メモリDC作成失敗");
+                return false;
+            }
+
             hBitmap = CreateCompatibleBitmap(screenDC, width, height);
+            if (hBitmap == IntPtr.Zero)
+            {
+                DbgLog.Log(5, "PixelIME: ビットマップ作成失敗");
+                return false;
+            }
+
             oldBitmap = SelectObject(memDC, hBitmap);
 
             // BitBltでスクリーンからメモリDCにコピー

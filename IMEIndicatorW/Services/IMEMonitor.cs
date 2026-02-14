@@ -141,6 +141,8 @@ public partial class IMEMonitor : IDisposable
         try
         {
             var hwndForeground = NativeMethods.GetForegroundWindow();
+            if (hwndForeground == IntPtr.Zero) return;
+
             var (currentState, reliableStatus) = IMEDetector_Common.GetCurrentIMEStateEx(
                 _trackedLanguageForTerminal, out string debugInfo);
 
@@ -250,6 +252,8 @@ public partial class IMEMonitor : IDisposable
         try
         {
             var hwndForeground = NativeMethods.GetForegroundWindow();
+            if (hwndForeground == IntPtr.Zero) return;
+
             var (currentState, reliableStatus) = IMEDetector_Common.GetCurrentIMEStateEx(
                 _trackedLanguageForTerminal, out string debugInfo);
 

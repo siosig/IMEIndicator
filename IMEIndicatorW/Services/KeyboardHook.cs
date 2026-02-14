@@ -71,6 +71,7 @@ public partial class KeyboardHook : IDisposable
     private bool _disposed;
 
     // 単独Shift検出用（中国語IME）
+    private const uint ShiftDownThresholdMs = 500;  // 単独Shift判定閾値（ミリ秒）
     private bool _shiftDownAlone = false;  // Shiftが単独で押されているか
     private uint _shiftDownTime = 0;       // Shift押下時刻
 
@@ -162,8 +163,8 @@ public partial class KeyboardHook : IDisposable
                     {
                         // Shiftが離された - 単独だった場合のみトグル
                         uint elapsed = hookStruct.time - _shiftDownTime;
-                        // 500ms以内の短いShift押下のみを単独Shiftとして扱う
-                        if (elapsed < 500)
+                        // ShiftDownThresholdMs以内の短いShift押下のみを単独Shiftとして扱う
+                        if (elapsed < ShiftDownThresholdMs)
                         {
                             DbgLog.Log(4, $"単独Shift検出 ({elapsed}ms) - 中国語IME 中/英切り替え");
                             ChineseIMEToggleDetected?.Invoke("Shift");
