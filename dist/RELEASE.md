@@ -3,105 +3,106 @@
 ## ビルド環境
 
 - Windows 10 / 11
-- Visual Studio 2022 または .NET 8 SDK
-- （macOSからはビルド不可）
+- .NET 8 SDK
+- gh CLI（GitHub Releases作成用）
 
-## リリースビルド作成
-
-### 1. Visual Studioでビルド
+## ディレクトリ構成
 
 ```
-Build > Publish > Folder
+IMEIndicatorClockW/
+├── IMEIndicatorW/              # ソースコード
+│   └── IMEIndicatorW.csproj    # バージョン番号はここ
+├── dist/                       # リリース関連ファイル
+│   ├── RELEASE.md              # この手順書
+│   ├── README.txt              # ZIPに同梱（日本語）
+│   ├── README_EN.txt           # ZIPに同梱（English）
+│   ├── README_ko.txt           # ZIPに同梱（韓国語）
+│   ├── README_zh-CN.txt        # ZIPに同梱（中国語簡体字）
+│   ├── README_zh-TW.txt        # ZIPに同梱（中国語繁体字）
+│   └── IMEIndicatorClockW_vX.X.X.zip  # ← リリースZIP出力先（.gitignore済み）
+├── publish/                    # ビルド出力先（.gitignore済み）
+│   └── IMEIndicatorClockW.exe
+└── .gitignore                  # publish/, dist/*.zip を除外
 ```
 
-構成：
-- Configuration: Release
-- Target Framework: net8.0-windows
-- Deployment Mode: Self-contained（推奨）
-- Target Runtime: win-x64
+## リリース手順
 
-### 2. コマンドラインでビルド（代替）
+### 1. バージョン番号を更新
 
-```powershell
-dotnet publish -c Release -r win-x64 --self-contained true -o build\publish
+`IMEIndicatorW/IMEIndicatorW.csproj` の `<Version>` を更新してコミット。
+
+### 2. ビルド
+
+```bash
+dotnet publish IMEIndicatorW/IMEIndicatorW.csproj -c Release -p:SelfContained=true -o publish
 ```
+
+- Self-contained: .NETランタイム同梱（約73MB EXE）
+- 出力先: `publish/IMEIndicatorClockW.exe`
 
 ### 3. ZIPファイル作成
 
-```powershell
-# 作業ディレクトリを作成（.gitignoreに追加済み）
-mkdir build\release\IMEIndicatorClockW
+`dist/` ディレクトリにZIPを作成する。
 
-# ビルド成果物をコピー
-Copy-Item -Recurse build\publish\* build\release\IMEIndicatorClockW\
+```bash
+# ステージングディレクトリに必要ファイルを集める
+mkdir -p /tmp/ime_zip
+cp publish/IMEIndicatorClockW.exe /tmp/ime_zip/
+cp dist/README*.txt /tmp/ime_zip/
 
-# READMEをコピー
-Copy-Item dist\README.txt build\release\IMEIndicatorClockW\
-Copy-Item dist\README_EN.txt build\release\IMEIndicatorClockW\
+# ZIP作成（PowerShell経由）
+powershell.exe -Command "Compress-Archive -Force -Path 'C:\...\ime_zip\*' -DestinationPath 'C:\...\dist\IMEIndicatorClockW_vX.X.X.zip'"
 
-# ZIPを作成
-Compress-Archive -Path build\release\IMEIndicatorClockW -DestinationPath build\release\IMEIndicatorClockW_vX.X.X.zip
+# またはzipコマンド
+cd /tmp/ime_zip && zip -9 ../../dist/IMEIndicatorClockW_vX.X.X.zip *
 ```
 
-### 4. GitHub Releasesにアップロード
+### 4. GitHub Releasesに公開
 
-1. GitHubでタグを作成（例: `v1.0.0`）
-2. Releases → Draft a new release
-3. 作成したZIPファイルをアップロード
-4. リリースノートを記載して公開
-
-## ファイル構成
-
-```
-リポジトリ内（コミット対象）:
-  dist/
-    ├── RELEASE.md      # この手順書
-    ├── README.txt      # ZIPに同梱（日本語）
-    └── README_EN.txt   # ZIPに同梱（English）
-
-作業用（.gitignoreで除外）:
-  build/
-    ├── publish/                        # ビルド出力
-    └── release/
-        └── IMEIndicatorClockW_vX.X.X.zip
-
-GitHub Releases（最終配布先）:
-  └── IMEIndicatorClockW_vX.X.X.zip
+```bash
+git push
+gh release create vX.X.X dist/IMEIndicatorClockW_vX.X.X.zip --title "vX.X.X" --notes "リリースノート"
 ```
 
 ## ZIPファイルの内容
 
 ```
 IMEIndicatorClockW_vX.X.X.zip
-├── IMEIndicatorClockW.exe
-├── IMEIndicatorClockW.dll
-├── （その他の依存ファイル）
-├── README.txt          # 日本語
-└── README_EN.txt       # English
+├── IMEIndicatorClockW.exe   # 単一EXE（Self-contained）
+├── README.txt               # 日本語
+├── README_EN.txt            # English
+├── README_ko.txt            # 韓国語
+├── README_zh-CN.txt         # 中国語（簡体字）
+└── README_zh-TW.txt         # 中国語（繁体字）
 ```
 
-## README.txt 必須記載事項
+## リリースノートのルール
 
-同梱するREADMEには以下を必ず記載すること：
+末尾に必ずスポンサーセクションを含める：
 
-- **ソフトの概要** - アプリの利用目的・機能
-- **作者への連絡先** - メールアドレス、GitHub等（作者に管理権限があること）
-- **取り扱い種別** - フリーソフト/シェアウェア等
-- **動作環境** - Windowsバージョン、必要なランタイム
-- **インストール方法** - 手順を明記
-- **アンインストール方法** - フォルダ削除のみでも必ず記載（「プログラムの追加と削除」に載らないため）
+```markdown
+---
+
+## ❤️ Support this project / このプロジェクトを支援する
+
+If you find this useful, please consider sponsoring!
+このツールが役に立ったら、スポンサーをご検討ください！
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-red?logo=github)](https://github.com/sponsors/obott9)
+```
 
 ## リリースチェックリスト
 
-- [ ] バージョン番号を更新（.csproj）
+- [ ] バージョン番号を更新（.csproj）→ コミット
 - [ ] Release構成でビルド
-- [ ] Windows 10 で動作確認
-- [ ] Windows 11 で動作確認
+- [ ] ZIPに README 5言語分が含まれているか確認
+- [ ] Windows 10 / 11 で動作確認
 - [ ] dist/README.txt の内容が最新か確認
-- [ ] GitHubにタグを作成
-- [ ] GitHub Releasesに ZIPをアップロード
+- [ ] git push
+- [ ] gh release create でタグ作成 + ZIPアップロード
 
 ## 注意事項
 
 - Self-contained でビルドすると .NET ランタイムが同梱され、ユーザー環境に依存しない
 - Framework-dependent でビルドするとサイズは小さいが、ユーザーが .NET 8 をインストールする必要がある
+- アセンブリ名は `IMEIndicatorClockW`（開発版 `IMEIndicatorW` と異なる）
