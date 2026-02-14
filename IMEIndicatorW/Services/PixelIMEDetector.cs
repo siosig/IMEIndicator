@@ -270,6 +270,11 @@ public partial class PixelIMEDetector : IDisposable
                 return false;
             }
 
+            // GetDIBitsの前にビットマップをDCから解除（API要件）
+            // "The bitmap must not be selected into a device context when GetDIBits is called"
+            SelectObject(memDC, oldBitmap);
+            oldBitmap = IntPtr.Zero; // finally での二重解除を防止
+
             // GetDIBitsでピクセルデータを直接取得（GDI+を経由しない）
             var bmi = new BITMAPINFO
             {
@@ -277,7 +282,7 @@ public partial class PixelIMEDetector : IDisposable
                 {
                     biSize = (uint)Marshal.SizeOf<BITMAPINFOHEADER>(),
                     biWidth = width,
-                    biHeight = -height, // 負の値でトップダウン（上から下）
+                    biHeight = height, // 正の値（ボトムアップ）- GetDIBitsでは負値非推奨
                     biPlanes = 1,
                     biBitCount = 32,
                     biCompression = BI_RGB
@@ -291,7 +296,7 @@ public partial class PixelIMEDetector : IDisposable
             IntPtr pPixels = Marshal.AllocHGlobal(pixels.Length);
             try
             {
-                int result = GetDIBits(memDC, hBitmap, 0, (uint)height, pPixels, ref bmi, DIB_RGB_COLORS);
+                int result = GetDIBits(screenDC, hBitmap, 0, (uint)height, pPixels, ref bmi, DIB_RGB_COLORS);
                 if (result == 0)
                 {
                     DbgLog.Log(5, "PixelIME: GetDIBits失敗");
