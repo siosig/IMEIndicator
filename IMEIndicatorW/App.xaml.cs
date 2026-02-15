@@ -180,7 +180,7 @@ public partial class App : Application
             DbgLog.Ex(ex, "アプリケーション起動エラー");
             MessageBox.Show(
                 $"アプリケーションの起動中にエラーが発生しました。\n\n{ex.Message}\n\n{ex.StackTrace}",
-                "IMEIndicatorW - エラー",
+                $"{AppConstants.AppName} - エラー",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             Shutdown(1);

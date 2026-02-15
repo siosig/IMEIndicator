@@ -239,7 +239,7 @@ public class SettingsManager
             {
                 MessageBox.Show(
                     $"設定ファイルの読み込みに失敗しました。\nデフォルト設定を使用します。\n\n{LastError}",
-                    "IMEIndicatorW - 警告",
+                    $"{AppConstants.AppName} - 警告",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             }));
@@ -257,7 +257,7 @@ public class SettingsManager
             {
                 MessageBox.Show(
                     $"設定の保存に失敗しました。\n\n{LastError}",
-                    "IMEIndicatorW - エラー",
+                    $"{AppConstants.AppName} - エラー",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }));

@@ -197,7 +197,7 @@ public partial class UIAutomationTestWindow : Window
             // ログファイルパスを準備
             var logDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "IMEIndicatorW");
+                AppConstants.AppName);
             if (!Directory.Exists(logDir)) Directory.CreateDirectory(logDir);
             var logPath = Path.Combine(logDir, $"button_search_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
 
@@ -1019,7 +1019,7 @@ public partial class UIAutomationTestWindow : Window
     {
         var saveDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "IMEIndicatorW",
+            AppConstants.AppName,
             "captures");
 
         if (!Directory.Exists(saveDir))
@@ -1083,7 +1083,7 @@ public partial class UIAutomationTestWindow : Window
             // ログファイルパスを準備
             var logDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "IMEIndicatorW");
+                AppConstants.AppName);
             if (!Directory.Exists(logDir)) Directory.CreateDirectory(logDir);
             var logPath = Path.Combine(logDir, $"text_search_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
 
