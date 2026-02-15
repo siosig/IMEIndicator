@@ -124,7 +124,7 @@ public class SettingsManagerTests : IDisposable
 
         // Assert
         Assert.Equal(1.0, manager.Settings.IMEIndicator.Opacity);
-        Assert.Equal(0.0, manager.Settings.Clock.Opacity);
+        Assert.Equal(0.1, manager.Settings.Clock.Opacity);
         Assert.Equal(1.0, manager.Settings.MouseCursorIndicator.Opacity);
         Assert.Equal(16, manager.Settings.IMEIndicator.Size);
         Assert.Equal(200, manager.Settings.Clock.FontSize);
