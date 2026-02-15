@@ -73,7 +73,7 @@
                             </Grid.ColumnDefinitions>
                             <Slider Minimum="0.1" Maximum="1.0"
                                     Value="{Binding IMEIndicatorViewModel.Opacity}"
-                                    TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+                                    TickFrequency="0.05" IsSnapToTickEnabled="True"/>
                             <TextBlock Grid.Column="1" Text="{Binding IMEIndicatorViewModel.Opacity, StringFormat={}{0:P0}}"
                                        HorizontalAlignment="Right" VerticalAlignment="Center"/>
                         </Grid>
@@ -263,7 +263,7 @@
                             </Grid.ColumnDefinitions>
                             <Slider Minimum="0.1" Maximum="1.0"
                                     Value="{Binding ClockViewModel.Opacity}"
-                                    TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+                                    TickFrequency="0.05" IsSnapToTickEnabled="True"/>
                             <TextBlock Grid.Column="1" Text="{Binding ClockViewModel.Opacity, StringFormat={}{0:P0}}"
                                        HorizontalAlignment="Right" VerticalAlignment="Center"/>
                         </Grid>
@@ -444,9 +444,9 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="60"/>
                             </Grid.ColumnDefinitions>
-                            <Slider Minimum="0.3" Maximum="1.0"
+                            <Slider Minimum="0.1" Maximum="1.0"
                                     Value="{Binding MouseCursorIndicatorViewModel.Opacity}"
-                                    TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+                                    TickFrequency="0.05" IsSnapToTickEnabled="True"/>
                             <TextBlock Grid.Column="1" Text="{Binding MouseCursorIndicatorViewModel.Opacity, StringFormat={}{0:P0}}"
                                        HorizontalAlignment="Right" VerticalAlignment="Center"/>
                         </Grid>

@@ -126,18 +126,18 @@ public class SettingsManager
     internal void ValidateAndClampSettings()
     {
         var s = Settings;
-        s.IMEIndicator.Opacity = Math.Clamp(s.IMEIndicator.Opacity, 0.0, 1.0);
+        s.IMEIndicator.Opacity = Math.Clamp(s.IMEIndicator.Opacity, 0.1, 1.0);
         s.IMEIndicator.Size = Math.Clamp(s.IMEIndicator.Size, 16, 512);
         s.IMEIndicator.FontSizeRatio = Math.Clamp(s.IMEIndicator.FontSizeRatio, 0.1, 1.0);
         s.IMEIndicator.PixelVerificationIntervalMs = Math.Max(0, s.IMEIndicator.PixelVerificationIntervalMs);
 
-        s.Clock.Opacity = Math.Clamp(s.Clock.Opacity, 0.0, 1.0);
+        s.Clock.Opacity = Math.Clamp(s.Clock.Opacity, 0.1, 1.0);
         s.Clock.Width = Math.Clamp(s.Clock.Width, 50, 2000);
         s.Clock.Height = Math.Clamp(s.Clock.Height, 30, 2000);
         s.Clock.FontSize = Math.Clamp(s.Clock.FontSize, 6, 200);
         s.Clock.AnalogClockSize = Math.Clamp(s.Clock.AnalogClockSize, 100, 500);
 
-        s.MouseCursorIndicator.Opacity = Math.Clamp(s.MouseCursorIndicator.Opacity, 0.0, 1.0);
+        s.MouseCursorIndicator.Opacity = Math.Clamp(s.MouseCursorIndicator.Opacity, 0.1, 1.0);
         s.MouseCursorIndicator.Size = Math.Clamp(s.MouseCursorIndicator.Size, 8, 256);
 
         s.Debug.PollingInterval = Math.Clamp(s.Debug.PollingInterval, 50, 10000);

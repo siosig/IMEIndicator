@@ -53,7 +53,7 @@ public class IMEIndicatorSettings
     public double PositionX { get; set; } = -1;  // -1 = 初回起動時に画面左上に自動配置
     public double PositionY { get; set; } = -1;
     public double Size { get; set; } = 48;
-    public double Opacity { get; set; } = 0.7;
+    public double Opacity { get; set; } = 0.9;
     public double FontSizeRatio { get; set; } = 0.5;
     public string FontName { get; set; } = "Segoe UI";
     public int DisplayIndex { get; set; } = 0; // マルチディスプレイ選択
@@ -116,7 +116,7 @@ public class ClockSettings
     public double PositionY { get; set; } = -1;
     public double Width { get; set; } = 200;
     public double Height { get; set; } = 100;
-    public double Opacity { get; set; } = 0.7;
+    public double Opacity { get; set; } = 0.9;
     public int DisplayIndex { get; set; } = 0; // マルチディスプレイ選択
 
     // フォント設定
