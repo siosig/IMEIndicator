@@ -14,8 +14,6 @@ public partial class IMEMonitor : IDisposable
     private bool _trackedIMEState = false;
     private LanguageType? _trackedLanguageForTerminal = null;
     private bool _languagePendingDetection = false;
-    private bool _useTrackedStateForJapanese = false;
-    private bool _useTrackedStateForChinese = false;
     private WindowHandleStateManager _windowKoreanIMEStates = new();
     private bool _disposed;
 
@@ -27,8 +25,6 @@ public partial class IMEMonitor : IDisposable
     private DateTime _lastPixelVerification = DateTime.MinValue;
     private int _pixelVerificationIntervalMs = 2000;
     private bool _usePixelStateForKorean = false;
-    private bool _usePixelStateForChinese = false;
-    private bool _usePixelStateForJapanese = false;
 
     /// <summary>
     /// デバッグログを有効にするかどうか（レガシー互換）

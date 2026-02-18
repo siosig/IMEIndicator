@@ -66,7 +66,6 @@ public partial class IMEMonitor
             _trackedIMEState = false;
             _trackedLanguageForTerminal = LanguageType.Japanese;
             _languagePendingDetection = false;
-            _useTrackedStateForJapanese = true;
             stateChanged = true;
             DbgLog.Log(5, "OEM_AUTO → 日本語確定");
         }
@@ -75,7 +74,6 @@ public partial class IMEMonitor
             _trackedIMEState = true;
             _trackedLanguageForTerminal = LanguageType.Japanese;
             _languagePendingDetection = false;
-            _useTrackedStateForJapanese = true;
             stateChanged = true;
             DbgLog.Log(5, "OEM_ENLW → 日本語確定");
         }
@@ -179,13 +177,11 @@ public partial class IMEMonitor
             if (eventType == "Shift")
             {
                 _trackedIMEState = !_trackedIMEState;
-                _useTrackedStateForChinese = true;
                 DbgLog.Log(4, $"中国語IME 中/英トグル (Shift): {_trackedIMEState}");
             }
             else if (eventType == "CtrlSpace")
             {
                 _trackedIMEState = !_trackedIMEState;
-                _useTrackedStateForChinese = true;
                 DbgLog.Log(4, $"中国語IME ON/OFFトグル (Ctrl+Space): {_trackedIMEState}");
             }
 

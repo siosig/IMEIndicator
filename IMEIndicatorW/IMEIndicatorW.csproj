@@ -10,7 +10,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>IMEIndicatorClockW</AssemblyName>
     <RootNamespace>IMEIndicatorClock</RootNamespace>
-    <Version>1.1.2</Version>
+    <Version>1.1.3</Version>
     <Authors>obott9</Authors>
     <Description>IME Indicator Clock for Windows - Display IME status with desktop clock</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>

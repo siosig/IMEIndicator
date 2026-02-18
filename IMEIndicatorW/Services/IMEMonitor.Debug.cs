@@ -26,11 +26,7 @@ public partial class IMEMonitor
         sb.AppendLine($"LastState: {_lastState.Language}, IME={_lastState.IsIMEOn}");
         sb.AppendLine($"TrackedIMEState: {_trackedIMEState}");
         sb.AppendLine($"LastForegroundWindow: 0x{_lastForegroundWindow:X}");
-        sb.AppendLine($"UseTrackedStateForJapanese: {_useTrackedStateForJapanese}");
-        sb.AppendLine($"UseTrackedStateForChinese: {_useTrackedStateForChinese}");
         sb.AppendLine($"UsePixelStateForKorean: {_usePixelStateForKorean}");
-        sb.AppendLine($"UsePixelStateForChinese: {_usePixelStateForChinese}");
-        sb.AppendLine($"UsePixelStateForJapanese: {_usePixelStateForJapanese}");
         sb.AppendLine($"WindowKoreanIMEStates Count: {_windowKoreanIMEStates.Count}");
         sb.AppendLine($"PixelVerificationInterval: {_pixelVerificationIntervalMs}ms");
         sb.AppendLine($"LastPixelVerification: {_lastPixelVerification:HH:mm:ss.fff}");
@@ -55,11 +51,7 @@ public partial class IMEMonitor
     {
         DbgLog.W("[DEBUG] トラッキング状態をリセット");
         _trackedIMEState = false;
-        _useTrackedStateForJapanese = false;
-        _useTrackedStateForChinese = false;
         _usePixelStateForKorean = false;
-        _usePixelStateForChinese = false;
-        _usePixelStateForJapanese = false;
         _windowKoreanIMEStates.Clear();
     }
 
