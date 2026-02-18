@@ -9,29 +9,6 @@ namespace IMEIndicatorClock.Views;
 
 public partial class IMEIndicatorWindow : Window
 {
-    private const int WM_WINDOWPOSCHANGING = 0x0046;
-
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
-
-    private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
-    private const uint SWP_NOMOVE = 0x0002;
-    private const uint SWP_NOSIZE = 0x0001;
-    private const uint SWP_NOACTIVATE = 0x0010;
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct WINDOWPOS
-    {
-        public IntPtr hwnd;
-        public IntPtr hwndInsertAfter;
-        public int x;
-        public int y;
-        public int cx;
-        public int cy;
-        public uint flags;
-    }
-
     private readonly IMEIndicatorViewModel _viewModel;
     private HwndSource? _hwndSource;
     private IntPtr _hwnd;
@@ -129,7 +106,7 @@ public partial class IMEIndicatorWindow : Window
         {
             if (_hwnd != IntPtr.Zero && !_suppressTopmost)
             {
-                SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                NativeMethods.SetWindowPos(_hwnd, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0, NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
             }
         };
         _topmostTimer.Start();
@@ -155,12 +132,12 @@ public partial class IMEIndicatorWindow : Window
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        if (msg == WM_WINDOWPOSCHANGING)
+        if (msg == NativeMethods.WM_WINDOWPOSCHANGING)
         {
-            var pos = Marshal.PtrToStructure<WINDOWPOS>(lParam);
+            var pos = Marshal.PtrToStructure<NativeMethods.WINDOWPOS>(lParam);
 
             // TOPMOSTが外されそうになったら強制的にTOPMOSTを維持
-            if (pos.hwndInsertAfter != HWND_TOPMOST)
+            if (pos.hwndInsertAfter != NativeMethods.HWND_TOPMOST)
             {
                 if (_suppressTopmost)
                 {
@@ -169,7 +146,7 @@ public partial class IMEIndicatorWindow : Window
                 else
                 {
                     DbgLog.Log(4, $"[TOPMOST] IMEIndicator: 維持 (0x{pos.hwndInsertAfter:X} → TOPMOST)");
-                    pos.hwndInsertAfter = HWND_TOPMOST;
+                    pos.hwndInsertAfter = NativeMethods.HWND_TOPMOST;
                     Marshal.StructureToPtr(pos, lParam, false);
                 }
             }

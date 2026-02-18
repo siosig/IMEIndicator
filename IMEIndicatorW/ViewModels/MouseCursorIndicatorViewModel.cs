@@ -88,7 +88,7 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
         if (activeSettings != null)
         {
             DisplayText = activeSettings.DisplayText ?? "?";
-            var color = ParseColor(activeSettings.Color ?? "#3B82F6");
+            var color = ColorHelper.ParseColor(activeSettings.Color ?? "#3B82F6");
             BackgroundColor = new SolidColorBrush(color);
             GlowColor = new SolidColorBrush(Color.FromArgb(179, color.R, color.G, color.B));
 
@@ -122,23 +122,6 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
     partial void OnOffsetXChanged(double value) => Settings.OffsetX = value;
     partial void OnOffsetYChanged(double value) => Settings.OffsetY = value;
     partial void OnIsVisibleChanged(bool value) => Settings.IsVisible = value;
-
-    private static Color ParseColor(string hex)
-    {
-        try
-        {
-            if (hex.StartsWith("#")) hex = hex[1..];
-            if (hex.Length == 6)
-            {
-                return Color.FromRgb(
-                    Convert.ToByte(hex[0..2], 16),
-                    Convert.ToByte(hex[2..4], 16),
-                    Convert.ToByte(hex[4..6], 16));
-            }
-        }
-        catch { }
-        return Colors.Gray;
-    }
 
     /// <summary>
     /// 設定を再読み込みする

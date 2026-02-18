@@ -363,8 +363,8 @@ public partial class SettingsWindow : Window
         var settings = _viewModel.ClockViewModel;
 
         // 背景色を読み込み
-        ClockColorOff = ParseColor(settings.BackgroundColorIMEOff);
-        ClockColorOn = ParseColor(settings.BackgroundColorIMEOn);
+        ClockColorOff = ColorHelper.ParseColor(settings.BackgroundColorIMEOff);
+        ClockColorOn = ColorHelper.ParseColor(settings.BackgroundColorIMEOn);
         ShowSeconds = settings.ShowSeconds;
 
         // スライダーの初期値設定（バインディングを使わずに直接設定）
@@ -393,7 +393,7 @@ public partial class SettingsWindow : Window
         ClockColorOnPicker.SelectedColor = ClockColorOn;
 
         // アナログ時計色を読み込み
-        AnalogClockColor = ParseColor(settings.AnalogClockColorHex);
+        AnalogClockColor = ColorHelper.ParseColor(settings.AnalogClockColorHex);
         AnalogClockColorPicker.SelectedColor = AnalogClockColor;
 
         // 背景色グリッドの有効/無効状態を更新
@@ -483,19 +483,6 @@ public partial class SettingsWindow : Window
     }
 
     private SettingsManager? SettingsManagerRef => _viewModel?.SettingsManager;
-
-    private static Color ParseColor(string hex)
-    {
-        if (hex.StartsWith("#")) hex = hex[1..];
-        if (hex.Length == 6)
-        {
-            return Color.FromRgb(
-                Convert.ToByte(hex[0..2], 16),
-                Convert.ToByte(hex[2..4], 16),
-                Convert.ToByte(hex[4..6], 16));
-        }
-        return Colors.Blue;
-    }
 
     private static string ColorToHex(Color color)
     {
@@ -749,7 +736,7 @@ public partial class SettingsWindow : Window
             var colorPicker = new ColorPickerButton { Margin = new Thickness(5, 0, 0, 0) };
             if (settings.TryGetValue(key, out var colorSettings))
             {
-                colorPicker.SelectedColor = ParseColor(colorSettings.Color ?? "#3B82F6");
+                colorPicker.SelectedColor = ColorHelper.ParseColor(colorSettings.Color ?? "#3B82F6");
             }
             colorPicker.ColorChanged += (s, c) => LanguageColor_Changed(key, c);
             Grid.SetColumn(colorPicker, 2);
@@ -1165,7 +1152,7 @@ public partial class SettingsWindow : Window
             {
                 SettingsManagerRef.Settings.IMEIndicator.PixelVerificationIntervalMs = intervalMs;
                 // IMEMonitorに即時反映
-                IMEMonitor.SetPixelVerificationInterval(intervalMs);
+                App.Instance.IMEMonitor?.SetPixelVerificationInterval(intervalMs);
             }
         }
     }
@@ -1214,7 +1201,7 @@ public partial class SettingsWindow : Window
             {
                 Width = 16,
                 Height = 16,
-                Fill = new SolidColorBrush(ParseColor(settings.Color ?? "#3B82F6"))
+                Fill = new SolidColorBrush(ColorHelper.ParseColor(settings.Color ?? "#3B82F6"))
             };
 
             // 表示テキスト

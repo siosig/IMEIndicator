@@ -186,7 +186,7 @@ public partial class LanguageColorsDialog : Window
             var colorPicker = new ColorPickerButton { Margin = new Thickness(10, 0, 0, 0) };
             if (settings.TryGetValue(key, out var colorSettings))
             {
-                colorPicker.SelectedColor = ParseColor(colorSettings.Color);
+                colorPicker.SelectedColor = ColorHelper.ParseColor(colorSettings.Color);
             }
             Grid.SetColumn(colorPicker, 3);
             grid.Children.Add(colorPicker);
@@ -260,19 +260,6 @@ public partial class LanguageColorsDialog : Window
             border.Child = grid;
             LanguageList.Children.Add(border);
         }
-    }
-
-    private static Color ParseColor(string hex)
-    {
-        if (hex.StartsWith("#")) hex = hex[1..];
-        if (hex.Length == 6)
-        {
-            return Color.FromRgb(
-                Convert.ToByte(hex[0..2], 16),
-                Convert.ToByte(hex[2..4], 16),
-                Convert.ToByte(hex[4..6], 16));
-        }
-        return Colors.Gray;
     }
 
     private void GlobalFont_SelectionChanged(object sender, SelectionChangedEventArgs e)

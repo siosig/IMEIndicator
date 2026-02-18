@@ -311,6 +311,31 @@ internal static partial class NativeMethods
         uint uTimeout,
         out IntPtr lpdwResult);
 
+    // SetWindowPos API
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+    internal static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+    internal const uint SWP_NOSIZE = 0x0001;
+    internal const uint SWP_NOMOVE = 0x0002;
+    internal const uint SWP_NOACTIVATE = 0x0010;
+
+    // WM_WINDOWPOSCHANGING メッセージ
+    internal const int WM_WINDOWPOSCHANGING = 0x0046;
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct WINDOWPOS
+    {
+        public IntPtr hwnd;
+        public IntPtr hwndInsertAfter;
+        public int x;
+        public int y;
+        public int cx;
+        public int cy;
+        public uint flags;
+    }
+
     // ヘルパーメソッド
     public static string GetWindowTitle(IntPtr hWnd)
     {

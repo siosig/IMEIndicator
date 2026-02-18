@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using IMEIndicatorClock.Services;
 
 namespace IMEIndicatorClock.Views;
 
@@ -49,7 +50,7 @@ public partial class ColorPickerDialog : Window, INotifyPropertyChanged
     {
         foreach (var hex in PresetColorValues)
         {
-            var color = ParseColor(hex);
+            var color = ColorHelper.ParseColor(hex);
             var rect = new Rectangle
             {
                 Width = 25,
@@ -95,7 +96,7 @@ public partial class ColorPickerDialog : Window, INotifyPropertyChanged
         {
             try
             {
-                var color = ParseColor(hex);
+                var color = ColorHelper.ParseColor(hex);
                 _isUpdating = true;
                 RedValue = color.R;
                 GreenValue = color.G;
@@ -137,18 +138,6 @@ public partial class ColorPickerDialog : Window, INotifyPropertyChanged
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    private static Color ParseColor(string hex)
-    {
-        if (hex.StartsWith("#"))
-            hex = hex[1..];
-
-        return Color.FromRgb(
-            Convert.ToByte(hex[0..2], 16),
-            Convert.ToByte(hex[2..4], 16),
-            Convert.ToByte(hex[4..6], 16)
-        );
     }
 
     private void OkButton_Click(object sender, RoutedEventArgs e)

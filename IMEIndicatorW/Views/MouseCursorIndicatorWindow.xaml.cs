@@ -1,20 +1,12 @@
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using IMEIndicatorClock.Services;
 using IMEIndicatorClock.ViewModels;
 
 namespace IMEIndicatorClock.Views;
 
 public partial class MouseCursorIndicatorWindow : Window
 {
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
-
-    private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
-    private const uint SWP_NOSIZE = 0x0001;
-    private const uint SWP_NOACTIVATE = 0x0010;
-
     private readonly MouseCursorIndicatorViewModel _viewModel;
     private IntPtr _hwnd;
 
@@ -52,7 +44,7 @@ public partial class MouseCursorIndicatorWindow : Window
 
         if (_hwnd != IntPtr.Zero)
         {
-            SetWindowPos(_hwnd, HWND_TOPMOST, (int)x, (int)y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
+            NativeMethods.SetWindowPos(_hwnd, NativeMethods.HWND_TOPMOST, (int)x, (int)y, 0, 0, NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
         }
         else
         {

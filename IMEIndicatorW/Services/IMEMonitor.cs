@@ -12,8 +12,8 @@ public partial class IMEMonitor : IDisposable
     private LanguageInfo _lastState = new(LanguageType.English, false);
     private IntPtr _lastForegroundWindow = IntPtr.Zero;
     private bool _trackedIMEState = false;
-    private static LanguageType? _trackedLanguageForTerminal = null;
-    private static bool _languagePendingDetection = false;
+    private LanguageType? _trackedLanguageForTerminal = null;
+    private bool _languagePendingDetection = false;
     private bool _useTrackedStateForJapanese = false;
     private bool _useTrackedStateForChinese = false;
     private WindowHandleStateManager _windowKoreanIMEStates = new();
@@ -25,7 +25,7 @@ public partial class IMEMonitor : IDisposable
 
     // ピクセル判定による状態検証
     private DateTime _lastPixelVerification = DateTime.MinValue;
-    private static int _pixelVerificationIntervalMs = 2000;
+    private int _pixelVerificationIntervalMs = 2000;
     private bool _usePixelStateForKorean = false;
     private bool _usePixelStateForChinese = false;
     private bool _usePixelStateForJapanese = false;
@@ -42,7 +42,7 @@ public partial class IMEMonitor : IDisposable
     /// <summary>
     /// 定期ピクセル検証間隔を設定する（0で無効化）
     /// </summary>
-    public static void SetPixelVerificationInterval(int intervalMs)
+    public void SetPixelVerificationInterval(int intervalMs)
     {
         _pixelVerificationIntervalMs = intervalMs;
         DbgLog.I($"ピクセル検証間隔を変更: {(intervalMs == 0 ? "無効" : $"{intervalMs}ms")}");

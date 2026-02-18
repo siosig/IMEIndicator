@@ -22,6 +22,7 @@ public partial class App : Application
     public ClockWindow? ClockWindow => _clockWindow;
     public MouseCursorIndicatorWindow? MouseCursorIndicatorWindow => _mouseCursorIndicatorWindow;
     public SettingsManager? SettingsManager => _settingsManager;
+    public IMEMonitor? IMEMonitor => _imeMonitor;
     public MainViewModel? MainViewModel => _mainViewModel;
 
     /// <summary>
@@ -114,12 +115,10 @@ public partial class App : Application
             _mainViewModel = new MainViewModel(_settingsManager);
             DbgLog.I("MainViewModel初期化完了");
 
-            // ピクセル検証間隔の設定
-            IMEMonitor.SetPixelVerificationInterval(_settingsManager.Settings.IMEIndicator.PixelVerificationIntervalMs);
-
             // IMEモニターの開始
             DbgLog.I("IMEモニター開始");
             _imeMonitor = new IMEMonitor();
+            _imeMonitor.SetPixelVerificationInterval(_settingsManager.Settings.IMEIndicator.PixelVerificationIntervalMs);
             _imeMonitor.IMEStateChanged += OnIMEStateChanged;
             _imeMonitor.CursorPositionChanged += OnCursorPositionChanged;
             _imeMonitor.Start();

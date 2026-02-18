@@ -24,7 +24,7 @@ public partial class ClockViewModel : ObservableObject, IDisposable
         return culture;
     });
 
-    private ClockSettings Settings => _settingsManager?.Settings?.Clock ?? new ClockSettings();
+    private ClockSettings Settings => _settingsManager.Settings.Clock;
 
     [ObservableProperty]
     private string _timeText = "";
@@ -196,6 +196,7 @@ public partial class ClockViewModel : ObservableObject, IDisposable
 
     public ClockViewModel(SettingsManager settingsManager)
     {
+        ArgumentNullException.ThrowIfNull(settingsManager);
         _settingsManager = settingsManager;
 
         // デフォルト値を先に設定
