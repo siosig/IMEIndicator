@@ -96,20 +96,23 @@ public partial class IMEMonitor
     {
         System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
         {
-            // 既存のタイマーをキャンセル
-            _keyDebounceTimer?.Stop();
+            // タイマーを遅延初期化（初回のみ作成）
+            if (_keyDebounceTimer == null)
+            {
+                _keyDebounceTimer = new System.Windows.Threading.DispatcherTimer
+                {
+                    Interval = TimeSpan.FromMilliseconds(KeyDebounceIntervalMs)
+                };
+                _keyDebounceTimer.Tick += (s, e) =>
+                {
+                    _keyDebounceTimer?.Stop();
+                    DbgLog.Log(4, "デバウンスタイマー発火 → CheckIMEState2");
+                    CheckIMEState2(forceUpdate: true);
+                };
+            }
 
-            // 新しいタイマーを開始
-            _keyDebounceTimer = new System.Windows.Threading.DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(KeyDebounceIntervalMs)
-            };
-            _keyDebounceTimer.Tick += (s, e) =>
-            {
-                _keyDebounceTimer?.Stop();
-                DbgLog.Log(4, "デバウンスタイマー発火 → CheckIMEState2");
-                CheckIMEState2(forceUpdate: true);
-            };
+            // 既存のタイマーをリセットして再開始
+            _keyDebounceTimer.Stop();
             _keyDebounceTimer.Start();
             DbgLog.Log(5, $"デバウンスタイマー開始 ({KeyDebounceIntervalMs}ms)");
         });

@@ -335,7 +335,7 @@ internal static partial class NativeMethods
         _ = GetWindowThreadProcessId(hWnd, out uint processId);
         try
         {
-            var process = System.Diagnostics.Process.GetProcessById((int)processId);
+            using var process = System.Diagnostics.Process.GetProcessById((int)processId);
             return process.ProcessName;
         }
         catch

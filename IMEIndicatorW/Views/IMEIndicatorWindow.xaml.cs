@@ -95,19 +95,22 @@ public partial class IMEIndicatorWindow : Window
         _viewModel.PositionY = Top;
 
         // デバウンス付きでディスプレイ検出と設定保存（500ms後）
-        _saveDelayTimer?.Stop();
-        _saveDelayTimer = new System.Windows.Threading.DispatcherTimer
+        if (_saveDelayTimer == null)
         {
-            Interval = TimeSpan.FromMilliseconds(500)
-        };
-        _saveDelayTimer.Tick += (s, args) =>
-        {
-            _saveDelayTimer?.Stop();
-            // ディスプレイインデックスを自動検出・更新
-            _viewModel.UpdateDisplayFromPosition();
-            App.Instance.SettingsManager?.Save();
-            DbgLog.Log(4, "IMEIndicatorWindow: 位置変更を保存");
-        };
+            _saveDelayTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(500)
+            };
+            _saveDelayTimer.Tick += (s, args) =>
+            {
+                _saveDelayTimer?.Stop();
+                // ディスプレイインデックスを自動検出・更新
+                _viewModel.UpdateDisplayFromPosition();
+                App.Instance.SettingsManager?.Save();
+                DbgLog.Log(4, "IMEIndicatorWindow: 位置変更を保存");
+            };
+        }
+        _saveDelayTimer.Stop();
         _saveDelayTimer.Start();
     }
 

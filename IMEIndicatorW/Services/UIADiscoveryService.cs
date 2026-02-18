@@ -67,7 +67,9 @@ public class UIADiscoveryService
     {
         try
         {
+#if DEBUG
             System.Windows.MessageBox.Show($"保存開始\nElements: {_log.Elements.Count}\nPath: {LogFilePath}", "Debug");
+#endif
 
             var dir = Path.GetDirectoryName(LogFilePath);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
@@ -79,7 +81,9 @@ public class UIADiscoveryService
             var json = JsonSerializer.Serialize(_log, JsonOptions);
             File.WriteAllText(LogFilePath, json);
 
+#if DEBUG
             System.Windows.MessageBox.Show("保存完了!", "Debug");
+#endif
         }
         catch (Exception ex)
         {

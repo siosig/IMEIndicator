@@ -349,8 +349,7 @@ public partial class App : Application
         var settingsItem = new System.Windows.Controls.MenuItem { Header = loc.GetString("MenuSettings") };
         settingsItem.Click += (s, e) =>
         {
-            var settingsWindow = new SettingsWindow(_mainViewModel!);
-            settingsWindow.ShowDialog();
+            OpenSettingsWindow();
         };
         menu.Items.Add(settingsItem);
 

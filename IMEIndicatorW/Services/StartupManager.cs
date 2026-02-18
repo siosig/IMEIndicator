@@ -124,8 +124,22 @@ public static class StartupManager
         string errorOutput = "";
         if (waitForExit)
         {
-            errorOutput = process.StandardError.ReadToEnd();
-            process.WaitForExit(5000); // 5秒タイムアウト
+            // WaitForExitの前にReadToEndすると、バッファが満杯時にデッドロックする可能性がある
+            // 非同期でエラー出力を読み取る
+            string? asyncError = null;
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) asyncError = (asyncError ?? "") + e.Data + Environment.NewLine;
+            };
+            process.BeginErrorReadLine();
+
+            if (!process.WaitForExit(5000)) // 5秒タイムアウト
+            {
+                try { process.Kill(); } catch { }
+                return new ProcessResult { ExitCode = -1, ErrorOutput = "プロセスがタイムアウトしました" };
+            }
+
+            errorOutput = asyncError ?? "";
         }
 
         return new ProcessResult { ExitCode = process.ExitCode, ErrorOutput = errorOutput };
