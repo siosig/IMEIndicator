@@ -54,7 +54,6 @@ public static class ColorHelper
         }
         catch (Exception ex)
         {
-            DbgLog.W($"色の解析に失敗: {hex} - {ex.Message}");
             return Colors.Gray;
         }
     }

@@ -138,8 +138,6 @@ public static class DisplayHelper
             newX = screen.Left + offset;
             newY = screen.Top + offset;
         }
-
-        DbgLog.Log(3, $"DisplayHelper: 無効な座標 ({x},{y}) → フォールバック ({newX},{newY}) display={targetDisplay}");
         return (newX, newY, targetDisplay);
     }
 }

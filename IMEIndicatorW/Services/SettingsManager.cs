@@ -73,21 +73,16 @@ public class SettingsManager
 
                     // null チェックと初期化
                     Settings.MouseCursorIndicator ??= new MouseCursorIndicatorSettings();
-                    Settings.Debug ??= new DebugSettings();
 
                     // 範囲外の値をクランプ
                     ValidateAndClampSettings();
 
-                    DbgLog.I($"設定を読み込みました: {_settingsFilePath}");
-
                     // デバッグレベルを設定から反映
-                    DebugLogService.DebugLevel = Settings.Debug.LogLevel;
                     return true;
                 }
             }
             else
             {
-                DbgLog.I("設定ファイルが存在しないため、デフォルト設定を使用します");
                 Settings = new AppSettings();
                 return true;
             }
@@ -95,21 +90,18 @@ public class SettingsManager
         catch (JsonException ex)
         {
             LastError = $"設定ファイルの形式が不正です: {ex.Message}";
-            DbgLog.E($"設定の読み込みに失敗（JSON形式エラー）: {ex.Message}");
             NotifyLoadError();
             Settings = new AppSettings();
         }
         catch (IOException ex)
         {
             LastError = $"設定ファイルの読み込みに失敗しました: {ex.Message}";
-            DbgLog.E($"設定の読み込みに失敗（I/Oエラー）: {ex.Message}");
             NotifyLoadError();
             Settings = new AppSettings();
         }
         catch (Exception ex)
         {
             LastError = $"設定の読み込み中に予期しないエラーが発生しました: {ex.Message}";
-            DbgLog.Ex(ex, "設定の読み込みに失敗");
             NotifyLoadError();
             Settings = new AppSettings();
         }
@@ -125,7 +117,6 @@ public class SettingsManager
         var s = Settings;
         s.MouseCursorIndicator.Opacity = Math.Clamp(s.MouseCursorIndicator.Opacity, 0.1, 1.0);
         s.MouseCursorIndicator.Size = Math.Clamp(s.MouseCursorIndicator.Size, 20, 100);
-        s.Debug.PollingInterval = Math.Clamp(s.Debug.PollingInterval, 50, 5000);
     }
 
     /// <summary>
@@ -139,28 +130,20 @@ public class SettingsManager
             if (!Directory.Exists(_settingsDirectory))
             {
                 Directory.CreateDirectory(_settingsDirectory);
-                DbgLog.I($"設定ディレクトリを作成しました: {_settingsDirectory}");
             }
-
-            // 現在のデバッグレベルを設定に保存
-            Settings.Debug ??= new DebugSettings();
-            Settings.Debug.LogLevel = DebugLogService.DebugLevel;
 
             var json = JsonSerializer.Serialize(Settings, JsonOptions);
             File.WriteAllText(_settingsFilePath, json);
-            DbgLog.Log(3, $"設定を保存しました: {_settingsFilePath}");
             return true;
         }
         catch (IOException ex)
         {
             LastError = $"設定ファイルの保存に失敗しました: {ex.Message}";
-            DbgLog.E($"設定の保存に失敗（I/Oエラー）: {ex.Message}");
             NotifySaveError();
         }
         catch (Exception ex)
         {
             LastError = $"設定の保存中に予期しないエラーが発生しました: {ex.Message}";
-            DbgLog.Ex(ex, "設定の保存に失敗");
             NotifySaveError();
         }
 
@@ -174,7 +157,6 @@ public class SettingsManager
     {
         Settings = new AppSettings();
         Save();
-        DbgLog.I("設定をデフォルトにリセットしました");
     }
 
     /// <summary>
@@ -205,7 +187,6 @@ public class SettingsManager
         }
         catch (Exception ex)
         {
-            DbgLog.E($"設定ディレクトリを開けません: {ex.Message}");
         }
     }
 

@@ -36,27 +36,6 @@ public class AppSettings
     /// 初回起動フラグ
     /// </summary>
     public bool IsFirstLaunch { get; set; } = true;
-
-    /// <summary>
-    /// デバッグ設定
-    /// </summary>
-    public DebugSettings Debug { get; set; } = new();
-}
-
-/// <summary>
-/// デバッグ設定
-/// </summary>
-public class DebugSettings
-{
-    /// <summary>
-    /// IMEモニターのポーリング間隔（ミリ秒）
-    /// </summary>
-    public int PollingInterval { get; set; } = 100;
-
-    /// <summary>
-    /// ログレベル（0: 無効、1-99: コンソールのみ、負: ファイル出力も）
-    /// </summary>
-    public int LogLevel { get; set; } = 0;
 }
 
 /// <summary>

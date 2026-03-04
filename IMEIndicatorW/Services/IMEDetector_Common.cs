@@ -57,7 +57,6 @@ public static class IMEDetector_Common
 
             if (result != IntPtr.Zero)
             {
-                DbgLog.Log(6, $"WM_IME_CONTROL成功: IME={lpdwResult != IntPtr.Zero}");
                 return (lpdwResult != IntPtr.Zero, true);
             }
         }
@@ -68,7 +67,6 @@ public static class IMEDetector_Common
         {
             bool isOpen = NativeMethods.ImmGetOpenStatus(hIMC);
             NativeMethods.ImmReleaseContext(hwndForeground, hIMC);
-            DbgLog.Log(6, $"ImmGetContext成功 (hwndForeground): IME={isOpen}");
             return (isOpen, true);
         }
 
@@ -80,7 +78,6 @@ public static class IMEDetector_Common
             {
                 bool isOpen = NativeMethods.ImmGetOpenStatus(hIMC);
                 NativeMethods.ImmReleaseContext(hwndFocus, hIMC);
-                DbgLog.Log(6, $"ImmGetContext成功 (hwndFocus): IME={isOpen}");
                 return (isOpen, true);
             }
         }
@@ -89,7 +86,6 @@ public static class IMEDetector_Common
         bool? fallbackResult = DetectIMEByCandidateWindow(hwndForeground);
         if (fallbackResult.HasValue)
         {
-            DbgLog.Log(5, $"候補ウィンドウ検出: IME={fallbackResult.Value}");
             return (fallbackResult.Value, true);
         }
 
@@ -143,7 +139,6 @@ public static class IMEDetector_Common
 
             if (CandidateWindowClasses.Contains(className))
             {
-                DbgLog.Log(6, $"候補ウィンドウ検出: class={className}");
                 return true;
             }
 
@@ -151,7 +146,6 @@ public static class IMEDetector_Common
             {
                 if (className.Contains(hint, StringComparison.OrdinalIgnoreCase))
                 {
-                    DbgLog.Log(6, $"候補ウィンドウ検出(部分一致): class={className}");
                     return true;
                 }
             }
@@ -164,15 +158,12 @@ public static class IMEDetector_Common
     /// 現在のIME状態を取得（日本語IME特化版）
     /// </summary>
     public static (LanguageInfo state, bool reliableStatus) GetCurrentIMEStateEx(
-        LanguageType? trackedLanguageForTerminal,
-        out string debugInfo)
+        LanguageType? trackedLanguageForTerminal)
     {
-        debugInfo = "";
 
         var hwndForeground = NativeMethods.GetForegroundWindow();
         if (hwndForeground == IntPtr.Zero)
         {
-            debugInfo = "[IME] フォアグラウンドウィンドウなし";
             return (new LanguageInfo(LanguageType.English, false), false);
         }
 
@@ -219,16 +210,11 @@ public static class IMEDetector_Common
 
         bool isTerminalProcess = TerminalProcesses.Contains(processName);
 
-        debugInfo = $"[IME] {processName} | \"{windowTitle}\" | class={className} | " +
-                    $"hwnd=0x{hwndForeground:X} | focus={focusInfo} | " +
-                    $"lang=0x{langId:X4} | {statusInfo}";
-
         var language = GetLanguageType(langId);
 
         if (isTerminalProcess && trackedLanguageForTerminal.HasValue)
         {
             language = trackedLanguageForTerminal.Value;
-            debugInfo += $" [TerminalLang:{language}]";
         }
 
         // 日本語以外はすべてIME OFF（英語）と同じ表示

@@ -40,7 +40,6 @@ public class SettingsManagerTests : IDisposable
         Assert.True(result);
         Assert.NotNull(manager.Settings);
         Assert.NotNull(manager.Settings.MouseCursorIndicator);
-        Assert.NotNull(manager.Settings.Debug);
     }
 
     [Fact]
@@ -106,7 +105,6 @@ public class SettingsManagerTests : IDisposable
         // Assert
         Assert.True(result);
         Assert.NotNull(manager.Settings.MouseCursorIndicator);
-        Assert.NotNull(manager.Settings.Debug);
     }
 
     [Fact]
@@ -116,7 +114,7 @@ public class SettingsManagerTests : IDisposable
         var manager = new SettingsManager(_tempDir);
         manager.Settings.MouseCursorIndicator.Opacity = 2.0;
         manager.Settings.MouseCursorIndicator.Size = 10; // 下限20未満
-        manager.Settings.Debug.PollingInterval = 10;      // 下限50未満
+      // 下限50未満
 
         // Act
         manager.ValidateAndClampSettings();
@@ -124,7 +122,6 @@ public class SettingsManagerTests : IDisposable
         // Assert
         Assert.Equal(1.0, manager.Settings.MouseCursorIndicator.Opacity);
         Assert.Equal(20, manager.Settings.MouseCursorIndicator.Size);
-        Assert.Equal(50, manager.Settings.Debug.PollingInterval);
     }
 
     [Fact]

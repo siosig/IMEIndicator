@@ -67,45 +67,33 @@ public partial class App : Application
 
         // デバッグログの初期化
 #if DEBUG
-        DebugLogService.DebugLevel = -5;
 #else
-        DebugLogService.DebugLevel = 3;
 #endif
-
-        DbgLog.I("アプリケーション起動開始");
 
         try
         {
             // 設定の読み込み
-            DbgLog.I("設定マネージャー作成");
             _settingsManager = new SettingsManager();
             _settingsManager.Load();
 
 #if DEBUG
-            DebugLogService.DebugLevel = -5;
 #endif
 
             // ViewModelの初期化
-            DbgLog.I("MainViewModel初期化開始");
             _mainViewModel = new MainViewModel(_settingsManager);
-            DbgLog.I("MainViewModel初期化完了");
 
             // IMEモニターの開始
-            DbgLog.I("IMEモニター開始");
             _imeMonitor = new IMEMonitor();
-            _imeMonitor.PollingInterval = _settingsManager.Settings.Debug.PollingInterval;
             _imeMonitor.IMEStateChanged += OnIMEStateChanged;
             _imeMonitor.CursorPositionChanged += OnCursorPositionChanged;
             _imeMonitor.Start();
 
             // マウスカーソルインジケーターウィンドウ
-            DbgLog.I("MouseCursorIndicatorWindow作成");
             _mouseCursorIndicatorWindow = new MouseCursorIndicatorWindow(_mainViewModel.MouseCursorIndicatorViewModel);
             // HideWhenImeOff を含む全設定を考慮した初期表示
             ApplyWindowVisibility(_imeMonitor.CurrentState);
 
             // システムトレイアイコン
-            DbgLog.I("システムトレイアイコン初期化");
             InitializeTrayIcon();
 
             // 設定ウィンドウの表示
@@ -122,12 +110,9 @@ public partial class App : Application
                 settingsWindow.Show();
             }
 #endif
-
-            DbgLog.I("アプリケーション起動完了");
         }
         catch (Exception ex)
         {
-            DbgLog.Ex(ex, "アプリケーション起動エラー");
             MessageBox.Show(
                 $"アプリケーションの起動中にエラーが発生しました。\n\n{ex.Message}\n\n{ex.StackTrace}",
                 $"{AppConstants.AppName} - エラー",
@@ -206,23 +191,6 @@ public partial class App : Application
         };
         menu.Items.Add(settingsItem);
 
-#if DEBUG
-        // デバッグメニュー
-        menu.Items.Add(new System.Windows.Controls.Separator());
-
-        var debugMenu = new System.Windows.Controls.MenuItem { Header = "デバッグ" };
-
-        var openLogItem = new System.Windows.Controls.MenuItem { Header = "ログファイルを開く" };
-        openLogItem.Click += (s, e) => DebugLogService.OpenLogFile();
-        debugMenu.Items.Add(openLogItem);
-
-        var clearLogItem = new System.Windows.Controls.MenuItem { Header = "ログをクリア" };
-        clearLogItem.Click += (s, e) => DebugLogService.ClearLogFile();
-        debugMenu.Items.Add(clearLogItem);
-
-        menu.Items.Add(debugMenu);
-#endif
-
         menu.Items.Add(new System.Windows.Controls.Separator());
 
         // 終了
@@ -235,7 +203,6 @@ public partial class App : Application
 
     private void OnIMEStateChanged(LanguageInfo languageInfo)
     {
-        DbgLog.Log(4, $"[App] OnIMEStateChanged: {languageInfo.Language}/{languageInfo.IsIMEOn}");
         Dispatcher.InvokeAsync(() =>
         {
             _mainViewModel?.UpdateIMEState(languageInfo);
@@ -272,7 +239,6 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        DbgLog.I("アプリケーション終了開始");
 
         try
         {
@@ -280,12 +246,9 @@ public partial class App : Application
             _mouseCursorIndicatorWindow?.Close();
             _trayIcon?.Dispose();
             _settingsManager?.Save();
-
-            DbgLog.I("アプリケーション終了完了");
         }
         catch (Exception ex)
         {
-            DbgLog.Ex(ex, "アプリケーション終了エラー");
         }
 
         base.OnExit(e);

@@ -65,16 +65,13 @@ public class MouseHook : IDisposable
             if (_hookId == IntPtr.Zero)
             {
                 int error = Marshal.GetLastWin32Error();
-                DbgLog.E($"マウスフック設定失敗 (Error: {error})");
             }
             else
             {
-                DbgLog.Log(4, $"マウスフック設定成功 (Handle: 0x{_hookId:X})");
             }
         }
         catch (Exception ex)
         {
-            DbgLog.Ex(ex, "マウスフック例外");
         }
     }
 
@@ -87,7 +84,6 @@ public class MouseHook : IDisposable
         {
             UnhookWindowsHookEx(_hookId);
             _hookId = IntPtr.Zero;
-            DbgLog.Log(4, "マウスフック解除");
         }
     }
 
@@ -102,7 +98,6 @@ public class MouseHook : IDisposable
             }
             catch (Exception ex)
             {
-                DbgLog.Ex(ex, "マウスフック コールバック例外");
             }
         }
 

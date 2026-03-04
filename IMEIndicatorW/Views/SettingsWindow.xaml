@@ -179,12 +179,6 @@
 
                         <Separator Margin="0,20,0,15"/>
 
-                        <!-- デバッグログスイッチ -->
-                        <CheckBox x:Name="DebugModeCheck" Content="デバッグログを有効にする" HorizontalAlignment="Center"
-                                  Checked="DebugMode_Changed" Unchecked="DebugMode_Changed"/>
-
-                        <Separator Margin="0,15,0,15"/>
-
                         <Button Content="設定をリセット" Width="150" Click="ResetSettings_Click"/>
                     </StackPanel>
                 </ScrollViewer>

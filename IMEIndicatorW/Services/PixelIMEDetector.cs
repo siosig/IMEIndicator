@@ -143,7 +143,6 @@ public partial class PixelIMEDetector : IDisposable
             var rect = GetIndicatorRect();
             if (rect.IsEmpty || rect.Width < 5 || rect.Height < 5)
             {
-                DbgLog.Log(5, "PixelIME: インジケーター位置取得失敗");
                 return null;
             }
 
@@ -152,13 +151,10 @@ public partial class PixelIMEDetector : IDisposable
 
             _lastPixelResult = isOn;
             _lastPixelCheck = now;
-
-            DbgLog.Log(5, $"PixelIME: {language} -> {(isOn ? "ON" : "OFF")}");
             return isOn;
         }
         catch (Exception ex)
         {
-            DbgLog.Log(5, $"PixelIME: 例外 - {ex.Message}");
             return null;
         }
     }
@@ -201,7 +197,6 @@ public partial class PixelIMEDetector : IDisposable
 
             if (rect.IsEmpty || rect.Width < 5 || rect.Height < 5)
             {
-                DbgLog.Log(5, "PixelIME2: インジケーター位置取得失敗");
                 swTotal.Stop();
                 return new DetectIMEState2Result(null, getRectTime, 0, swTotal.Elapsed.TotalMilliseconds);
             }
@@ -213,12 +208,10 @@ public partial class PixelIMEDetector : IDisposable
             analyzeTime = sw.Elapsed.TotalMilliseconds;
 
             swTotal.Stop();
-            DbgLog.Log(5, $"PixelIME2: {language} -> {(isOn ? "ON" : "OFF")} (GetRect={getRectTime:F2}ms, Analyze={analyzeTime:F2}ms)");
             return new DetectIMEState2Result(isOn, getRectTime, analyzeTime, swTotal.Elapsed.TotalMilliseconds);
         }
         catch (Exception ex)
         {
-            DbgLog.Log(5, $"PixelIME2: 例外 - {ex.Message}");
             swTotal.Stop();
             return new DetectIMEState2Result(null, getRectTime, analyzeTime, swTotal.Elapsed.TotalMilliseconds);
         }
@@ -234,8 +227,6 @@ public partial class PixelIMEDetector : IDisposable
         int width = (int)rect.Width;
         int height = (int)rect.Height;
 
-        DbgLog.Log(5, $"PixelIME: rect=({left},{top},{width}x{height})");
-
         IntPtr screenDC = IntPtr.Zero;
         IntPtr memDC = IntPtr.Zero;
         IntPtr hBitmap = IntPtr.Zero;
@@ -247,7 +238,6 @@ public partial class PixelIMEDetector : IDisposable
             screenDC = GetDC(IntPtr.Zero);
             if (screenDC == IntPtr.Zero)
             {
-                DbgLog.Log(5, "PixelIME: スクリーンDC取得失敗");
                 return false;
             }
 
@@ -255,14 +245,12 @@ public partial class PixelIMEDetector : IDisposable
             memDC = CreateCompatibleDC(screenDC);
             if (memDC == IntPtr.Zero)
             {
-                DbgLog.Log(5, "PixelIME: メモリDC作成失敗");
                 return false;
             }
 
             hBitmap = CreateCompatibleBitmap(screenDC, width, height);
             if (hBitmap == IntPtr.Zero)
             {
-                DbgLog.Log(5, "PixelIME: ビットマップ作成失敗");
                 return false;
             }
 
@@ -271,7 +259,6 @@ public partial class PixelIMEDetector : IDisposable
             // BitBltでスクリーンからメモリDCにコピー
             if (!BitBlt(memDC, 0, 0, width, height, screenDC, left, top, SRCCOPY))
             {
-                DbgLog.Log(5, "PixelIME: BitBlt失敗");
                 return false;
             }
 
@@ -304,7 +291,6 @@ public partial class PixelIMEDetector : IDisposable
                 int result = GetDIBits(screenDC, hBitmap, 0, (uint)height, pPixels, ref bmi, DIB_RGB_COLORS);
                 if (result == 0)
                 {
-                    DbgLog.Log(5, "PixelIME: GetDIBits失敗");
                     return false;
                 }
 
@@ -344,7 +330,6 @@ public partial class PixelIMEDetector : IDisposable
     /// </summary>
     private bool AnalyzePixelData(byte[] pixels, int width, int height, int stride, LanguageType language)
     {
-        DbgLog.Log(5, $"PixelIME: size={width}x{height}, stride={stride}");
 
         // 全体をサンプリング（マージン最小）
         // 周囲ピクセルから背景色の輝度を取得（上端1行を除く）
@@ -401,13 +386,10 @@ public partial class PixelIMEDetector : IDisposable
 
         if (innerPixels == 0) return false;
         double textRatio = (double)textPixels / innerPixels;
-        DbgLog.Log(5, $"PixelIME: bgBrightness={bgBrightness}, textPixels={textPixels}/{innerPixels} ({textRatio:P1})");
 
         // 実測値（内側領域 topMargin=3, bottomMargin=8）:
         //   日本語: A=7.1%, あ=11.3% → 閾値 8.5%
         bool result = textRatio > 0.085;   // 8.5%超でON（日本語専用）
-
-        DbgLog.Log(5, $"PixelIME: {language} textRatio={textRatio:P1} -> {(result ? "ON" : "OFF")}");
         return result;
     }
 
@@ -443,7 +425,6 @@ public partial class PixelIMEDetector : IDisposable
 
         var (name, rect) = result.Value;
         _cachedIndicatorRect = rect;
-        DbgLog.Log(5, $"PixelIME: インジケーター検索完了 name=\"{name}\"");
         return rect;
     }
 
@@ -459,7 +440,6 @@ public partial class PixelIMEDetector : IDisposable
             var trayHwnd = NativeMethods.FindWindow("Shell_TrayWnd", null);
             if (trayHwnd == IntPtr.Zero)
             {
-                DbgLog.Log(5, "PixelIME: Shell_TrayWnd が見つかりません");
                 return null;
             }
 
@@ -467,7 +447,6 @@ public partial class PixelIMEDetector : IDisposable
             var trayElement = AutomationElement.FromHandle(trayHwnd);
             if (trayElement == null)
             {
-                DbgLog.Log(5, "PixelIME: Shell_TrayWnd の AutomationElement 取得失敗");
                 return null;
             }
 
@@ -492,7 +471,6 @@ public partial class PixelIMEDetector : IDisposable
         }
         catch (Exception ex)
         {
-            DbgLog.Log(5, $"PixelIME: FindIndicator例外 - {ex.Message}");
         }
 
         return null;
@@ -536,11 +514,9 @@ public partial class PixelIMEDetector : IDisposable
             bitmap.UnlockBits(bmpData);
 
             bitmap.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
-            DbgLog.Log(5, $"PixelIME: DIB画像保存: {filePath}");
         }
         catch (Exception ex)
         {
-            DbgLog.Log(5, $"PixelIME: デバッグ画像保存エラー: {ex.Message}");
         }
     }
 #endif
@@ -588,7 +564,6 @@ public partial class PixelIMEDetector : IDisposable
         }
 
         _disposed = true;
-        DbgLog.Log(5, "PixelIMEDetector: Disposed");
     }
 
     /// <summary>

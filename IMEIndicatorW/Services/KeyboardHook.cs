@@ -89,16 +89,13 @@ public partial class KeyboardHook : IDisposable
             if (_hookId == IntPtr.Zero)
             {
                 int error = Marshal.GetLastWin32Error();
-                DbgLog.E($"キーボードフック設定失敗 (Error: {error})");
             }
             else
             {
-                DbgLog.Log(4, $"キーボードフック設定成功 (Handle: 0x{_hookId:X})");
             }
         }
         catch (Exception ex)
         {
-            DbgLog.Ex(ex, "キーボードフック例外");
         }
     }
 
@@ -108,7 +105,6 @@ public partial class KeyboardHook : IDisposable
         {
             UnhookWindowsHookEx(_hookId);
             _hookId = IntPtr.Zero;
-            DbgLog.Log(4, "キーボードフック解除");
         }
     }
 
@@ -125,7 +121,6 @@ public partial class KeyboardHook : IDisposable
                 // 詳細デバッグ: 全キー出力（レベル6以上で有効）
                 if (isKeyDown)
                 {
-                    DbgLog.Log(6, $"Key: vkCode=0x{vkCode:X2}, scanCode=0x{hookStruct.scanCode:X2}, flags=0x{hookStruct.flags:X2}");
                 }
 
                 // KeyDown時の処理
@@ -136,7 +131,6 @@ public partial class KeyboardHook : IDisposable
                         vkCode == VK_IME_ON || vkCode == VK_IME_OFF ||
                         vkCode == VK_OEM_AUTO || vkCode == VK_OEM_ENLW)
                     {
-                        DbgLog.Log(5, $"IMEキー検出: vkCode=0x{vkCode:X2} ({GetKeyName(vkCode)})");
                         IMEKeyPressed?.Invoke(vkCode);
                     }
 
@@ -147,7 +141,6 @@ public partial class KeyboardHook : IDisposable
                                           (GetAsyncKeyState(VK_RWIN) & 0x8000) != 0;
                         if (winPressed)
                         {
-                            DbgLog.Log(4, "Win+Space検出 - 言語切り替え");
                             LanguageSwitchDetected?.Invoke();
                         }
                     }
@@ -156,7 +149,6 @@ public partial class KeyboardHook : IDisposable
         }
         catch (Exception ex)
         {
-            DbgLog.Ex(ex, "キーボードフック コールバック例外");
         }
 
         return CallNextHookEx(_hookId, nCode, wParam, lParam);

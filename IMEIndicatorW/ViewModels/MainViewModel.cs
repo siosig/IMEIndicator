@@ -26,15 +26,12 @@ public partial class MainViewModel : ObservableObject
     /// </summary>
     public void UpdateIMEState(LanguageInfo languageInfo)
     {
-        DbgLog.Log(5, $"[MainVM] UpdateIMEState開始: {languageInfo.Language}/{languageInfo.IsIMEOn}");
         try
         {
             MouseCursorIndicatorViewModel.UpdateState(languageInfo);
-            DbgLog.Log(6, "[MainVM] MouseCursorIndicatorViewModel.UpdateState完了");
         }
         catch (Exception ex)
         {
-            DbgLog.Ex(ex, "[MainVM] UpdateIMEState例外");
         }
     }
 

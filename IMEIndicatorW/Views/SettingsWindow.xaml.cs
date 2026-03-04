@@ -44,7 +44,6 @@ public partial class SettingsWindow : Window
         LblVersion.Text = $"v{version?.Major}.{version?.Minor}.{version?.Build}";
 
         // デバッグモード
-        DebugModeCheck.IsChecked = IMEMonitor.DebugMode;
     }
 
     private static void UpdateColorPreview(System.Windows.Controls.Border preview, string hex)
@@ -110,13 +109,6 @@ public partial class SettingsWindow : Window
         _viewModel.MouseCursorIndicatorViewModel.HideWhenImeOff = HideWhenImeOffCheck.IsChecked == true;
         _viewModel.SaveSettings();
         App.Instance.ApplyCurrentVisibility();
-    }
-
-    private void DebugMode_Changed(object sender, RoutedEventArgs e)
-    {
-        if (_isInitializing) return;
-        IMEMonitor.DebugMode = DebugModeCheck.IsChecked == true;
-        _viewModel.SaveSettings();
     }
 
     private void ResetSettings_Click(object sender, RoutedEventArgs e)

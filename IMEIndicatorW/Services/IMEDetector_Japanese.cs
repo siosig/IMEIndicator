@@ -54,11 +54,9 @@ public static class IMEDetector_Japanese
 
                 if (windowChanged || languageChanged)
                 {
-                    DbgLog.Log(4, $"日本語初期状態(Pixel): {(pixelResult.Value ? "あ" : "A")}");
                 }
                 else if (trackedIMEState != pixelResult.Value)
                 {
-                    DbgLog.Log(4, $"日本語状態補正(Pixel): {trackedIMEState} → {pixelResult.Value}");
                 }
 
                 trackedIMEState = pixelResult.Value;

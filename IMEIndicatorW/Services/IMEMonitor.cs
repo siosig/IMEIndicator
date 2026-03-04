@@ -28,21 +28,11 @@ public partial class IMEMonitor : IDisposable
     private volatile int _isChecking = 0;
 
     /// <summary>
-    /// デバッグログを有効にするかどうか
-    /// </summary>
-    public static bool DebugMode
-    {
-        get => DebugLogService.DebugLevel != 0;
-        set => DebugLogService.DebugLevel = value ? -5 : 0;
-    }
-
-    /// <summary>
     /// 定期ピクセル検証間隔を設定する（0で無効化）
     /// </summary>
     public void SetPixelVerificationInterval(int intervalMs)
     {
         _pixelVerificationIntervalMs = intervalMs;
-        DbgLog.I($"ピクセル検証間隔を変更: {(intervalMs == 0 ? "無効" : $"{intervalMs}ms")}");
     }
 
     /// <summary>
@@ -72,18 +62,14 @@ public partial class IMEMonitor : IDisposable
     {
         if (_timer != null) return;
 
-        DbgLog.I("IMEMonitor 監視開始");
-
         _keyboardHook = new KeyboardHook();
         _keyboardHook.IMEKeyPressed += OnIMEKeyPressed;
         _keyboardHook.LanguageSwitchDetected += OnLanguageSwitchDetected;
         _keyboardHook.Start();
-        DbgLog.I("キーボードフック開始完了");
 
         _mouseHook = new MouseHook();
         _mouseHook.MouseMoved += (x, y) => CursorPositionChanged?.Invoke(x, y);
         _mouseHook.Start();
-        DbgLog.I("マウスフック開始完了");
 
         _timer = new DispatcherTimer
         {
@@ -124,8 +110,6 @@ public partial class IMEMonitor : IDisposable
             _mouseHook.Dispose();
             _mouseHook = null;
         }
-
-        DbgLog.I("IMEMonitor 監視停止");
     }
 
     private void OnTimerTick(object? sender, EventArgs e)
@@ -148,7 +132,7 @@ public partial class IMEMonitor : IDisposable
             if (hwndForeground == IntPtr.Zero) return;
 
             var (currentState, reliableStatus) = IMEDetector_Common.GetCurrentIMEStateEx(
-                _trackedLanguageForTerminal, out string debugInfo);
+                _trackedLanguageForTerminal);
 
             bool windowChanged = hwndForeground != _lastForegroundWindow;
 
@@ -160,13 +144,11 @@ public partial class IMEMonitor : IDisposable
                 {
                     currentState = new LanguageInfo(currentState.Language, result.IsOn.Value);
                     _trackedIMEState = result.IsOn.Value;
-                    debugInfo += $" [Pixel2:{result.IsOn.Value} Total={result.TotalTimeMs:F1}ms GetRect={result.GetRectTimeMs:F1}ms Analyze={result.AnalyzeTimeMs:F1}ms]";
                 }
             }
 
             if (windowChanged)
             {
-                DbgLog.Log(4, $"[Window変更] {debugInfo}");
                 _lastForegroundWindow = hwndForeground;
             }
 
@@ -176,16 +158,13 @@ public partial class IMEMonitor : IDisposable
             {
                 if (!windowChanged)
                 {
-                    DbgLog.Log(5, debugInfo);
                 }
-                DbgLog.Log(4, $"  → 変更検出: {_lastState.Language}/{_lastState.IsIMEOn} → {currentState.Language}/{currentState.IsIMEOn}");
                 _lastState = currentState;
                 IMEStateChanged?.Invoke(currentState);
             }
         }
         catch (Exception ex)
         {
-            DbgLog.Ex(ex, "IME状態チェックエラー");
         }
         finally
         {

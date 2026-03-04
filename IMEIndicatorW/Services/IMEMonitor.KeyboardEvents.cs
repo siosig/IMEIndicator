@@ -23,19 +23,16 @@ public partial class IMEMonitor
             _trackedIMEState = false;
             _trackedLanguageForTerminal = LanguageType.Japanese;
             stateChanged = true;
-            DbgLog.Log(5, "OEM_AUTO → 日本語確定");
         }
         else if (vkCode == VK_OEM_ENLW)
         {
             _trackedIMEState = true;
             _trackedLanguageForTerminal = LanguageType.Japanese;
             stateChanged = true;
-            DbgLog.Log(5, "OEM_ENLW → 日本語確定");
         }
 
         if (stateChanged)
         {
-            DbgLog.Log(4, $"IME状態変更 (KeyHook): {_trackedIMEState}");
             // デバウンス処理: 最後のキー押下から100ms後にピクセル判定
             ScheduleDebouncedCheck();
         }
@@ -59,7 +56,6 @@ public partial class IMEMonitor
                 _keyDebounceTimer.Tick += (s, e) =>
                 {
                     _keyDebounceTimer?.Stop();
-                    DbgLog.Log(4, "デバウンスタイマー発火 → CheckIMEState2");
                     CheckIMEState2(forceUpdate: true);
                 };
             }
@@ -67,7 +63,6 @@ public partial class IMEMonitor
             // 既存のタイマーをリセットして再開始
             _keyDebounceTimer.Stop();
             _keyDebounceTimer.Start();
-            DbgLog.Log(5, $"デバウンスタイマー開始 ({KeyDebounceIntervalMs}ms)");
         });
     }
 
@@ -79,7 +74,6 @@ public partial class IMEMonitor
 
         if (isTerminal)
         {
-            DbgLog.Log(4, "Win+Space検出 - 次のIMEキーで言語判定待ち");
         }
         else
         {
@@ -91,8 +85,6 @@ public partial class IMEMonitor
                 int langId = (int)hkl & 0xFFFF;
                 var newLang = IMEDetector_Common.GetLanguageType(langId);
                 _trackedLanguageForTerminal = newLang;
-
-                DbgLog.Log(4, $"言語取得: lang=0x{langId:X4} -> {newLang}");
                 CheckIMEState2(forceUpdate: true);
             });
         }
