@@ -71,9 +71,7 @@ public class SettingsManager
                 {
                     Settings = settings;
 
-                    // null チェックと初期化（古い設定ファイルからの読み込み対応）
-                    Settings.Clock ??= new ClockSettings();
-                    Settings.IMEIndicator ??= new IMEIndicatorSettings();
+                    // null チェックと初期化
                     Settings.MouseCursorIndicator ??= new MouseCursorIndicatorSettings();
                     Settings.Debug ??= new DebugSettings();
 
@@ -81,7 +79,6 @@ public class SettingsManager
                     ValidateAndClampSettings();
 
                     DbgLog.I($"設定を読み込みました: {_settingsFilePath}");
-                    DbgLog.Log(3, $"SettingsManager.Load: Clock.PositionX={Settings.Clock.PositionX}, Clock.PositionY={Settings.Clock.PositionY}");
 
                     // デバッグレベルを設定から反映
                     DebugLogService.DebugLevel = Settings.Debug.LogLevel;
@@ -126,21 +123,9 @@ public class SettingsManager
     internal void ValidateAndClampSettings()
     {
         var s = Settings;
-        s.IMEIndicator.Opacity = Math.Clamp(s.IMEIndicator.Opacity, 0.1, 1.0);
-        s.IMEIndicator.Size = Math.Clamp(s.IMEIndicator.Size, 16, 512);
-        s.IMEIndicator.FontSizeRatio = Math.Clamp(s.IMEIndicator.FontSizeRatio, 0.1, 1.0);
-        s.IMEIndicator.PixelVerificationIntervalMs = Math.Max(0, s.IMEIndicator.PixelVerificationIntervalMs);
-
-        s.Clock.Opacity = Math.Clamp(s.Clock.Opacity, 0.1, 1.0);
-        s.Clock.Width = Math.Clamp(s.Clock.Width, 50, 2000);
-        s.Clock.Height = Math.Clamp(s.Clock.Height, 30, 2000);
-        s.Clock.FontSize = Math.Clamp(s.Clock.FontSize, 6, 200);
-        s.Clock.AnalogClockSize = Math.Clamp(s.Clock.AnalogClockSize, 100, 500);
-
         s.MouseCursorIndicator.Opacity = Math.Clamp(s.MouseCursorIndicator.Opacity, 0.1, 1.0);
-        s.MouseCursorIndicator.Size = Math.Clamp(s.MouseCursorIndicator.Size, 8, 256);
-
-        s.Debug.PollingInterval = Math.Clamp(s.Debug.PollingInterval, 50, 10000);
+        s.MouseCursorIndicator.Size = Math.Clamp(s.MouseCursorIndicator.Size, 20, 100);
+        s.Debug.PollingInterval = Math.Clamp(s.Debug.PollingInterval, 50, 5000);
     }
 
     /// <summary>
@@ -151,7 +136,6 @@ public class SettingsManager
         LastError = null;
         try
         {
-            // ディレクトリが存在しない場合は作成
             if (!Directory.Exists(_settingsDirectory))
             {
                 Directory.CreateDirectory(_settingsDirectory);
@@ -161,9 +145,6 @@ public class SettingsManager
             // 現在のデバッグレベルを設定に保存
             Settings.Debug ??= new DebugSettings();
             Settings.Debug.LogLevel = DebugLogService.DebugLevel;
-
-            // 保存前の時計位置をログ
-            DbgLog.Log(3, $"SettingsManager.Save: Clock.PositionX={Settings.Clock.PositionX}, Clock.PositionY={Settings.Clock.PositionY}");
 
             var json = JsonSerializer.Serialize(Settings, JsonOptions);
             File.WriteAllText(_settingsFilePath, json);

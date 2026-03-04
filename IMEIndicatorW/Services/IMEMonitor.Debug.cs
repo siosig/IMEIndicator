@@ -1,8 +1,6 @@
 //
 // IMEMonitor.Debug.cs
-// 開発用デバッグ機能（公開リポジトリには含めない）
-//
-// .gitignore に *.Debug.cs を追加して非公開にする
+// 開発用デバッグ機能
 //
 
 using System.Diagnostics;
@@ -11,7 +9,7 @@ using System.Text;
 namespace IMEIndicatorClock.Services;
 
 /// <summary>
-/// IMEMonitor デバッグ拡張
+/// IMEMonitor デバッグ拡張（日本語IME特化）
 /// </summary>
 public partial class IMEMonitor
 {
@@ -26,8 +24,6 @@ public partial class IMEMonitor
         sb.AppendLine($"LastState: {_lastState.Language}, IME={_lastState.IsIMEOn}");
         sb.AppendLine($"TrackedIMEState: {_trackedIMEState}");
         sb.AppendLine($"LastForegroundWindow: 0x{_lastForegroundWindow:X}");
-        sb.AppendLine($"UsePixelStateForKorean: {_usePixelStateForKorean}");
-        sb.AppendLine($"WindowKoreanIMEStates Count: {_windowKoreanIMEStates.Count}");
         sb.AppendLine($"PixelVerificationInterval: {_pixelVerificationIntervalMs}ms");
         sb.AppendLine($"LastPixelVerification: {_lastPixelVerification:HH:mm:ss.fff}");
         return sb.ToString();
@@ -51,8 +47,6 @@ public partial class IMEMonitor
     {
         DbgLog.W("[DEBUG] トラッキング状態をリセット");
         _trackedIMEState = false;
-        _usePixelStateForKorean = false;
-        _windowKoreanIMEStates.Clear();
     }
 
     /// <summary>

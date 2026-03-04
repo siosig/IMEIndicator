@@ -1,14 +1,8 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:converters="clr-namespace:IMEIndicatorClock.Resources">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- コンバーター -->
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-    <converters:FontSizeReducerConverter x:Key="FontSizeReducerConverter"/>
-    <converters:DisplayModeToTimeVisibilityConverter x:Key="DisplayModeToTimeVisibilityConverter"/>
-    <converters:DisplayModeToDateVisibilityConverter x:Key="DisplayModeToDateVisibilityConverter"/>
-    <converters:ClockStyleToDigitalVisibilityConverter x:Key="ClockStyleToDigitalVisibilityConverter"/>
-    <converters:ClockStyleToAnalogVisibilityConverter x:Key="ClockStyleToAnalogVisibilityConverter"/>
 
     <!-- 基本スタイル -->
     <Style TargetType="Button">

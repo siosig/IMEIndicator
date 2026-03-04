@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace IMEIndicatorClock.Services;
 
 /// <summary>
-/// 低レベルキーボードフックでIME切り替えキーを検出
+/// 低レベルキーボードフックでIME切り替えキーを検出（日本語IME特化）
 /// </summary>
 public partial class KeyboardHook : IDisposable
 {
@@ -28,14 +28,6 @@ public partial class KeyboardHook : IDisposable
     private const int VK_SPACE = 0x20;           // Space
     private const int VK_LWIN = 0x5B;            // Left Windows key
     private const int VK_RWIN = 0x5C;            // Right Windows key
-
-    // 中国語IME切り替えキー
-    private const int VK_SHIFT = 0x10;           // Shift (中国語IME 中/英切り替え)
-    private const int VK_LSHIFT = 0xA0;          // Left Shift
-    private const int VK_RSHIFT = 0xA1;          // Right Shift
-    private const int VK_CONTROL = 0x11;         // Ctrl
-    private const int VK_LCONTROL = 0xA2;        // Left Ctrl
-    private const int VK_RCONTROL = 0xA3;        // Right Ctrl
 
     private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
@@ -70,11 +62,6 @@ public partial class KeyboardHook : IDisposable
     private readonly LowLevelKeyboardProc _proc;
     private bool _disposed;
 
-    // 単独Shift検出用（中国語IME）
-    private const uint ShiftDownThresholdMs = 500;  // 単独Shift判定閾値（ミリ秒）
-    private bool _shiftDownAlone = false;  // Shiftが単独で押されているか
-    private uint _shiftDownTime = 0;       // Shift押下時刻
-
     /// <summary>
     /// IME切り替えキーが押されたときに発生
     /// </summary>
@@ -84,12 +71,6 @@ public partial class KeyboardHook : IDisposable
     /// 言語切り替え (Win+Space等) が検出されたときに発生
     /// </summary>
     public event Action? LanguageSwitchDetected;
-
-    /// <summary>
-    /// 中国語IME切り替え (Ctrl+Space, 単独Shift) が検出されたときに発生
-    /// eventType: "CtrlSpace" = Ctrl+Space, "Shift" = 単独Shift
-    /// </summary>
-    public event Action<string>? ChineseIMEToggleDetected;
 
     public KeyboardHook()
     {
@@ -140,48 +121,11 @@ public partial class KeyboardHook : IDisposable
                 var hookStruct = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);
                 int vkCode = (int)hookStruct.vkCode;
                 bool isKeyDown = wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN;
-                bool isKeyUp = wParam == (IntPtr)WM_KEYUP || wParam == (IntPtr)WM_SYSKEYUP;
 
                 // 詳細デバッグ: 全キー出力（レベル6以上で有効）
                 if (isKeyDown)
                 {
                     DbgLog.Log(6, $"Key: vkCode=0x{vkCode:X2}, scanCode=0x{hookStruct.scanCode:X2}, flags=0x{hookStruct.flags:X2}");
-                }
-
-                // ========================================
-                // 単独Shift検出（中国語IME 中/英切り替え）
-                // ========================================
-                if (vkCode == VK_SHIFT || vkCode == VK_LSHIFT || vkCode == VK_RSHIFT)
-                {
-                    if (isKeyDown)
-                    {
-                        // Shiftが押された - 単独フラグをセット
-                        _shiftDownAlone = true;
-                        _shiftDownTime = hookStruct.time;
-                    }
-                    else if (isKeyUp && _shiftDownAlone)
-                    {
-                        // Shiftが離された - 単独だった場合のみトグル
-                        uint elapsed = hookStruct.time - _shiftDownTime;
-                        // ShiftDownThresholdMs以内の短いShift押下のみを単独Shiftとして扱う
-                        if (elapsed < ShiftDownThresholdMs)
-                        {
-                            DbgLog.Log(4, $"単独Shift検出 ({elapsed}ms) - 中国語IME 中/英切り替え");
-                            ChineseIMEToggleDetected?.Invoke("Shift");
-                        }
-                        _shiftDownAlone = false;
-                    }
-                }
-                // Shift以外のキーが押されたら単独Shiftフラグをリセット
-                else if (isKeyDown && _shiftDownAlone)
-                {
-                    // モディファイアキー（Ctrl, Alt, Win）は除外
-                    if (vkCode != VK_CONTROL && vkCode != VK_LCONTROL && vkCode != VK_RCONTROL &&
-                        vkCode != VK_LWIN && vkCode != VK_RWIN &&
-                        vkCode != 0x12 /* VK_MENU (Alt) */)
-                    {
-                        _shiftDownAlone = false;
-                    }
                 }
 
                 // KeyDown時の処理
@@ -196,25 +140,15 @@ public partial class KeyboardHook : IDisposable
                         IMEKeyPressed?.Invoke(vkCode);
                     }
 
-                    // Space キー
+                    // Win+Space 言語切り替え検出
                     if (vkCode == VK_SPACE)
                     {
-                        // Win+Space 言語切り替え検出
                         bool winPressed = (GetAsyncKeyState(VK_LWIN) & 0x8000) != 0 ||
                                           (GetAsyncKeyState(VK_RWIN) & 0x8000) != 0;
                         if (winPressed)
                         {
                             DbgLog.Log(4, "Win+Space検出 - 言語切り替え");
                             LanguageSwitchDetected?.Invoke();
-                        }
-
-                        // Ctrl+Space 中国語IME ON/OFF検出
-                        bool ctrlPressed = (GetAsyncKeyState(VK_LCONTROL) & 0x8000) != 0 ||
-                                           (GetAsyncKeyState(VK_RCONTROL) & 0x8000) != 0;
-                        if (ctrlPressed && !winPressed)
-                        {
-                            DbgLog.Log(4, "Ctrl+Space検出 - 中国語IME ON/OFF");
-                            ChineseIMEToggleDetected?.Invoke("CtrlSpace");
                         }
                     }
                 }

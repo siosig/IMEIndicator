@@ -10,16 +10,12 @@ public partial class App : Application
 {
     private TaskbarIcon? _trayIcon;
     private IMEMonitor? _imeMonitor;
-    private IMEIndicatorWindow? _imeIndicatorWindow;
-    private ClockWindow? _clockWindow;
     private MouseCursorIndicatorWindow? _mouseCursorIndicatorWindow;
     private SettingsManager? _settingsManager;
     private MainViewModel? _mainViewModel;
 
     // 外部からアクセス可能なインスタンス
     public static App Instance => (App)Current;
-    public IMEIndicatorWindow? IMEIndicatorWindow => _imeIndicatorWindow;
-    public ClockWindow? ClockWindow => _clockWindow;
     public MouseCursorIndicatorWindow? MouseCursorIndicatorWindow => _mouseCursorIndicatorWindow;
     public SettingsManager? SettingsManager => _settingsManager;
     public IMEMonitor? IMEMonitor => _imeMonitor;
@@ -29,28 +25,6 @@ public partial class App : Application
     /// 設定ウィンドウが開いているかどうか
     /// </summary>
     public bool IsSettingsWindowOpen { get; set; } = false;
-
-    /// <summary>
-    /// IMEインジケーターの表示切替
-    /// </summary>
-    public void SetIMEIndicatorVisible(bool visible)
-    {
-        if (_imeIndicatorWindow == null || _settingsManager == null) return;
-        _settingsManager.Settings.IMEIndicator.IsVisible = visible;
-        if (visible) _imeIndicatorWindow.Show();
-        else _imeIndicatorWindow.Hide();
-    }
-
-    /// <summary>
-    /// 時計の表示切替
-    /// </summary>
-    public void SetClockVisible(bool visible)
-    {
-        if (_clockWindow == null || _settingsManager == null) return;
-        _settingsManager.Settings.Clock.IsVisible = visible;
-        if (visible) _clockWindow.Show();
-        else _clockWindow.Hide();
-    }
 
     /// <summary>
     /// マウスインジケーターの表示切替
@@ -70,10 +44,10 @@ public partial class App : Application
     public void OpenSettingsWindow()
     {
         if (_mainViewModel == null) return;
-        
+
         // 既に開いている場合は何もしない
         if (IsSettingsWindowOpen) return;
-        
+
         var settingsWindow = new SettingsWindow(_mainViewModel);
         settingsWindow.Show();
     }
@@ -82,11 +56,11 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        // デバッグログの初期化（常にファイル出力を有効にする）
+        // デバッグログの初期化
 #if DEBUG
-        DebugLogService.DebugLevel = -5;  // デバッグビルドではファイル出力も有効
+        DebugLogService.DebugLevel = -5;
 #else
-        DebugLogService.DebugLevel = 3;   // リリースビルドではエラーのみ
+        DebugLogService.DebugLevel = 3;
 #endif
 
         DbgLog.I("アプリケーション起動開始");
@@ -98,17 +72,9 @@ public partial class App : Application
             _settingsManager = new SettingsManager();
             _settingsManager.Load();
 
-            // デバッグビルドではログレベルを強制的に-5に維持
 #if DEBUG
             DebugLogService.DebugLevel = -5;
 #endif
-
-            // 言語設定の適用
-            DbgLog.I("言語設定適用");
-            if (!string.IsNullOrEmpty(_settingsManager.Settings.Language))
-            {
-                LocalizationService.Instance.SetLanguage(_settingsManager.Settings.Language);
-            }
 
             // ViewModelの初期化
             DbgLog.I("MainViewModel初期化開始");
@@ -118,26 +84,10 @@ public partial class App : Application
             // IMEモニターの開始
             DbgLog.I("IMEモニター開始");
             _imeMonitor = new IMEMonitor();
-            _imeMonitor.SetPixelVerificationInterval(_settingsManager.Settings.IMEIndicator.PixelVerificationIntervalMs);
+            _imeMonitor.PollingInterval = _settingsManager.Settings.Debug.PollingInterval;
             _imeMonitor.IMEStateChanged += OnIMEStateChanged;
             _imeMonitor.CursorPositionChanged += OnCursorPositionChanged;
             _imeMonitor.Start();
-
-            // IMEインジケーターウィンドウ
-            DbgLog.I("IMEIndicatorWindow作成");
-            _imeIndicatorWindow = new IMEIndicatorWindow(_mainViewModel.IMEIndicatorViewModel);
-            if (_settingsManager.Settings.IMEIndicator.IsVisible)
-            {
-                _imeIndicatorWindow.Show();
-            }
-
-            // 時計ウィンドウ
-            DbgLog.I("ClockWindow作成");
-            _clockWindow = new ClockWindow(_mainViewModel.ClockViewModel);
-            if (_settingsManager.Settings.Clock.IsVisible)
-            {
-                _clockWindow.Show();
-            }
 
             // マウスカーソルインジケーターウィンドウ
             DbgLog.I("MouseCursorIndicatorWindow作成");
@@ -151,13 +101,7 @@ public partial class App : Application
             DbgLog.I("システムトレイアイコン初期化");
             InitializeTrayIcon();
 
-            // 言語変更イベントの購読
-            LocalizationService.Instance.LanguageChanged += OnLanguageChanged;
-
             // 設定ウィンドウの表示
-            // - デバッグ時: 毎回開く
-            // - リリース時: 初回起動時のみ開く
-            DbgLog.I("設定ウィンドウ表示判定");
 #if DEBUG
             var settingsWindow = new SettingsWindow(_mainViewModel);
             settingsWindow.Show();
@@ -186,28 +130,18 @@ public partial class App : Application
         }
     }
 
-    private void OnLanguageChanged(object? sender, EventArgs e)
-    {
-        // コンテキストメニューを再作成
-        if (_trayIcon != null)
-        {
-            _trayIcon.ContextMenu = CreateContextMenu();
-        }
-    }
-
     private void InitializeTrayIcon()
     {
         _trayIcon = new TaskbarIcon
         {
             Icon = LoadIcon(),
-            ToolTipText = "IME Indicator Clock",
+            ToolTipText = AppConstants.AppName,
             ContextMenu = CreateContextMenu()
         };
     }
 
     private System.Drawing.Icon LoadIcon()
     {
-        // Debug/Releaseで異なるアイコンを使用
 #if DEBUG
         var iconFileName = "app-debug.ico";
 #else
@@ -215,7 +149,6 @@ public partial class App : Application
 #endif
         try
         {
-            // 埋め込みリソースから読み込み（PublishSingleFile対応）
             var uri = new Uri($"pack://application:,,,/{iconFileName}", UriKind.Absolute);
             var streamInfo = GetResourceStream(uri);
             if (streamInfo != null)
@@ -228,124 +161,38 @@ public partial class App : Application
             // 埋め込みリソースから読み込めない場合、外部ファイルを試す
         }
 
-        // フォールバック: 外部ファイルから読み込み
         var iconPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", iconFileName);
         if (System.IO.File.Exists(iconPath))
         {
             return new System.Drawing.Icon(iconPath);
         }
 
-        // デフォルトアイコン（システムアイコン）
         return System.Drawing.SystemIcons.Application;
     }
 
     private System.Windows.Controls.ContextMenu CreateContextMenu()
     {
-        var loc = LocalizationService.Instance;
         var menu = new System.Windows.Controls.ContextMenu();
-
-        // IMEインジケーター表示/非表示
-        var imeIndicatorItem = new System.Windows.Controls.MenuItem
-        {
-            Header = loc.GetString("MenuIMEIndicator"),
-            IsCheckable = true,
-            IsChecked = _settingsManager?.Settings.IMEIndicator.IsVisible ?? true
-        };
-        imeIndicatorItem.Click += (s, e) =>
-        {
-            var item = (System.Windows.Controls.MenuItem)s!;
-            if (item.IsChecked)
-            {
-                _imeIndicatorWindow?.Show();
-            }
-            else
-            {
-                _imeIndicatorWindow?.Hide();
-            }
-            if (_settingsManager != null)
-            {
-                _settingsManager.Settings.IMEIndicator.IsVisible = item.IsChecked;
-                _settingsManager.Save();
-            }
-        };
-        menu.Items.Add(imeIndicatorItem);
-
-        // 時計表示/非表示
-        var clockItem = new System.Windows.Controls.MenuItem
-        {
-            Header = loc.GetString("MenuClock"),
-            IsCheckable = true,
-            IsChecked = _settingsManager?.Settings.Clock.IsVisible ?? true
-        };
-        clockItem.Click += (s, e) =>
-        {
-            var item = (System.Windows.Controls.MenuItem)s!;
-            if (item.IsChecked)
-            {
-                _clockWindow?.Show();
-            }
-            else
-            {
-                _clockWindow?.Hide();
-            }
-            if (_settingsManager != null)
-            {
-                _settingsManager.Settings.Clock.IsVisible = item.IsChecked;
-                _settingsManager.Save();
-            }
-        };
-        menu.Items.Add(clockItem);
 
         // マウスカーソルインジケーター表示/非表示
         var mouseIndicatorItem = new System.Windows.Controls.MenuItem
         {
-            Header = loc.GetString("MenuMouseIndicator"),
+            Header = "表示切替",
             IsCheckable = true,
-            IsChecked = _settingsManager?.Settings.MouseCursorIndicator.IsVisible ?? false
+            IsChecked = _settingsManager?.Settings.MouseCursorIndicator.IsVisible ?? true
         };
         mouseIndicatorItem.Click += (s, e) =>
         {
             var item = (System.Windows.Controls.MenuItem)s!;
-            if (item.IsChecked)
-            {
-                _mouseCursorIndicatorWindow?.Show();
-            }
-            else
-            {
-                _mouseCursorIndicatorWindow?.Hide();
-            }
-            if (_settingsManager != null)
-            {
-                _settingsManager.Settings.MouseCursorIndicator.IsVisible = item.IsChecked;
-                _mainViewModel!.MouseCursorIndicatorViewModel.IsVisible = item.IsChecked;
-                _settingsManager.Save();
-            }
+            SetMouseIndicatorVisible(item.IsChecked);
+            _settingsManager?.Save();
         };
         menu.Items.Add(mouseIndicatorItem);
 
         menu.Items.Add(new System.Windows.Controls.Separator());
 
-        // 自動起動
-        var startupItem = new System.Windows.Controls.MenuItem
-        {
-            Header = loc.GetString("MenuStartup"),
-            IsCheckable = true,
-            IsChecked = StartupManager.IsEnabled
-        };
-        startupItem.Click += (s, e) =>
-        {
-            var item = (System.Windows.Controls.MenuItem)s!;
-            var success = StartupManager.SetEnabled(item.IsChecked);
-            if (!success)
-            {
-                // 失敗した場合はチェック状態を戻す
-                item.IsChecked = !item.IsChecked;
-            }
-        };
-        menu.Items.Add(startupItem);
-
         // 設定
-        var settingsItem = new System.Windows.Controls.MenuItem { Header = loc.GetString("MenuSettings") };
+        var settingsItem = new System.Windows.Controls.MenuItem { Header = "設定" };
         settingsItem.Click += (s, e) =>
         {
             OpenSettingsWindow();
@@ -355,24 +202,24 @@ public partial class App : Application
 #if DEBUG
         // デバッグメニュー
         menu.Items.Add(new System.Windows.Controls.Separator());
-        
+
         var debugMenu = new System.Windows.Controls.MenuItem { Header = "デバッグ" };
-        
+
         var openLogItem = new System.Windows.Controls.MenuItem { Header = "ログファイルを開く" };
         openLogItem.Click += (s, e) => DebugLogService.OpenLogFile();
         debugMenu.Items.Add(openLogItem);
-        
+
         var clearLogItem = new System.Windows.Controls.MenuItem { Header = "ログをクリア" };
         clearLogItem.Click += (s, e) => DebugLogService.ClearLogFile();
         debugMenu.Items.Add(clearLogItem);
-        
+
         menu.Items.Add(debugMenu);
 #endif
 
         menu.Items.Add(new System.Windows.Controls.Separator());
 
         // 終了
-        var exitItem = new System.Windows.Controls.MenuItem { Header = loc.GetString("MenuExit") };
+        var exitItem = new System.Windows.Controls.MenuItem { Header = "終了" };
         exitItem.Click += (s, e) => Shutdown();
         menu.Items.Add(exitItem);
 
@@ -384,7 +231,6 @@ public partial class App : Application
         DbgLog.Log(4, $"[App] OnIMEStateChanged: {languageInfo.Language}/{languageInfo.IsIMEOn}");
         Dispatcher.Invoke(() =>
         {
-            DbgLog.Log(5, $"[App] UpdateIMEState呼び出し: _mainViewModel={(_mainViewModel != null ? "OK" : "NULL")}");
             _mainViewModel?.UpdateIMEState(languageInfo);
         });
     }
@@ -409,18 +255,9 @@ public partial class App : Application
 
         try
         {
-            // IMEモニターを停止
             _imeMonitor?.Stop();
-
-            // ウィンドウを閉じる
-            _imeIndicatorWindow?.Close();
-            _clockWindow?.Close();
             _mouseCursorIndicatorWindow?.Close();
-
-            // トレイアイコンを解放
             _trayIcon?.Dispose();
-
-            // 設定を保存
             _settingsManager?.Save();
 
             DbgLog.I("アプリケーション終了完了");

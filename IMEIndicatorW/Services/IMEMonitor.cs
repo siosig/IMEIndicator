@@ -3,7 +3,7 @@ using System.Windows.Threading;
 namespace IMEIndicatorClock.Services;
 
 /// <summary>
-/// IME状態を監視するサービス
+/// IME状態を監視するサービス（日本語IME特化）
 /// </summary>
 public partial class IMEMonitor : IDisposable
 {
@@ -13,8 +13,6 @@ public partial class IMEMonitor : IDisposable
     private IntPtr _lastForegroundWindow = IntPtr.Zero;
     private bool _trackedIMEState = false;
     private LanguageType? _trackedLanguageForTerminal = null;
-    private bool _languagePendingDetection = false;
-    private WindowHandleStateManager _windowKoreanIMEStates = new();
     private bool _disposed;
 
     // キー押下デバウンス用
@@ -24,10 +22,9 @@ public partial class IMEMonitor : IDisposable
     // ピクセル判定による状態検証
     private DateTime _lastPixelVerification = DateTime.MinValue;
     private int _pixelVerificationIntervalMs = 2000;
-    private bool _usePixelStateForKorean = false;
 
     /// <summary>
-    /// デバッグログを有効にするかどうか（レガシー互換）
+    /// デバッグログを有効にするかどうか
     /// </summary>
     public static bool DebugMode
     {
@@ -76,7 +73,6 @@ public partial class IMEMonitor : IDisposable
         _keyboardHook = new KeyboardHook();
         _keyboardHook.IMEKeyPressed += OnIMEKeyPressed;
         _keyboardHook.LanguageSwitchDetected += OnLanguageSwitchDetected;
-        _keyboardHook.ChineseIMEToggleDetected += OnChineseIMEToggleDetected;
         _keyboardHook.Start();
         DbgLog.I("キーボードフック開始完了");
 
@@ -110,7 +106,6 @@ public partial class IMEMonitor : IDisposable
         {
             _keyboardHook.IMEKeyPressed -= OnIMEKeyPressed;
             _keyboardHook.LanguageSwitchDetected -= OnLanguageSwitchDetected;
-            _keyboardHook.ChineseIMEToggleDetected -= OnChineseIMEToggleDetected;
             _keyboardHook.Dispose();
             _keyboardHook = null;
         }
@@ -133,7 +128,7 @@ public partial class IMEMonitor : IDisposable
     }
 
     /// <summary>
-    /// IME状態をチェック（DetectIMEState2使用版）
+    /// IME状態をチェック（日本語IME特化版）
     /// </summary>
     private void CheckIMEState2(bool forceUpdate = false)
     {
@@ -146,15 +141,9 @@ public partial class IMEMonitor : IDisposable
                 _trackedLanguageForTerminal, out string debugInfo);
 
             bool windowChanged = hwndForeground != _lastForegroundWindow;
-            bool languageChanged = currentState.Language != _lastState.Language;
 
-            bool isKoreanIME = currentState.Language == LanguageType.Korean;
-            bool isChineseIME = currentState.Language == LanguageType.ChineseTraditional ||
-                                currentState.Language == LanguageType.ChineseSimplified;
-            bool isJapaneseIME = currentState.Language == LanguageType.Japanese;
-
-            // 日本語/韓国語/中国語の場合、DetectIMEState2でピクセル判定
-            if (isJapaneseIME || isKoreanIME || isChineseIME)
+            // 日本語IMEの場合、PixelIMEDetectorでピクセル判定
+            if (currentState.Language == LanguageType.Japanese)
             {
                 var result = PixelIMEDetector.Instance.DetectIMEState2(currentState.Language);
                 if (result.IsOn.HasValue)
@@ -186,7 +175,7 @@ public partial class IMEMonitor : IDisposable
         }
         catch (Exception ex)
         {
-            DbgLog.Ex(ex, "IME状態チェック2エラー");
+            DbgLog.Ex(ex, "IME状態チェックエラー");
         }
     }
 

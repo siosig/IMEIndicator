@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace IMEIndicatorClock.Services;
 
 /// <summary>
-/// IME検出の共通ヘルパーメソッド
+/// IME検出の共通ヘルパーメソッド（日本語IME特化）
 /// </summary>
 public static class IMEDetector_Common
 {
@@ -23,7 +23,7 @@ public static class IMEDetector_Common
     };
 
     /// <summary>
-    /// 言語IDから言語タイプを判定
+    /// 言語IDから言語タイプを判定（日本語IME特化）
     /// </summary>
     public static LanguageType GetLanguageType(int langId)
     {
@@ -31,49 +31,7 @@ public static class IMEDetector_Common
 
         return langId switch
         {
-            // 東アジア
             NativeMethods.LANG_JAPANESE => LanguageType.Japanese,
-            NativeMethods.LANG_CHINESE_SIMPLIFIED => LanguageType.ChineseSimplified,
-            NativeMethods.LANG_CHINESE_TRADITIONAL => LanguageType.ChineseTraditional,
-            NativeMethods.LANG_CHINESE_TRADITIONAL_HK => LanguageType.ChineseTraditional,
-
-            // 東南アジア
-            NativeMethods.LANG_THAI => LanguageType.Thai,
-            NativeMethods.LANG_VIETNAMESE => LanguageType.Vietnamese,
-            NativeMethods.LANG_MYANMAR => LanguageType.Myanmar,
-            NativeMethods.LANG_KHMER => LanguageType.Khmer,
-            NativeMethods.LANG_LAO => LanguageType.Lao,
-
-            // 南アジア
-            NativeMethods.LANG_HINDI => LanguageType.Hindi,
-            NativeMethods.LANG_BENGALI_IN => LanguageType.Bengali,
-            NativeMethods.LANG_BENGALI_BD => LanguageType.Bengali,
-            NativeMethods.LANG_TAMIL => LanguageType.Tamil,
-            NativeMethods.LANG_TELUGU => LanguageType.Telugu,
-            NativeMethods.LANG_NEPALI => LanguageType.Nepali,
-            NativeMethods.LANG_SINHALA => LanguageType.Sinhala,
-
-            // 中央アジア
-            NativeMethods.LANG_MONGOLIAN => LanguageType.Mongolian,
-            NativeMethods.LANG_MONGOLIAN_CN => LanguageType.Mongolian,
-
-            // 中東
-            NativeMethods.LANG_ARABIC => LanguageType.Arabic,
-            NativeMethods.LANG_ARABIC_EGYPT => LanguageType.Arabic,
-            NativeMethods.LANG_ARABIC_UAE => LanguageType.Arabic,
-            NativeMethods.LANG_PERSIAN => LanguageType.Persian,
-            NativeMethods.LANG_HEBREW => LanguageType.Hebrew,
-
-            // ヨーロッパ（キリル・ギリシャ）
-            NativeMethods.LANG_UKRAINIAN => LanguageType.Ukrainian,
-            NativeMethods.LANG_RUSSIAN => LanguageType.Russian,
-            NativeMethods.LANG_GREEK => LanguageType.Greek,
-
-            // プライマリ言語コードで判定
-            _ when primaryLang == NativeMethods.LANG_PRIMARY_KOREAN => LanguageType.Korean,
-            _ when primaryLang == NativeMethods.LANG_PRIMARY_ARABIC => LanguageType.Arabic,
-            _ when primaryLang == NativeMethods.LANG_PRIMARY_BENGALI => LanguageType.Bengali,
-            _ when primaryLang == NativeMethods.LANG_PRIMARY_MONGOLIAN => LanguageType.Mongolian,
             _ when primaryLang == 0x09 => LanguageType.English,
             _ => LanguageType.Other
         };
@@ -179,7 +137,7 @@ public static class IMEDetector_Common
             return true;
         }), IntPtr.Zero);
 
-        foreach (var hwnd in ownedWindows)
+        foreach (IntPtr hwnd in ownedWindows)
         {
             string className = NativeMethods.GetWindowClassName(hwnd);
 
@@ -189,7 +147,7 @@ public static class IMEDetector_Common
                 return true;
             }
 
-            foreach (var hint in CandidateWindowClasses)
+            foreach (string hint in CandidateWindowClasses)
             {
                 if (className.Contains(hint, StringComparison.OrdinalIgnoreCase))
                 {
@@ -203,7 +161,7 @@ public static class IMEDetector_Common
     }
 
     /// <summary>
-    /// 現在のIME状態を取得（拡張版）
+    /// 現在のIME状態を取得（日本語IME特化版）
     /// </summary>
     public static (LanguageInfo state, bool reliableStatus) GetCurrentIMEStateEx(
         LanguageType? trackedLanguageForTerminal,
@@ -273,7 +231,8 @@ public static class IMEDetector_Common
             debugInfo += $" [TerminalLang:{language}]";
         }
 
-        if (language == LanguageType.English)
+        // 日本語以外はすべてIME OFF（英語）と同じ表示
+        if (language != LanguageType.Japanese)
         {
             imeOpen = false;
         }

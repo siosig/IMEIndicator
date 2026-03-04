@@ -39,8 +39,6 @@ public class SettingsManagerTests : IDisposable
         // Assert
         Assert.True(result);
         Assert.NotNull(manager.Settings);
-        Assert.NotNull(manager.Settings.Clock);
-        Assert.NotNull(manager.Settings.IMEIndicator);
         Assert.NotNull(manager.Settings.MouseCursorIndicator);
         Assert.NotNull(manager.Settings.Debug);
     }
@@ -50,10 +48,12 @@ public class SettingsManagerTests : IDisposable
     {
         // Arrange
         var manager = new SettingsManager(_tempDir);
-        manager.Settings.Clock.Width = 300;
-        manager.Settings.Clock.Height = 150;
-        manager.Settings.IMEIndicator.Opacity = 0.5;
-        manager.Settings.Language = "ja";
+        manager.Settings.ImeOnColor = "#FF0000";
+        manager.Settings.ImeOnText = "日";
+        manager.Settings.ImeOffColor = "#0000FF";
+        manager.Settings.ImeOffText = "E";
+        manager.Settings.MouseCursorIndicator.Size = 50;
+        manager.Settings.MouseCursorIndicator.Opacity = 0.5;
 
         // Act
         var saveResult = manager.Save();
@@ -63,10 +63,12 @@ public class SettingsManagerTests : IDisposable
         // Assert
         Assert.True(saveResult);
         Assert.True(loadResult);
-        Assert.Equal(300, manager2.Settings.Clock.Width);
-        Assert.Equal(150, manager2.Settings.Clock.Height);
-        Assert.Equal(0.5, manager2.Settings.IMEIndicator.Opacity);
-        Assert.Equal("ja", manager2.Settings.Language);
+        Assert.Equal("#FF0000", manager2.Settings.ImeOnColor);
+        Assert.Equal("日", manager2.Settings.ImeOnText);
+        Assert.Equal("#0000FF", manager2.Settings.ImeOffColor);
+        Assert.Equal("E", manager2.Settings.ImeOffText);
+        Assert.Equal(50, manager2.Settings.MouseCursorIndicator.Size);
+        Assert.Equal(0.5, manager2.Settings.MouseCursorIndicator.Opacity);
     }
 
     [Fact]
@@ -86,48 +88,42 @@ public class SettingsManagerTests : IDisposable
         Assert.NotNull(manager.LastError);
         // デフォルト設定にフォールバック
         Assert.NotNull(manager.Settings);
-        Assert.Equal(new AppSettings().Clock.Width, manager.Settings.Clock.Width);
+        Assert.Equal(new AppSettings().ImeOnColor, manager.Settings.ImeOnColor);
     }
 
     [Fact]
     public void Load_MissingNestedProperties_UsesDefaults()
     {
-        // Arrange — Clock プロパティが存在しないJSON
+        // Arrange — MouseCursorIndicator プロパティが存在しないJSON
         Directory.CreateDirectory(_tempDir);
         var manager = new SettingsManager(_tempDir);
         var filePath = manager.GetSettingsFilePath();
-        File.WriteAllText(filePath, """{"language": "en"}""");
+        File.WriteAllText(filePath, """{"imeOnColor": "#FF0000"}""");
 
         // Act
         var result = manager.Load();
 
         // Assert
         Assert.True(result);
-        Assert.NotNull(manager.Settings.Clock);
-        Assert.NotNull(manager.Settings.IMEIndicator);
+        Assert.NotNull(manager.Settings.MouseCursorIndicator);
+        Assert.NotNull(manager.Settings.Debug);
     }
 
     [Fact]
-    public void ValidateAndClamp_OpacityOutOfRange_Clamped()
+    public void ValidateAndClamp_OutOfRange_Clamped()
     {
         // Arrange
         var manager = new SettingsManager(_tempDir);
-        manager.Settings.IMEIndicator.Opacity = 1.5;
-        manager.Settings.Clock.Opacity = -0.1;
         manager.Settings.MouseCursorIndicator.Opacity = 2.0;
-        manager.Settings.IMEIndicator.Size = 1;   // 下限16未満
-        manager.Settings.Clock.FontSize = 500;     // 上限200超
-        manager.Settings.Debug.PollingInterval = 10; // 下限50未満
+        manager.Settings.MouseCursorIndicator.Size = 10; // 下限20未満
+        manager.Settings.Debug.PollingInterval = 10;      // 下限50未満
 
         // Act
         manager.ValidateAndClampSettings();
 
         // Assert
-        Assert.Equal(1.0, manager.Settings.IMEIndicator.Opacity);
-        Assert.Equal(0.1, manager.Settings.Clock.Opacity);
         Assert.Equal(1.0, manager.Settings.MouseCursorIndicator.Opacity);
-        Assert.Equal(16, manager.Settings.IMEIndicator.Size);
-        Assert.Equal(200, manager.Settings.Clock.FontSize);
+        Assert.Equal(20, manager.Settings.MouseCursorIndicator.Size);
         Assert.Equal(50, manager.Settings.Debug.PollingInterval);
     }
 
@@ -152,8 +148,8 @@ public class SettingsManagerTests : IDisposable
     {
         // Arrange
         var manager = new SettingsManager(_tempDir);
-        manager.Settings.Clock.Width = 999;
-        manager.Settings.Language = "ko";
+        manager.Settings.ImeOnColor = "#999999";
+        manager.Settings.MouseCursorIndicator.Size = 80;
         manager.Save();
 
         // Act
@@ -161,7 +157,7 @@ public class SettingsManagerTests : IDisposable
 
         // Assert
         var defaults = new AppSettings();
-        Assert.Equal(defaults.Clock.Width, manager.Settings.Clock.Width);
-        Assert.Equal(defaults.Language, manager.Settings.Language);
+        Assert.Equal(defaults.ImeOnColor, manager.Settings.ImeOnColor);
+        Assert.Equal(defaults.MouseCursorIndicator.Size, manager.Settings.MouseCursorIndicator.Size);
     }
 }

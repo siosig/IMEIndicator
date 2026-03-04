@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Windows.Automation;
 using AutomationCondition = System.Windows.Automation.Condition;
-using DrawingColor = System.Drawing.Color;
 
 namespace IMEIndicatorClock.Services;
 
@@ -124,11 +123,8 @@ public partial class PixelIMEDetector : IDisposable
     /// <returns>IME ON状態かどうか（判定不能な場合はnull）</returns>
     public bool? DetectIMEState(LanguageType language)
     {
-        // 日本語、韓国語、中国語のみ対応
-        if (language != LanguageType.Japanese &&
-            language != LanguageType.Korean &&
-            language != LanguageType.ChineseSimplified &&
-            language != LanguageType.ChineseTraditional)
+        // 日本語のみ対応
+        if (language != LanguageType.Japanese)
         {
             return null;
         }
@@ -188,11 +184,8 @@ public partial class PixelIMEDetector : IDisposable
         double getRectTime = 0;
         double analyzeTime = 0;
 
-        // 日本語、韓国語、中国語のみ対応
-        if (language != LanguageType.Japanese &&
-            language != LanguageType.Korean &&
-            language != LanguageType.ChineseSimplified &&
-            language != LanguageType.ChineseTraditional)
+        // 日本語のみ対応
+        if (language != LanguageType.Japanese)
         {
             swTotal.Stop();
             return new DetectIMEState2Result(null, 0, 0, swTotal.Elapsed.TotalMilliseconds);
@@ -412,16 +405,7 @@ public partial class PixelIMEDetector : IDisposable
 
         // 実測値（内側領域 topMargin=3, bottomMargin=8）:
         //   日本語: A=7.1%, あ=11.3% → 閾値 8.5%
-        //   韓国語: A=7.1%, 가=5.8% → 閾値 6.5%
-        //   中国語: 英=10.0%, 中=6.0% → 閾値 6.5%
-        bool result = language switch
-        {
-            LanguageType.Japanese => textRatio > 0.085,   // 8.5%超でON
-            LanguageType.Korean => textRatio < 0.065,     // 6.5%未満でON
-            LanguageType.ChineseSimplified => textRatio < 0.065,  // 6.5%未満でON
-            LanguageType.ChineseTraditional => textRatio < 0.065, // 6.5%未満でON
-            _ => false
-        };
+        bool result = textRatio > 0.085;   // 8.5%超でON（日本語専用）
 
         DbgLog.Log(5, $"PixelIME: {language} textRatio={textRatio:P1} -> {(result ? "ON" : "OFF")}");
         return result;
