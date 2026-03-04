@@ -94,7 +94,7 @@ public partial class KeyboardHook : IDisposable
             {
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
     }
@@ -147,7 +147,7 @@ public partial class KeyboardHook : IDisposable
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
 

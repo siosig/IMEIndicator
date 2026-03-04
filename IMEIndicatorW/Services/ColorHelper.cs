@@ -52,7 +52,7 @@ public static class ColorHelper
                 _ => Colors.Gray
             };
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Colors.Gray;
         }

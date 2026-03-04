@@ -74,7 +74,7 @@ public partial class PixelIMEDetector : IDisposable
     #endregion
 
     private static PixelIMEDetector? _instance;
-    private static readonly object _lock = new();
+    private static readonly System.Threading.Lock _lock = new();
     private bool _disposed;
 
 #if DEBUG
@@ -153,7 +153,7 @@ public partial class PixelIMEDetector : IDisposable
             _lastPixelCheck = now;
             return isOn;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return null;
         }
@@ -210,7 +210,7 @@ public partial class PixelIMEDetector : IDisposable
             swTotal.Stop();
             return new DetectIMEState2Result(isOn, getRectTime, analyzeTime, swTotal.Elapsed.TotalMilliseconds);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             swTotal.Stop();
             return new DetectIMEState2Result(null, getRectTime, analyzeTime, swTotal.Elapsed.TotalMilliseconds);
@@ -466,7 +466,7 @@ public partial class PixelIMEDetector : IDisposable
                 return (indicator.Current.Name ?? "", rect);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
 
@@ -512,7 +512,7 @@ public partial class PixelIMEDetector : IDisposable
 
             bitmap.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
     }

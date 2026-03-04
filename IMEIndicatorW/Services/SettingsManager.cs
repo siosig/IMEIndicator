@@ -185,7 +185,7 @@ public class SettingsManager
                 });
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
     }

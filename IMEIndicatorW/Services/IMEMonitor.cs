@@ -163,7 +163,7 @@ public partial class IMEMonitor : IDisposable
                 IMEStateChanged?.Invoke(currentState);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
         finally

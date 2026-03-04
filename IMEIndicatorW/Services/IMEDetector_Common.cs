@@ -110,7 +110,7 @@ public static class IMEDetector_Common
     {
         if (ownerHwnd == IntPtr.Zero) return null;
 
-        var ownedWindows = new List<IntPtr>();
+        List<IntPtr> ownedWindows = [];
 
         NativeMethods.EnumWindows(new NativeMethods.EnumWindowsProc((hwnd, lParam) =>
         {

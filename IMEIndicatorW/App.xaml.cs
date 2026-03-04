@@ -247,7 +247,7 @@ public partial class App : Application
             _trayIcon?.Dispose();
             _settingsManager?.Save();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
 

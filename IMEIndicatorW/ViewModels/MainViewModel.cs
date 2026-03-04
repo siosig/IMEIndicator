@@ -30,7 +30,7 @@ public partial class MainViewModel : ObservableObject
         {
             MouseCursorIndicatorViewModel.UpdateState(languageInfo);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
     }

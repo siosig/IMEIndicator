@@ -70,7 +70,7 @@ public class MouseHook : IDisposable
             {
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
     }
@@ -96,7 +96,7 @@ public class MouseHook : IDisposable
                 var s = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
                 MouseMoved?.Invoke(s.pt.X, s.pt.Y);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
