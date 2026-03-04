@@ -9,6 +9,7 @@ public partial class IMEMonitor : IDisposable
 {
     private DispatcherTimer? _timer;
     private KeyboardHook? _keyboardHook;
+    private MouseHook? _mouseHook;
     private LanguageInfo _lastState = new(LanguageType.English, false);
     private IntPtr _lastForegroundWindow = IntPtr.Zero;
     private bool _trackedIMEState = false;
@@ -76,6 +77,11 @@ public partial class IMEMonitor : IDisposable
         _keyboardHook.Start();
         DbgLog.I("キーボードフック開始完了");
 
+        _mouseHook = new MouseHook();
+        _mouseHook.MouseMoved += (x, y) => CursorPositionChanged?.Invoke(x, y);
+        _mouseHook.Start();
+        DbgLog.I("マウスフック開始完了");
+
         _timer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(PollingInterval)
@@ -110,21 +116,18 @@ public partial class IMEMonitor : IDisposable
             _keyboardHook = null;
         }
 
+        if (_mouseHook != null)
+        {
+            _mouseHook.Dispose();
+            _mouseHook = null;
+        }
+
         DbgLog.I("IMEMonitor 監視停止");
     }
 
     private void OnTimerTick(object? sender, EventArgs e)
     {
         CheckIMEState2();
-        CheckCursorPosition();
-    }
-
-    private void CheckCursorPosition()
-    {
-        if (NativeMethods.GetCursorPos(out var point))
-        {
-            CursorPositionChanged?.Invoke(point.X, point.Y);
-        }
     }
 
     /// <summary>

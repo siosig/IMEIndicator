@@ -253,16 +253,14 @@ public partial class App : Application
 
     private void OnCursorPositionChanged(int x, int y)
     {
-        Dispatcher.Invoke(() =>
+        // MouseHook コールバックは UI スレッドで呼ばれるため Dispatcher.Invoke 不要
+        if (_mainViewModel != null && _mouseCursorIndicatorWindow != null)
         {
-            if (_mainViewModel != null && _mouseCursorIndicatorWindow != null)
-            {
-                var vm = _mainViewModel.MouseCursorIndicatorViewModel;
-                double posX = x + vm.OffsetX;
-                double posY = y + vm.OffsetY;
-                _mouseCursorIndicatorWindow.UpdatePosition(posX, posY);
-            }
-        });
+            var vm = _mainViewModel.MouseCursorIndicatorViewModel;
+            double posX = x + vm.OffsetX;
+            double posY = y + vm.OffsetY;
+            _mouseCursorIndicatorWindow.UpdatePosition(posX, posY);
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)
