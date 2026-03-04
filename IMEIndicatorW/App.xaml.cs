@@ -39,6 +39,15 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// 現在のIME状態に基づいてウィンドウ表示を即時反映（設定変更時に呼ぶ）
+    /// </summary>
+    public void ApplyCurrentVisibility()
+    {
+        if (_imeMonitor == null) return;
+        ApplyWindowVisibility(_imeMonitor.CurrentState);
+    }
+
+    /// <summary>
     /// 設定ウィンドウを開く
     /// </summary>
     public void OpenSettingsWindow()
@@ -92,10 +101,8 @@ public partial class App : Application
             // マウスカーソルインジケーターウィンドウ
             DbgLog.I("MouseCursorIndicatorWindow作成");
             _mouseCursorIndicatorWindow = new MouseCursorIndicatorWindow(_mainViewModel.MouseCursorIndicatorViewModel);
-            if (_settingsManager.Settings.MouseCursorIndicator.IsVisible)
-            {
-                _mouseCursorIndicatorWindow.Show();
-            }
+            // HideWhenImeOff を含む全設定を考慮した初期表示
+            ApplyWindowVisibility(_imeMonitor.CurrentState);
 
             // システムトレイアイコン
             DbgLog.I("システムトレイアイコン初期化");
@@ -229,7 +236,7 @@ public partial class App : Application
     private void OnIMEStateChanged(LanguageInfo languageInfo)
     {
         DbgLog.Log(4, $"[App] OnIMEStateChanged: {languageInfo.Language}/{languageInfo.IsIMEOn}");
-        Dispatcher.Invoke(() =>
+        Dispatcher.InvokeAsync(() =>
         {
             _mainViewModel?.UpdateIMEState(languageInfo);
             ApplyWindowVisibility(languageInfo);

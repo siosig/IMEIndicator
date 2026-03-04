@@ -24,6 +24,9 @@ public partial class IMEMonitor : IDisposable
     private DateTime _lastPixelVerification = DateTime.MinValue;
     private int _pixelVerificationIntervalMs = 2000;
 
+    // CheckIMEState2 の多重実行防止（タイマーとデバウンスが重なる場合）
+    private volatile int _isChecking = 0;
+
     /// <summary>
     /// デバッグログを有効にするかどうか
     /// </summary>
@@ -127,14 +130,18 @@ public partial class IMEMonitor : IDisposable
 
     private void OnTimerTick(object? sender, EventArgs e)
     {
-        CheckIMEState2();
+        // TSF + PixelDetector はブロッキング処理のためバックグラウンドで実行
+        // UIスレッドを解放し WH_MOUSE_LL コールバックの遅延を防ぐ
+        _ = Task.Run(() => CheckIMEState2());
     }
 
     /// <summary>
     /// IME状態をチェック（日本語IME特化版）
+    /// タイマー（バックグラウンド）とデバウンス（UIスレッド）から呼ばれる可能性があるため多重実行を防止
     /// </summary>
     private void CheckIMEState2(bool forceUpdate = false)
     {
+        if (System.Threading.Interlocked.Exchange(ref _isChecking, 1) == 1) return;
         try
         {
             var hwndForeground = NativeMethods.GetForegroundWindow();
@@ -179,6 +186,10 @@ public partial class IMEMonitor : IDisposable
         catch (Exception ex)
         {
             DbgLog.Ex(ex, "IME状態チェックエラー");
+        }
+        finally
+        {
+            System.Threading.Interlocked.Exchange(ref _isChecking, 0);
         }
     }
 

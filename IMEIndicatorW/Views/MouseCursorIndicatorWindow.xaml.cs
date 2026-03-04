@@ -44,7 +44,8 @@ public partial class MouseCursorIndicatorWindow : Window
 
         if (_hwnd != IntPtr.Zero)
         {
-            NativeMethods.SetWindowPos(_hwnd, NativeMethods.HWND_TOPMOST, (int)x, (int)y, 0, 0, NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
+            // SWP_NOZORDER: Topmost="True" で維持されるため Z-order の再計算は不要
+            NativeMethods.SetWindowPos(_hwnd, IntPtr.Zero, (int)x, (int)y, 0, 0, NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOZORDER);
         }
         else
         {

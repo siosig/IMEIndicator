@@ -109,6 +109,7 @@ public partial class SettingsWindow : Window
         if (_isInitializing) return;
         _viewModel.MouseCursorIndicatorViewModel.HideWhenImeOff = HideWhenImeOffCheck.IsChecked == true;
         _viewModel.SaveSettings();
+        App.Instance.ApplyCurrentVisibility();
     }
 
     private void DebugMode_Changed(object sender, RoutedEventArgs e)
