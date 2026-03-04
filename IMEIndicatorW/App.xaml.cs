@@ -232,7 +232,23 @@ public partial class App : Application
         Dispatcher.Invoke(() =>
         {
             _mainViewModel?.UpdateIMEState(languageInfo);
+            ApplyWindowVisibility(languageInfo);
         });
+    }
+
+    private void ApplyWindowVisibility(LanguageInfo languageInfo)
+    {
+        if (_mouseCursorIndicatorWindow == null || _settingsManager == null) return;
+        var settings = _settingsManager.Settings.MouseCursorIndicator;
+
+        // トレイメニューで非表示の場合は無条件非表示
+        if (!settings.IsVisible) return;
+
+        bool isJapaneseImeOn = languageInfo.Language == LanguageType.Japanese && languageInfo.IsIMEOn;
+        bool shouldShow = !settings.HideWhenImeOff || isJapaneseImeOn;
+
+        if (shouldShow) _mouseCursorIndicatorWindow.Show();
+        else            _mouseCursorIndicatorWindow.Hide();
     }
 
     private void OnCursorPositionChanged(int x, int y)

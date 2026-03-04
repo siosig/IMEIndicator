@@ -28,6 +28,7 @@ public partial class SettingsWindow : Window
     {
         // マウスインジケーター表示状態
         MouseIndicatorVisibleCheck.IsChecked = _viewModel.MouseCursorIndicatorViewModel.IsVisible;
+        HideWhenImeOffCheck.IsChecked = _viewModel.MouseCursorIndicatorViewModel.HideWhenImeOff;
 
         // IME ON/OFF 色・文字
         var settings = _viewModel.SettingsManager.Settings;
@@ -100,6 +101,13 @@ public partial class SettingsWindow : Window
     {
         if (_isInitializing) return;
         _viewModel.MouseCursorIndicatorViewModel.IsVisible = MouseIndicatorVisibleCheck.IsChecked == true;
+        _viewModel.SaveSettings();
+    }
+
+    private void HideWhenImeOff_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_isInitializing) return;
+        _viewModel.MouseCursorIndicatorViewModel.HideWhenImeOff = HideWhenImeOffCheck.IsChecked == true;
         _viewModel.SaveSettings();
     }
 

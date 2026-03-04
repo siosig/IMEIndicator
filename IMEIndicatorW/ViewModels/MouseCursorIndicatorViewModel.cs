@@ -52,6 +52,9 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
     [ObservableProperty]
     private bool _isVisible = true;
 
+    [ObservableProperty]
+    private bool _hideWhenImeOff = true;
+
     public MouseCursorIndicatorViewModel(SettingsManager settingsManager)
     {
         _settingsManager = settingsManager;
@@ -65,6 +68,7 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
         OffsetX = Settings.OffsetX;
         OffsetY = Settings.OffsetY;
         IsVisible = Settings.IsVisible;
+        HideWhenImeOff = Settings.HideWhenImeOff;
         FontSize = Size * FontSizeRatio;
 
         // 初期表示をIME OFF状態に設定
@@ -128,6 +132,7 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
     partial void OnOffsetXChanged(double value) => Settings.OffsetX = value;
     partial void OnOffsetYChanged(double value) => Settings.OffsetY = value;
     partial void OnIsVisibleChanged(bool value) => Settings.IsVisible = value;
+    partial void OnHideWhenImeOffChanged(bool value) => Settings.HideWhenImeOff = value;
 
     /// <summary>
     /// 設定を再読み込みする

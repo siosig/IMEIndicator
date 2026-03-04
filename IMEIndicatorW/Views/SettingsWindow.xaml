@@ -26,8 +26,10 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="15">
                         <!-- 表示スイッチ -->
-                        <CheckBox x:Name="MouseIndicatorVisibleCheck" Content="インジケーターを表示" Margin="0,0,0,15"
+                        <CheckBox x:Name="MouseIndicatorVisibleCheck" Content="インジケーターを表示" Margin="0,0,0,8"
                                   Checked="MouseIndicatorVisible_Changed" Unchecked="MouseIndicatorVisible_Changed"/>
+                        <CheckBox x:Name="HideWhenImeOffCheck" Content="IME ONの時のみ表示（OFFの時は非表示）" Margin="20,0,0,15"
+                                  Checked="HideWhenImeOff_Changed" Unchecked="HideWhenImeOff_Changed"/>
                         <Separator Margin="0,0,0,15"/>
 
                         <!-- 説明 -->

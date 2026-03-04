@@ -65,6 +65,7 @@ public class DebugSettings
 public class MouseCursorIndicatorSettings
 {
     public bool IsVisible { get; set; } = true;
+    public bool HideWhenImeOff { get; set; } = true;
     public double Size { get; set; } = 34;
     public double Opacity { get; set; } = 0.9;
     public double OffsetX { get; set; } = 15;

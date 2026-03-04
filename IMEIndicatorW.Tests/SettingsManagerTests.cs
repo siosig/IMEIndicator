@@ -160,4 +160,41 @@ public class SettingsManagerTests : IDisposable
         Assert.Equal(defaults.ImeOnColor, manager.Settings.ImeOnColor);
         Assert.Equal(defaults.MouseCursorIndicator.Size, manager.Settings.MouseCursorIndicator.Size);
     }
+
+    [Fact]
+    public void HideWhenImeOff_DefaultIsTrue()
+    {
+        // デフォルト値が true であることを確認
+        var settings = new MouseCursorIndicatorSettings();
+        Assert.True(settings.HideWhenImeOff);
+    }
+
+    [Fact]
+    public void HideWhenImeOff_SaveAndLoad_Preserved()
+    {
+        // Arrange
+        var manager = new SettingsManager(_tempDir);
+        manager.Settings.MouseCursorIndicator.HideWhenImeOff = false;
+
+        // Act
+        manager.Save();
+        var manager2 = new SettingsManager(_tempDir);
+        manager2.Load();
+
+        // Assert
+        Assert.False(manager2.Settings.MouseCursorIndicator.HideWhenImeOff);
+    }
+
+    [Fact]
+    public void HideWhenImeOff_MissingInJson_FallsBackToDefault()
+    {
+        // settings.json に hideWhenImeOff がない場合、デフォルト true が使用される
+        Directory.CreateDirectory(_tempDir);
+        var manager = new SettingsManager(_tempDir);
+        File.WriteAllText(manager.GetSettingsFilePath(), """{"mouseCursorIndicator": {"isVisible": true}}""");
+
+        manager.Load();
+
+        Assert.True(manager.Settings.MouseCursorIndicator.HideWhenImeOff);
+    }
 }
