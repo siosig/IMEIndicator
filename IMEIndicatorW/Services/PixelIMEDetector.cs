@@ -283,18 +283,20 @@ public partial class PixelIMEDetector : IDisposable
 
             // ピクセルデータ用バッファ（BGRA形式、4バイト/ピクセル）
             int stride = width * 4;
-            byte[] pixels = new byte[stride * height];
+            int length = stride * height;
+            byte[] pixels = System.Buffers.ArrayPool<byte>.Shared.Rent(length);
 
-            IntPtr pPixels = Marshal.AllocHGlobal(pixels.Length);
+            IntPtr pPixels = Marshal.AllocHGlobal(length);
             try
             {
                 int result = GetDIBits(screenDC, hBitmap, 0, (uint)height, pPixels, ref bmi, DIB_RGB_COLORS);
                 if (result == 0)
                 {
+                    System.Buffers.ArrayPool<byte>.Shared.Return(pixels);
                     return false;
                 }
 
-                Marshal.Copy(pPixels, pixels, 0, pixels.Length);
+                Marshal.Copy(pPixels, pixels, 0, length);
             }
             finally
             {
@@ -309,7 +311,9 @@ public partial class PixelIMEDetector : IDisposable
             }
 #endif
 
-            return AnalyzePixelData(pixels, width, height, stride, language);
+            bool analysisResult = AnalyzePixelData(pixels, width, height, stride, language);
+            System.Buffers.ArrayPool<byte>.Shared.Return(pixels);
+            return analysisResult;
         }
         finally
         {
@@ -450,23 +454,16 @@ public partial class PixelIMEDetector : IDisposable
                 return null;
             }
 
-            // 子孫から入力インジケーターを探す
-            var descendants = trayElement.FindAll(TreeScope.Descendants, AutomationCondition.TrueCondition);
+            // UI Automationで直接条件指定して検索（高速化）
+            var conditionJa = new PropertyCondition(AutomationElement.NameProperty, "入力インジケーター");
+            var conditionEn = new PropertyCondition(AutomationElement.NameProperty, "Input indicator");
+            var orCondition = new OrCondition(conditionJa, conditionEn);
 
-            foreach (AutomationElement desc in descendants)
+            var indicator = trayElement.FindFirst(TreeScope.Descendants, orCondition);
+            if (indicator != null)
             {
-                try
-                {
-                    var name = desc.Current.Name ?? "";
-
-                    // 「トレイ入力インジケーター」または「Input indicator」を含む要素
-                    if (name.Contains("入力インジケーター") || name.Contains("Input indicator"))
-                    {
-                        var rect = desc.Current.BoundingRectangle;
-                        return (name, rect);
-                    }
-                }
-                catch { }
+                var rect = indicator.Current.BoundingRectangle;
+                return (indicator.Current.Name ?? "", rect);
             }
         }
         catch (Exception ex)
