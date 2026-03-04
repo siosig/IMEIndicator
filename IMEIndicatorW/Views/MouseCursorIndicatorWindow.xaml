@@ -9,7 +9,9 @@
         ShowInTaskbar="False"
         ResizeMode="NoResize"
         SizeToContent="WidthAndHeight"
-        IsHitTestVisible="False">
+        IsHitTestVisible="False"
+        ShowActivated="False"
+        Focusable="False">
 
     <Grid Width="{Binding Size}" Height="{Binding Size}"
           Opacity="{Binding Opacity}">

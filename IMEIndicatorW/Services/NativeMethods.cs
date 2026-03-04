@@ -337,6 +337,18 @@ internal static partial class NativeMethods
         public uint flags;
     }
 
+    // Window Styles
+    [LibraryImport("user32.dll", EntryPoint = "GetWindowLongW")]
+    public static partial int GetWindowLong(IntPtr hWnd, int nIndex);
+
+    [LibraryImport("user32.dll", EntryPoint = "SetWindowLongW")]
+    public static partial int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+    public const int GWL_EXSTYLE = -20;
+    public const int WS_EX_TRANSPARENT = 0x00000020;
+    public const int WS_EX_TOOLWINDOW = 0x00000080;
+    public const int WS_EX_NOACTIVATE = 0x08000000;
+
     // ヘルパーメソッド
     public static string GetWindowTitle(IntPtr hWnd)
     {
