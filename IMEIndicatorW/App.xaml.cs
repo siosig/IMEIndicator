@@ -227,7 +227,8 @@ public partial class App : Application
 
     private void OnCursorPositionChanged(int x, int y)
     {
-        // MouseHook コールバックは UI スレッドで呼ばれるため Dispatcher.Invoke 不要
+        // MouseTracker はバックグラウンドスレッドから発火するため
+        // SetWindowPos (P/Invoke) は任意スレッドから呼べるので直接実行
         if (_mainViewModel != null && _mouseCursorIndicatorWindow != null)
         {
             var vm = _mainViewModel.MouseCursorIndicatorViewModel;

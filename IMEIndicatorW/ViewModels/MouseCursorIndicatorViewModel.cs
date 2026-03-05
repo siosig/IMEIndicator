@@ -16,6 +16,16 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
 
     private const double FontSizeRatio = 0.5;
 
+    // Brush/FontFamily のキャッシュ（Freeze済みで再利用、アロケーションゼロ）
+    private static readonly FontFamily MeiryoUiFont = new("Meiryo UI");
+    private static readonly FontFamily SegoeUiFont = new("Segoe UI");
+    private SolidColorBrush? _imeOnBgBrush;
+    private SolidColorBrush? _imeOnGlowBrush;
+    private SolidColorBrush? _imeOffBgBrush;
+    private SolidColorBrush? _imeOffGlowBrush;
+    private string? _cachedImeOnColor;
+    private string? _cachedImeOffColor;
+
     [ObservableProperty]
     private double _size = 34;
 
@@ -26,16 +36,16 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
     private string _displayText = "A";
 
     [ObservableProperty]
-    private Brush _backgroundColor = new SolidColorBrush(Color.FromRgb(59, 130, 246));
+    private Brush _backgroundColor = CreateFrozenBrush(Color.FromRgb(59, 130, 246));
 
     [ObservableProperty]
-    private Brush _glowColor = new SolidColorBrush(Color.FromArgb(179, 59, 130, 246));
+    private Brush _glowColor = CreateFrozenBrush(Color.FromArgb(179, 59, 130, 246));
 
     [ObservableProperty]
     private double _fontSize = 17;
 
     [ObservableProperty]
-    private FontFamily _fontFamily = new("Segoe UI");
+    private FontFamily _fontFamily = SegoeUiFont;
 
     [ObservableProperty]
     private double _positionX;
@@ -61,6 +71,37 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
         LoadSettings();
     }
 
+    private static SolidColorBrush CreateFrozenBrush(Color color)
+    {
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        return brush;
+    }
+
+    /// <summary>
+    /// 設定の色文字列からFrozen Brushを生成・キャッシュする
+    /// </summary>
+    private void EnsureBrushCache()
+    {
+        var appSettings = _settingsManager.Settings;
+
+        if (_cachedImeOnColor != appSettings.ImeOnColor || _imeOnBgBrush == null)
+        {
+            var color = ColorHelper.ParseColor(appSettings.ImeOnColor);
+            _imeOnBgBrush = CreateFrozenBrush(color);
+            _imeOnGlowBrush = CreateFrozenBrush(Color.FromArgb(179, color.R, color.G, color.B));
+            _cachedImeOnColor = appSettings.ImeOnColor;
+        }
+
+        if (_cachedImeOffColor != appSettings.ImeOffColor || _imeOffBgBrush == null)
+        {
+            var color = ColorHelper.ParseColor(appSettings.ImeOffColor);
+            _imeOffBgBrush = CreateFrozenBrush(color);
+            _imeOffGlowBrush = CreateFrozenBrush(Color.FromArgb(179, color.R, color.G, color.B));
+            _cachedImeOffColor = appSettings.ImeOffColor;
+        }
+    }
+
     private void LoadSettings()
     {
         Size = Settings.Size;
@@ -71,34 +112,35 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
         HideWhenImeOff = Settings.HideWhenImeOff;
         FontSize = Size * FontSizeRatio;
 
+        // Brushキャッシュを初期化
+        EnsureBrushCache();
+
         // 初期表示をIME OFF状態に設定
         ApplyIMEColors(isIMEOn: false);
     }
 
     /// <summary>
-    /// IME ON/OFF に応じた色とテキストを適用
+    /// IME ON/OFF に応じた色とテキストを適用（キャッシュ済みBrushを再利用）
     /// </summary>
     private void ApplyIMEColors(bool isIMEOn)
     {
+        EnsureBrushCache();
         var appSettings = _settingsManager.Settings;
 
         if (isIMEOn)
         {
             DisplayText = appSettings.ImeOnText;
-            var color = ColorHelper.ParseColor(appSettings.ImeOnColor);
-            BackgroundColor = new SolidColorBrush(color);
-            GlowColor = new SolidColorBrush(Color.FromArgb(179, color.R, color.G, color.B));
+            BackgroundColor = _imeOnBgBrush!;
+            GlowColor = _imeOnGlowBrush!;
+            FontFamily = MeiryoUiFont;
         }
         else
         {
             DisplayText = appSettings.ImeOffText;
-            var color = ColorHelper.ParseColor(appSettings.ImeOffColor);
-            BackgroundColor = new SolidColorBrush(color);
-            GlowColor = new SolidColorBrush(Color.FromArgb(179, color.R, color.G, color.B));
+            BackgroundColor = _imeOffBgBrush!;
+            GlowColor = _imeOffGlowBrush!;
+            FontFamily = SegoeUiFont;
         }
-
-        // 日本語テキストにはMeiryo UIを使用
-        FontFamily = isIMEOn ? new FontFamily("Meiryo UI") : new FontFamily("Segoe UI");
     }
 
     /// <summary>
@@ -139,10 +181,14 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
     /// </summary>
     public void ReloadSettings()
     {
+        // Brushキャッシュを強制再生成
+        _cachedImeOnColor = null;
+        _cachedImeOffColor = null;
+
         LoadSettings();
-        if (_currentLanguageInfo != null)
+        if (_currentLanguageInfo.HasValue)
         {
-            UpdateState(_currentLanguageInfo);
+            UpdateState(_currentLanguageInfo.Value);
         }
     }
 }

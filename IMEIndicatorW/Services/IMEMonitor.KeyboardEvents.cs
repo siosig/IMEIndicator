@@ -33,37 +33,9 @@ public partial class IMEMonitor
 
         if (stateChanged)
         {
-            // デバウンス処理: 最後のキー押下から100ms後にピクセル判定
-            ScheduleDebouncedCheck();
+            // デバウンス処理: 最後のキー押下から一定時間後にピクセル判定
+            OnTriggerFired();
         }
-    }
-
-    /// <summary>
-    /// デバウンス付きでCheckIMEState2をスケジュール
-    /// 連打時は最後のキー押下から100ms後に1回だけ実行
-    /// </summary>
-    private void ScheduleDebouncedCheck()
-    {
-        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
-        {
-            // タイマーを遅延初期化（初回のみ作成）
-            if (_keyDebounceTimer == null)
-            {
-                _keyDebounceTimer = new System.Windows.Threading.DispatcherTimer
-                {
-                    Interval = TimeSpan.FromMilliseconds(KeyDebounceIntervalMs)
-                };
-                _keyDebounceTimer.Tick += (s, e) =>
-                {
-                    _keyDebounceTimer?.Stop();
-                    CheckIMEState2(forceUpdate: true);
-                };
-            }
-
-            // 既存のタイマーをリセットして再開始
-            _keyDebounceTimer.Stop();
-            _keyDebounceTimer.Start();
-        });
     }
 
     private void OnLanguageSwitchDetected()

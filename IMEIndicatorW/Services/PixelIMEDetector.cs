@@ -94,6 +94,18 @@ public partial class PixelIMEDetector : IDisposable
     private bool? _lastPixelResult = null;
     private const int PixelCheckIntervalMs = 200; // 200ms間隔で判定
 
+    // GDIリソースのキャッシュ（毎回の確保・解放を排除）
+    private IntPtr _cachedScreenDC = IntPtr.Zero;
+    private IntPtr _cachedMemDC = IntPtr.Zero;
+    private IntPtr _cachedBitmap = IntPtr.Zero;
+    private IntPtr _cachedOldBitmap = IntPtr.Zero;
+    private int _cachedWidth;
+    private int _cachedHeight;
+
+    // ピクセルバッファの事前確保（ArrayPool/AllocHGlobalの毎回確保を排除）
+    private byte[]? _pixelBuffer;
+    private IntPtr _pinnedPixelBuffer = IntPtr.Zero;
+
     /// <summary>
     /// シングルトンインスタンス
     /// </summary>
@@ -218,7 +230,75 @@ public partial class PixelIMEDetector : IDisposable
     }
 
     /// <summary>
-    /// BitBltでキャプチャしてピクセルを分析（GetDIBits使用）
+    /// GDIリソースを確保（初回またはサイズ変更時のみ）
+    /// </summary>
+    private bool EnsureGdiResources(int width, int height)
+    {
+        if (_cachedScreenDC != IntPtr.Zero && _cachedWidth == width && _cachedHeight == height)
+            return true;
+
+        // 既存リソースを解放
+        ReleaseGdiResources();
+
+        _cachedScreenDC = GetDC(IntPtr.Zero);
+        if (_cachedScreenDC == IntPtr.Zero) return false;
+
+        _cachedMemDC = CreateCompatibleDC(_cachedScreenDC);
+        if (_cachedMemDC == IntPtr.Zero) return false;
+
+        _cachedBitmap = CreateCompatibleBitmap(_cachedScreenDC, width, height);
+        if (_cachedBitmap == IntPtr.Zero) return false;
+
+        _cachedOldBitmap = SelectObject(_cachedMemDC, _cachedBitmap);
+        _cachedWidth = width;
+        _cachedHeight = height;
+
+        // ピクセルバッファも事前確保
+        int bufferSize = width * height * 4;
+        _pixelBuffer = new byte[bufferSize];
+        _pinnedPixelBuffer = Marshal.AllocHGlobal(bufferSize);
+
+        return true;
+    }
+
+    /// <summary>
+    /// キャッシュ済みGDIリソースを解放
+    /// </summary>
+    private void ReleaseGdiResources()
+    {
+        if (_pinnedPixelBuffer != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(_pinnedPixelBuffer);
+            _pinnedPixelBuffer = IntPtr.Zero;
+        }
+        _pixelBuffer = null;
+
+        if (_cachedOldBitmap != IntPtr.Zero && _cachedMemDC != IntPtr.Zero)
+        {
+            SelectObject(_cachedMemDC, _cachedOldBitmap);
+            _cachedOldBitmap = IntPtr.Zero;
+        }
+        if (_cachedBitmap != IntPtr.Zero)
+        {
+            DeleteObject(_cachedBitmap);
+            _cachedBitmap = IntPtr.Zero;
+        }
+        if (_cachedMemDC != IntPtr.Zero)
+        {
+            DeleteDC(_cachedMemDC);
+            _cachedMemDC = IntPtr.Zero;
+        }
+        if (_cachedScreenDC != IntPtr.Zero)
+        {
+            ReleaseDC(IntPtr.Zero, _cachedScreenDC);
+            _cachedScreenDC = IntPtr.Zero;
+        }
+        _cachedWidth = 0;
+        _cachedHeight = 0;
+    }
+
+    /// <summary>
+    /// BitBltでキャプチャしてピクセルを分析（キャッシュ済みGDIリソース使用）
     /// </summary>
     private bool AnalyzeIndicatorWithBitBlt(System.Windows.Rect rect, LanguageType language)
     {
@@ -227,106 +307,50 @@ public partial class PixelIMEDetector : IDisposable
         int width = (int)rect.Width;
         int height = (int)rect.Height;
 
-        IntPtr screenDC = IntPtr.Zero;
-        IntPtr memDC = IntPtr.Zero;
-        IntPtr hBitmap = IntPtr.Zero;
-        IntPtr oldBitmap = IntPtr.Zero;
+        if (!EnsureGdiResources(width, height))
+            return false;
 
-        try
+        // BitBltでスクリーンからメモリDCにコピー
+        if (!BitBlt(_cachedMemDC, 0, 0, width, height, _cachedScreenDC, left, top, SRCCOPY))
+            return false;
+
+        // GetDIBitsの前にビットマップをDCから解除（API要件）
+        SelectObject(_cachedMemDC, _cachedOldBitmap);
+
+        var bmi = new BITMAPINFO
         {
-            // スクリーンDCを取得
-            screenDC = GetDC(IntPtr.Zero);
-            if (screenDC == IntPtr.Zero)
+            bmiHeader = new BITMAPINFOHEADER
             {
-                return false;
+                biSize = (uint)Marshal.SizeOf<BITMAPINFOHEADER>(),
+                biWidth = width,
+                biHeight = height,
+                biPlanes = 1,
+                biBitCount = 32,
+                biCompression = BI_RGB
             }
+        };
 
-            // メモリDCとビットマップを作成
-            memDC = CreateCompatibleDC(screenDC);
-            if (memDC == IntPtr.Zero)
-            {
-                return false;
-            }
+        int stride = width * 4;
+        int length = stride * height;
 
-            hBitmap = CreateCompatibleBitmap(screenDC, width, height);
-            if (hBitmap == IntPtr.Zero)
-            {
-                return false;
-            }
+        // 事前確保済みバッファでGetDIBits実行（アロケーションゼロ）
+        int result = GetDIBits(_cachedScreenDC, _cachedBitmap, 0, (uint)height, _pinnedPixelBuffer, ref bmi, DIB_RGB_COLORS);
 
-            oldBitmap = SelectObject(memDC, hBitmap);
+        // ビットマップをDCに再選択
+        _cachedOldBitmap = SelectObject(_cachedMemDC, _cachedBitmap);
 
-            // BitBltでスクリーンからメモリDCにコピー
-            if (!BitBlt(memDC, 0, 0, width, height, screenDC, left, top, SRCCOPY))
-            {
-                return false;
-            }
+        if (result == 0) return false;
 
-            // GetDIBitsの前にビットマップをDCから解除（API要件）
-            // "The bitmap must not be selected into a device context when GetDIBits is called"
-            SelectObject(memDC, oldBitmap);
-            oldBitmap = IntPtr.Zero; // finally での二重解除を防止
-
-            // GetDIBitsでピクセルデータを直接取得（GDI+を経由しない）
-            var bmi = new BITMAPINFO
-            {
-                bmiHeader = new BITMAPINFOHEADER
-                {
-                    biSize = (uint)Marshal.SizeOf<BITMAPINFOHEADER>(),
-                    biWidth = width,
-                    biHeight = height, // 正の値（ボトムアップ）- GetDIBitsでは負値非推奨
-                    biPlanes = 1,
-                    biBitCount = 32,
-                    biCompression = BI_RGB
-                }
-            };
-
-            // ピクセルデータ用バッファ（BGRA形式、4バイト/ピクセル）
-            int stride = width * 4;
-            int length = stride * height;
-            byte[] pixels = System.Buffers.ArrayPool<byte>.Shared.Rent(length);
-
-            IntPtr pPixels = Marshal.AllocHGlobal(length);
-            try
-            {
-                int result = GetDIBits(screenDC, hBitmap, 0, (uint)height, pPixels, ref bmi, DIB_RGB_COLORS);
-                if (result == 0)
-                {
-                    System.Buffers.ArrayPool<byte>.Shared.Return(pixels);
-                    return false;
-                }
-
-                Marshal.Copy(pPixels, pixels, 0, length);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(pPixels);
-            }
+        Marshal.Copy(_pinnedPixelBuffer, _pixelBuffer!, 0, length);
 
 #if DEBUG
-            // デバッグ: キャプチャ画像を保存（設定で有効時のみ）
-            if (EnableDebugImageSave)
-            {
-                SaveDebugBitmapFromPixels(pixels, width, height, language);
-            }
+        if (EnableDebugImageSave)
+        {
+            SaveDebugBitmapFromPixels(_pixelBuffer!, width, height, language);
+        }
 #endif
 
-            bool analysisResult = AnalyzePixelData(pixels, width, height, stride, language);
-            System.Buffers.ArrayPool<byte>.Shared.Return(pixels);
-            return analysisResult;
-        }
-        finally
-        {
-            // リソース解放
-            if (oldBitmap != IntPtr.Zero && memDC != IntPtr.Zero)
-                SelectObject(memDC, oldBitmap);
-            if (hBitmap != IntPtr.Zero)
-                DeleteObject(hBitmap);
-            if (memDC != IntPtr.Zero)
-                DeleteDC(memDC);
-            if (screenDC != IntPtr.Zero)
-                ReleaseDC(IntPtr.Zero, screenDC);
-        }
+        return AnalyzePixelData(_pixelBuffer!, width, height, stride, language);
     }
 
     /// <summary>
@@ -550,6 +574,9 @@ public partial class PixelIMEDetector : IDisposable
             // マネージドリソースのクリーンアップ
             ClearCache();
         }
+
+        // GDIリソースの解放（アンマネージドリソース）
+        ReleaseGdiResources();
 
         // 静的インスタンスをクリア
         lock (_lock)

@@ -1,4 +1,5 @@
-using System.Windows.Threading;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace IMEIndicatorClock.Services;
 
@@ -7,24 +8,25 @@ namespace IMEIndicatorClock.Services;
 /// </summary>
 public partial class IMEMonitor : IDisposable
 {
-    private DispatcherTimer? _timer;
     private KeyboardHook? _keyboardHook;
-    private MouseHook? _mouseHook;
+    private MouseTracker? _mouseTracker;
+    private WinEventHookManager? _winEventHook;
+
     private LanguageInfo _lastState = new(LanguageType.English, false);
     private IntPtr _lastForegroundWindow = IntPtr.Zero;
     private bool _trackedIMEState = false;
     private LanguageType? _trackedLanguageForTerminal = null;
     private bool _disposed;
 
-    // キー押下デバウンス用
-    private DispatcherTimer? _keyDebounceTimer;
-    private const int KeyDebounceIntervalMs = 100;
+    // デバウンス: 単一Timer.Change()でアロケーションゼロ
+    private System.Threading.Timer? _debounceTimer;
+    private const int DebounceDelayMs = 150;
 
     // ピクセル判定による状態検証
     private DateTime _lastPixelVerification = DateTime.MinValue;
     private int _pixelVerificationIntervalMs = 2000;
 
-    // CheckIMEState2 の多重実行防止（タイマーとデバウンスが重なる場合）
+    // CheckIMEState2 の多重実行防止
     private volatile int _isChecking = 0;
 
     /// <summary>
@@ -46,11 +48,6 @@ public partial class IMEMonitor : IDisposable
     public event Action<int, int>? CursorPositionChanged;
 
     /// <summary>
-    /// ポーリング間隔（ミリ秒）
-    /// </summary>
-    public int PollingInterval { get; set; } = 300;
-
-    /// <summary>
     /// 現在のIME状態
     /// </summary>
     public LanguageInfo CurrentState => _lastState;
@@ -60,25 +57,25 @@ public partial class IMEMonitor : IDisposable
     /// </summary>
     public void Start()
     {
-        if (_timer != null) return;
+        // デバウンスタイマーを事前確保（以降は Change() のみでアロケーションなし）
+        _debounceTimer = new System.Threading.Timer(
+            _ => CheckIMEState2(), null, Timeout.Infinite, Timeout.Infinite);
 
         _keyboardHook = new KeyboardHook();
         _keyboardHook.IMEKeyPressed += OnIMEKeyPressed;
         _keyboardHook.LanguageSwitchDetected += OnLanguageSwitchDetected;
         _keyboardHook.Start();
 
-        _mouseHook = new MouseHook();
-        _mouseHook.MouseMoved += (x, y) => CursorPositionChanged?.Invoke(x, y);
-        _mouseHook.Start();
+        _mouseTracker = new MouseTracker();
+        _mouseTracker.MouseMoved += (x, y) => CursorPositionChanged?.Invoke(x, y);
+        _mouseTracker.Start();
 
-        _timer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(PollingInterval)
-        };
-        _timer.Tick += OnTimerTick;
-        _timer.Start();
+        _winEventHook = new WinEventHookManager();
+        _winEventHook.FocusChanged += OnTriggerFired;
+        _winEventHook.Start();
 
-        CheckIMEState2();
+        // 初回チェック
+        OnTriggerFired();
     }
 
     /// <summary>
@@ -86,16 +83,8 @@ public partial class IMEMonitor : IDisposable
     /// </summary>
     public void Stop()
     {
-        if (_timer != null)
-        {
-            _timer.Stop();
-            _timer.Tick -= OnTimerTick;
-            _timer = null;
-        }
-
-        // デバウンスタイマーも停止
-        _keyDebounceTimer?.Stop();
-        _keyDebounceTimer = null;
+        _debounceTimer?.Dispose();
+        _debounceTimer = null;
 
         if (_keyboardHook != null)
         {
@@ -105,23 +94,28 @@ public partial class IMEMonitor : IDisposable
             _keyboardHook = null;
         }
 
-        if (_mouseHook != null)
+        if (_mouseTracker != null)
         {
-            _mouseHook.Dispose();
-            _mouseHook = null;
+            _mouseTracker.Dispose();
+            _mouseTracker = null;
+        }
+
+        if (_winEventHook != null)
+        {
+            _winEventHook.FocusChanged -= OnTriggerFired;
+            _winEventHook.Dispose();
+            _winEventHook = null;
         }
     }
 
-    private void OnTimerTick(object? sender, EventArgs e)
+    public void OnTriggerFired()
     {
-        // TSF + PixelDetector はブロッキング処理のためバックグラウンドで実行
-        // UIスレッドを解放し WH_MOUSE_LL コールバックの遅延を防ぐ
-        _ = Task.Run(() => CheckIMEState2());
+        // Timer.Change() でデバウンスをリセット（アロケーションゼロ）
+        _debounceTimer?.Change(DebounceDelayMs, Timeout.Infinite);
     }
 
     /// <summary>
     /// IME状態をチェック（日本語IME特化版）
-    /// タイマー（バックグラウンド）とデバウンス（UIスレッド）から呼ばれる可能性があるため多重実行を防止
     /// </summary>
     private void CheckIMEState2(bool forceUpdate = false)
     {
@@ -156,9 +150,6 @@ public partial class IMEMonitor : IDisposable
                 currentState.IsIMEOn != _lastState.IsIMEOn ||
                 forceUpdate)
             {
-                if (!windowChanged)
-                {
-                }
                 _lastState = currentState;
                 IMEStateChanged?.Invoke(currentState);
             }

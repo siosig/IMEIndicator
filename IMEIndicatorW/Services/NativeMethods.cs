@@ -349,6 +349,19 @@ internal static partial class NativeMethods
     public const int WS_EX_TOOLWINDOW = 0x00000080;
     public const int WS_EX_NOACTIVATE = 0x08000000;
 
+    public delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr hmodWinEventProc, WinEventDelegate lpfnWinEventProc, uint idProcess, uint idThread, uint dwFlags);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool UnhookWinEvent(IntPtr hWinEventHook);
+
+    public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
+    public const uint EVENT_OBJECT_FOCUS = 0x8005;
+    public const uint WINEVENT_OUTOFCONTEXT = 0x0000;
+
     // ヘルパーメソッド
     public static string GetWindowTitle(IntPtr hWnd)
     {
@@ -367,18 +380,54 @@ internal static partial class NativeMethods
         return len > 0 ? new string(buffer[..len]) : "";
     }
 
+    // プロセス名キャッシュ（hWndベース、ウィンドウ切り替え時のみ更新）
+    private static IntPtr _lastProcessHWnd = IntPtr.Zero;
+    private static string _lastProcessNameCached = string.Empty;
+
+    // QueryFullProcessImageName で Process オブジェクト生成を排除
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint processAccess, [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle, uint processId);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool QueryFullProcessImageName(IntPtr hProcess, uint dwFlags, char[] lpExeName, ref uint lpdwSize);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool CloseHandle(IntPtr hObject);
+
+    private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+
     public static string GetProcessName(IntPtr hWnd)
     {
         if (hWnd == IntPtr.Zero) return "(null)";
+
+        // hWndが同じなら前回の結果を返す（キャッシュヒット）
+        if (hWnd == _lastProcessHWnd) return _lastProcessNameCached;
+
         _ = GetWindowThreadProcessId(hWnd, out uint processId);
+        IntPtr hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processId);
+        if (hProcess == IntPtr.Zero) return $"PID:{processId}";
+
+        // ArrayPool でバッファ確保（ヒープアロケーション回避）
+        char[] buffer = System.Buffers.ArrayPool<char>.Shared.Rent(1024);
         try
         {
-            using var process = System.Diagnostics.Process.GetProcessById((int)processId);
-            return process.ProcessName;
-        }
-        catch
-        {
+            uint size = (uint)buffer.Length;
+            if (QueryFullProcessImageName(hProcess, 0, buffer, ref size))
+            {
+                ReadOnlySpan<char> fullPath = new ReadOnlySpan<char>(buffer, 0, (int)size);
+                var fileName = System.IO.Path.GetFileNameWithoutExtension(fullPath);
+                _lastProcessNameCached = fileName.ToString();
+                _lastProcessHWnd = hWnd;
+                return _lastProcessNameCached;
+            }
             return $"PID:{processId}";
+        }
+        finally
+        {
+            System.Buffers.ArrayPool<char>.Shared.Return(buffer);
+            CloseHandle(hProcess);
         }
     }
 }

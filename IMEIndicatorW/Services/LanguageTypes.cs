@@ -11,6 +11,6 @@ public enum LanguageType
 }
 
 /// <summary>
-/// 言語情報
+/// 言語情報（値型によりヒープアロケーションを回避）
 /// </summary>
-public record LanguageInfo(LanguageType Language, bool IsIMEOn);
+public readonly record struct LanguageInfo(LanguageType Language, bool IsIMEOn);
