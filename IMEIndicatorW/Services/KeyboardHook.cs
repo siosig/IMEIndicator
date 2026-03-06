@@ -35,10 +35,6 @@ public partial class KeyboardHook : IDisposable
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
 
-    [DllImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool UnhookWindowsHookEx(IntPtr hhk);
-
     [DllImport("user32.dll")]
     private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
 
@@ -58,7 +54,7 @@ public partial class KeyboardHook : IDisposable
         public IntPtr dwExtraInfo;
     }
 
-    private IntPtr _hookId = IntPtr.Zero;
+    private SafeHookHandle? _hookId;
     private readonly LowLevelKeyboardProc _proc;
     private bool _disposed;
 
@@ -79,33 +75,33 @@ public partial class KeyboardHook : IDisposable
 
     public void Start()
     {
-        if (_hookId != IntPtr.Zero) return;
+        if (_hookId is { IsInvalid: false }) return;
 
         try
         {
             // .NET Core/5+では GetModuleHandle(null) を使用
-            _hookId = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, GetModuleHandle(null), 0);
+            var handle = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, GetModuleHandle(null), 0);
 
-            if (_hookId == IntPtr.Zero)
+            if (handle == IntPtr.Zero)
             {
                 int error = Marshal.GetLastWin32Error();
+                Debug.WriteLine($"[KeyboardHook] SetWindowsHookEx failed with error: {error}");
             }
             else
             {
+                _hookId = new SafeHookHandle(handle);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[KeyboardHook] Start failed: {ex.Message}");
         }
     }
 
     public void Stop()
     {
-        if (_hookId != IntPtr.Zero)
-        {
-            UnhookWindowsHookEx(_hookId);
-            _hookId = IntPtr.Zero;
-        }
+        _hookId?.Dispose();
+        _hookId = null;
     }
 
     private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
@@ -147,11 +143,12 @@ public partial class KeyboardHook : IDisposable
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[KeyboardHook] HookCallback failed: {ex.Message}");
         }
 
-        return CallNextHookEx(_hookId, nCode, wParam, lParam);
+        return CallNextHookEx(_hookId?.DangerousGetHandle() ?? IntPtr.Zero, nCode, wParam, lParam);
     }
 
     /// <summary>

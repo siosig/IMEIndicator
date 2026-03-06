@@ -15,9 +15,6 @@ public partial class PixelIMEDetector : IDisposable
     [LibraryImport("user32.dll")]
     private static partial IntPtr GetDC(IntPtr hWnd);
 
-    [LibraryImport("user32.dll")]
-    private static partial int ReleaseDC(IntPtr hWnd, IntPtr hDC);
-
     [LibraryImport("gdi32.dll")]
     private static partial IntPtr CreateCompatibleDC(IntPtr hdc);
 
@@ -26,14 +23,6 @@ public partial class PixelIMEDetector : IDisposable
 
     [LibraryImport("gdi32.dll")]
     private static partial IntPtr SelectObject(IntPtr hdc, IntPtr hgdiobj);
-
-    [LibraryImport("gdi32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool DeleteObject(IntPtr hObject);
-
-    [LibraryImport("gdi32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool DeleteDC(IntPtr hdc);
 
     [LibraryImport("gdi32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -94,10 +83,10 @@ public partial class PixelIMEDetector : IDisposable
     private bool? _lastPixelResult = null;
     private const int PixelCheckIntervalMs = 200; // 200ms間隔で判定
 
-    // GDIリソースのキャッシュ（毎回の確保・解放を排除）
-    private IntPtr _cachedScreenDC = IntPtr.Zero;
-    private IntPtr _cachedMemDC = IntPtr.Zero;
-    private IntPtr _cachedBitmap = IntPtr.Zero;
+    // GDIリソースのキャッシュ（SafeHandleで安全に管理）
+    private SafeDCHandle? _cachedScreenDC;
+    private SafeMemDCHandle? _cachedMemDC;
+    private SafeGdiObjectHandle? _cachedBitmap;
     private IntPtr _cachedOldBitmap = IntPtr.Zero;
     private int _cachedWidth;
     private int _cachedHeight;
@@ -165,8 +154,9 @@ public partial class PixelIMEDetector : IDisposable
             _lastPixelCheck = now;
             return isOn;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[PixelIMEDetector] DetectIMEState failed: {ex.Message}");
             return null;
         }
     }
@@ -222,8 +212,9 @@ public partial class PixelIMEDetector : IDisposable
             swTotal.Stop();
             return new DetectIMEState2Result(isOn, getRectTime, analyzeTime, swTotal.Elapsed.TotalMilliseconds);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[PixelIMEDetector] DetectIMEState2 failed: {ex.Message}");
             swTotal.Stop();
             return new DetectIMEState2Result(null, getRectTime, analyzeTime, swTotal.Elapsed.TotalMilliseconds);
         }
@@ -234,22 +225,25 @@ public partial class PixelIMEDetector : IDisposable
     /// </summary>
     private bool EnsureGdiResources(int width, int height)
     {
-        if (_cachedScreenDC != IntPtr.Zero && _cachedWidth == width && _cachedHeight == height)
+        if (_cachedScreenDC is { IsInvalid: false } && _cachedWidth == width && _cachedHeight == height)
             return true;
 
         // 既存リソースを解放
         ReleaseGdiResources();
 
-        _cachedScreenDC = GetDC(IntPtr.Zero);
-        if (_cachedScreenDC == IntPtr.Zero) return false;
+        var screenDC = GetDC(IntPtr.Zero);
+        if (screenDC == IntPtr.Zero) return false;
+        _cachedScreenDC = new SafeDCHandle(screenDC);
 
-        _cachedMemDC = CreateCompatibleDC(_cachedScreenDC);
-        if (_cachedMemDC == IntPtr.Zero) return false;
+        var memDC = CreateCompatibleDC(screenDC);
+        if (memDC == IntPtr.Zero) return false;
+        _cachedMemDC = new SafeMemDCHandle(memDC);
 
-        _cachedBitmap = CreateCompatibleBitmap(_cachedScreenDC, width, height);
-        if (_cachedBitmap == IntPtr.Zero) return false;
+        var bitmap = CreateCompatibleBitmap(screenDC, width, height);
+        if (bitmap == IntPtr.Zero) return false;
+        _cachedBitmap = new SafeGdiObjectHandle(bitmap);
 
-        _cachedOldBitmap = SelectObject(_cachedMemDC, _cachedBitmap);
+        _cachedOldBitmap = SelectObject(memDC, bitmap);
         _cachedWidth = width;
         _cachedHeight = height;
 
@@ -273,26 +267,22 @@ public partial class PixelIMEDetector : IDisposable
         }
         _pixelBuffer = null;
 
-        if (_cachedOldBitmap != IntPtr.Zero && _cachedMemDC != IntPtr.Zero)
+        // OldBitmapを復元してからSafeHandleをDispose
+        if (_cachedOldBitmap != IntPtr.Zero && _cachedMemDC is { IsInvalid: false })
         {
-            SelectObject(_cachedMemDC, _cachedOldBitmap);
+            SelectObject(_cachedMemDC.DangerousGetHandle(), _cachedOldBitmap);
             _cachedOldBitmap = IntPtr.Zero;
         }
-        if (_cachedBitmap != IntPtr.Zero)
-        {
-            DeleteObject(_cachedBitmap);
-            _cachedBitmap = IntPtr.Zero;
-        }
-        if (_cachedMemDC != IntPtr.Zero)
-        {
-            DeleteDC(_cachedMemDC);
-            _cachedMemDC = IntPtr.Zero;
-        }
-        if (_cachedScreenDC != IntPtr.Zero)
-        {
-            ReleaseDC(IntPtr.Zero, _cachedScreenDC);
-            _cachedScreenDC = IntPtr.Zero;
-        }
+
+        _cachedBitmap?.Dispose();
+        _cachedBitmap = null;
+
+        _cachedMemDC?.Dispose();
+        _cachedMemDC = null;
+
+        _cachedScreenDC?.Dispose();
+        _cachedScreenDC = null;
+
         _cachedWidth = 0;
         _cachedHeight = 0;
     }
@@ -310,12 +300,16 @@ public partial class PixelIMEDetector : IDisposable
         if (!EnsureGdiResources(width, height))
             return false;
 
+        var memDCHandle = _cachedMemDC!.DangerousGetHandle();
+        var screenDCHandle = _cachedScreenDC!.DangerousGetHandle();
+        var bitmapHandle = _cachedBitmap!.DangerousGetHandle();
+
         // BitBltでスクリーンからメモリDCにコピー
-        if (!BitBlt(_cachedMemDC, 0, 0, width, height, _cachedScreenDC, left, top, SRCCOPY))
+        if (!BitBlt(memDCHandle, 0, 0, width, height, screenDCHandle, left, top, SRCCOPY))
             return false;
 
         // GetDIBitsの前にビットマップをDCから解除（API要件）
-        SelectObject(_cachedMemDC, _cachedOldBitmap);
+        SelectObject(memDCHandle, _cachedOldBitmap);
 
         var bmi = new BITMAPINFO
         {
@@ -334,10 +328,10 @@ public partial class PixelIMEDetector : IDisposable
         int length = stride * height;
 
         // 事前確保済みバッファでGetDIBits実行（アロケーションゼロ）
-        int result = GetDIBits(_cachedScreenDC, _cachedBitmap, 0, (uint)height, _pinnedPixelBuffer, ref bmi, DIB_RGB_COLORS);
+        int result = GetDIBits(screenDCHandle, bitmapHandle, 0, (uint)height, _pinnedPixelBuffer, ref bmi, DIB_RGB_COLORS);
 
         // ビットマップをDCに再選択
-        _cachedOldBitmap = SelectObject(_cachedMemDC, _cachedBitmap);
+        _cachedOldBitmap = SelectObject(memDCHandle, bitmapHandle);
 
         if (result == 0) return false;
 
@@ -490,8 +484,9 @@ public partial class PixelIMEDetector : IDisposable
                 return (indicator.Current.Name ?? "", rect);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[PixelIMEDetector] FindWindowsInputIndicator failed: {ex.Message}");
         }
 
         return null;
@@ -536,8 +531,9 @@ public partial class PixelIMEDetector : IDisposable
 
             bitmap.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[PixelIMEDetector] SaveDebugBitmap failed: {ex.Message}");
         }
     }
 #endif

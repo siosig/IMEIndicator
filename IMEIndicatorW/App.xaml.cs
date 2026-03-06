@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using Hardcodet.Wpf.TaskbarNotification;
 using IMEIndicatorClock.Services;
@@ -148,9 +149,9 @@ public partial class App : Application
                 return new System.Drawing.Icon(streamInfo.Stream);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // 埋め込みリソースから読み込めない場合、外部ファイルを試す
+            Debug.WriteLine($"[App] Failed to load icon from resource, trying external file: {ex.Message}");
         }
 
         var iconPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", iconFileName);
@@ -203,6 +204,8 @@ public partial class App : Application
 
     private void OnIMEStateChanged(LanguageInfo languageInfo)
     {
+        // IMEMonitor のタイマーコールバック（ThreadPool スレッド）から呼ばれるため
+        // Dispatcher.InvokeAsync で UI スレッドにマーシャリング
         Dispatcher.InvokeAsync(() =>
         {
             _mainViewModel?.UpdateIMEState(languageInfo);
@@ -240,17 +243,27 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // イベント購読を解除してからDispose
+        if (_imeMonitor != null)
+        {
+            _imeMonitor.IMEStateChanged -= OnIMEStateChanged;
+            _imeMonitor.CursorPositionChanged -= OnCursorPositionChanged;
+        }
 
-        try
-        {
-            _imeMonitor?.Stop();
-            _mouseCursorIndicatorWindow?.Close();
-            _trayIcon?.Dispose();
-            _settingsManager?.Save();
-        }
-        catch (Exception)
-        {
-        }
+        try { _imeMonitor?.Dispose(); }
+        catch (Exception ex) { Trace.TraceError($"[App.OnExit] IMEMonitor Dispose failed: {ex.Message}"); }
+
+        try { _mouseCursorIndicatorWindow?.Close(); }
+        catch (Exception ex) { Trace.TraceError($"[App.OnExit] MouseCursorIndicatorWindow Close failed: {ex.Message}"); }
+
+        try { _trayIcon?.Dispose(); }
+        catch (Exception ex) { Trace.TraceError($"[App.OnExit] TrayIcon Dispose failed: {ex.Message}"); }
+
+        try { _settingsManager?.Save(); }
+        catch (Exception ex) { Trace.TraceError($"[App.OnExit] SettingsManager Save failed: {ex.Message}"); }
+
+        try { PixelIMEDetector.DisposeInstance(); }
+        catch (Exception ex) { Trace.TraceError($"[App.OnExit] PixelIMEDetector Dispose failed: {ex.Message}"); }
 
         base.OnExit(e);
     }

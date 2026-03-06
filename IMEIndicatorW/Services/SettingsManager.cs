@@ -60,6 +60,10 @@ public class SettingsManager
     public bool Load()
     {
         LastError = null;
+
+        // 前回クラッシュで残った .tmp ファイルをクリーンアップ
+        CleanupStaleTempFiles();
+
         try
         {
             if (File.Exists(_settingsFilePath))
@@ -133,7 +137,11 @@ public class SettingsManager
             }
 
             var json = JsonSerializer.Serialize(Settings, JsonOptions);
-            File.WriteAllText(_settingsFilePath, json);
+
+            // アトミック保存: .tmp に書き込み → File.Move で上書き
+            var tmpPath = _settingsFilePath + ".tmp";
+            File.WriteAllText(tmpPath, json);
+            File.Move(tmpPath, _settingsFilePath, overwrite: true);
             return true;
         }
         catch (IOException ex)
@@ -185,8 +193,29 @@ public class SettingsManager
                 });
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[SettingsManager] OpenSettingsDirectory failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 前回クラッシュで残った .tmp ファイルを削除
+    /// </summary>
+    private void CleanupStaleTempFiles()
+    {
+        try
+        {
+            var tmpPath = _settingsFilePath + ".tmp";
+            if (File.Exists(tmpPath))
+            {
+                File.Delete(tmpPath);
+                System.Diagnostics.Debug.WriteLine($"[SettingsManager] Cleaned up stale temp file: {tmpPath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsManager] Failed to cleanup temp file: {ex.Message}");
         }
     }
 

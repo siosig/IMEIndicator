@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -154,8 +155,9 @@ public partial class IMEMonitor : IDisposable
                 IMEStateChanged?.Invoke(currentState);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[IMEMonitor] CheckIMEState2 failed: {ex.Message}");
         }
         finally
         {
@@ -166,8 +168,39 @@ public partial class IMEMonitor : IDisposable
     public void Dispose()
     {
         if (_disposed) return;
-        Stop();
         _disposed = true;
+
+        try { _debounceTimer?.Dispose(); }
+        catch (Exception ex) { Trace.TraceError($"[IMEMonitor] debounceTimer Dispose failed: {ex.Message}"); }
+        _debounceTimer = null;
+
+        try
+        {
+            if (_keyboardHook != null)
+            {
+                _keyboardHook.IMEKeyPressed -= OnIMEKeyPressed;
+                _keyboardHook.LanguageSwitchDetected -= OnLanguageSwitchDetected;
+                _keyboardHook.Dispose();
+            }
+        }
+        catch (Exception ex) { Trace.TraceError($"[IMEMonitor] KeyboardHook Dispose failed: {ex.Message}"); }
+        _keyboardHook = null;
+
+        try { _mouseTracker?.Dispose(); }
+        catch (Exception ex) { Trace.TraceError($"[IMEMonitor] MouseTracker Dispose failed: {ex.Message}"); }
+        _mouseTracker = null;
+
+        try
+        {
+            if (_winEventHook != null)
+            {
+                _winEventHook.FocusChanged -= OnTriggerFired;
+                _winEventHook.Dispose();
+            }
+        }
+        catch (Exception ex) { Trace.TraceError($"[IMEMonitor] WinEventHook Dispose failed: {ex.Message}"); }
+        _winEventHook = null;
+
         GC.SuppressFinalize(this);
     }
 }

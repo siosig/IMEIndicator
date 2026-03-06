@@ -392,10 +392,6 @@ internal static partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool QueryFullProcessImageName(IntPtr hProcess, uint dwFlags, char[] lpExeName, ref uint lpdwSize);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool CloseHandle(IntPtr hObject);
-
     private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
 
     public static string GetProcessName(IntPtr hWnd)
@@ -406,15 +402,17 @@ internal static partial class NativeMethods
         if (hWnd == _lastProcessHWnd) return _lastProcessNameCached;
 
         _ = GetWindowThreadProcessId(hWnd, out uint processId);
-        IntPtr hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processId);
-        if (hProcess == IntPtr.Zero) return $"PID:{processId}";
+        var rawHandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processId);
+        if (rawHandle == IntPtr.Zero) return $"PID:{processId}";
+
+        using var hProcess = new SafeProcessHandle(rawHandle);
 
         // ArrayPool でバッファ確保（ヒープアロケーション回避）
         char[] buffer = System.Buffers.ArrayPool<char>.Shared.Rent(1024);
         try
         {
             uint size = (uint)buffer.Length;
-            if (QueryFullProcessImageName(hProcess, 0, buffer, ref size))
+            if (QueryFullProcessImageName(hProcess.DangerousGetHandle(), 0, buffer, ref size))
             {
                 ReadOnlySpan<char> fullPath = new ReadOnlySpan<char>(buffer, 0, (int)size);
                 var fileName = System.IO.Path.GetFileNameWithoutExtension(fullPath);
@@ -427,7 +425,6 @@ internal static partial class NativeMethods
         finally
         {
             System.Buffers.ArrayPool<char>.Shared.Return(buffer);
-            CloseHandle(hProcess);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace IMEIndicatorClock.Services;
 /// </summary>
 public class WinEventHookManager : IDisposable
 {
-    private IntPtr _hookForeground;
+    private WinEventHookHandle? _hookForeground;
     private NativeMethods.WinEventDelegate? _procDelegate; // GC対策で保持
     private bool _isStarted;
 
@@ -23,9 +23,11 @@ public class WinEventHookManager : IDisposable
         _procDelegate = new NativeMethods.WinEventDelegate(WinEventProc);
 
         // EVENT_SYSTEM_FOREGROUND のみ（アクティブウィンドウ切り替え時）
-        _hookForeground = NativeMethods.SetWinEventHook(
+        var handle = NativeMethods.SetWinEventHook(
             NativeMethods.EVENT_SYSTEM_FOREGROUND, NativeMethods.EVENT_SYSTEM_FOREGROUND,
             IntPtr.Zero, _procDelegate, 0, 0, NativeMethods.WINEVENT_OUTOFCONTEXT);
+        if (handle != IntPtr.Zero)
+            _hookForeground = new WinEventHookHandle(handle);
     }
 
     private void WinEventProc(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
@@ -38,8 +40,8 @@ public class WinEventHookManager : IDisposable
         if (!_isStarted) return;
         _isStarted = false;
 
-        if (_hookForeground != IntPtr.Zero) NativeMethods.UnhookWinEvent(_hookForeground);
-        _hookForeground = IntPtr.Zero;
+        _hookForeground?.Dispose();
+        _hookForeground = null;
     }
 
     public void Dispose()

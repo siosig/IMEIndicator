@@ -52,8 +52,9 @@ public static class ColorHelper
                 _ => Colors.Gray
             };
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[ColorHelper] Failed to parse color '{hex}': {ex.Message}");
             return Colors.Gray;
         }
     }

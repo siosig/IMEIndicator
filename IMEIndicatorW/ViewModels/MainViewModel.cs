@@ -30,8 +30,9 @@ public partial class MainViewModel : ObservableObject
         {
             MouseCursorIndicatorViewModel.UpdateState(languageInfo);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[MainViewModel] UpdateIMEState failed: {ex.Message}");
         }
     }
 

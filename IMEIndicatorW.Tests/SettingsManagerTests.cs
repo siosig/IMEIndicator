@@ -194,4 +194,52 @@ public class SettingsManagerTests : IDisposable
 
         Assert.True(manager.Settings.MouseCursorIndicator.HideWhenImeOff);
     }
+
+    [Fact]
+    public void Save_Atomic_NoTmpFileRemains()
+    {
+        // アトミック保存後に .tmp ファイルが残らないことを確認
+        var manager = new SettingsManager(_tempDir);
+        manager.Settings.ImeOnColor = "#AABBCC";
+
+        var result = manager.Save();
+
+        Assert.True(result);
+        Assert.False(File.Exists(manager.GetSettingsFilePath() + ".tmp"));
+        Assert.True(File.Exists(manager.GetSettingsFilePath()));
+    }
+
+    [Fact]
+    public void Save_Atomic_ProducesValidJson()
+    {
+        // アトミック保存結果が有効な JSON であることを確認
+        var manager = new SettingsManager(_tempDir);
+        manager.Settings.ImeOnColor = "#112233";
+        manager.Settings.MouseCursorIndicator.Size = 42;
+        manager.Save();
+
+        var json = File.ReadAllText(manager.GetSettingsFilePath());
+        var parsed = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(json, new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+        });
+
+        Assert.NotNull(parsed);
+        Assert.Equal("#112233", parsed.ImeOnColor);
+        Assert.Equal(42, parsed.MouseCursorIndicator.Size);
+    }
+
+    [Fact]
+    public void Load_CleansStaleTmpFile()
+    {
+        // Load 時に残存 .tmp ファイルがクリーンアップされることを確認
+        Directory.CreateDirectory(_tempDir);
+        var manager = new SettingsManager(_tempDir);
+        var tmpPath = manager.GetSettingsFilePath() + ".tmp";
+        File.WriteAllText(tmpPath, "stale data");
+
+        manager.Load();
+
+        Assert.False(File.Exists(tmpPath));
+    }
 }
