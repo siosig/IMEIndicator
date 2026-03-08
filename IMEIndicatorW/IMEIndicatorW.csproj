@@ -40,7 +40,17 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishReadyToRun>true</PublishReadyToRun>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <!-- 部分トリミング: WPF/WinForms は非対応のため触れず、opt-in した System.* のみ削減 -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+    <!-- WPF 関連の trim 分析警告を抑制 -->
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
   </PropertyGroup>
+
+  <!-- 部分トリミング用ルート記述子（Self-contained ビルドのみ） -->
+  <ItemGroup Condition="'$(SelfContained)' == 'true'">
+    <TrimmerRootDescriptor Include="TrimmerRootDescriptor.xml" />
+  </ItemGroup>
 
   <ItemGroup>
     <Resource Include="app.ico" />
