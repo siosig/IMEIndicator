@@ -1,5 +1,5 @@
 =====================================
-IMEIndicatorClockW v1.0.2 - お読みください
+IMEIndicator v1.0.2 - お読みください
 =====================================
 
 【アプリ概要】
@@ -12,7 +12,7 @@ Windowsユーティリティです。
 
 【インストール方法】
 1. ZIPファイルを任意のフォルダに展開
-2. IMEIndicatorClockW.exe を実行
+2. IMEIndicator.exe を実行
 
 【主な機能】
 - 18言語以上のIME状態表示
@@ -41,11 +41,11 @@ IME状態を正しく検出するために必要です。
 1. 自動起動を有効にしている場合は、先にメニューから無効にしてください
 2. 展開したフォルダを削除
 ※レジストリは使用していません
-※設定ファイルは %AppData%\IMEIndicatorClockW に保存されています
+※設定ファイルは %AppData%\IMEIndicator に保存されています
   （完全削除する場合はこのフォルダも削除）
 
 【サポート】
-- GitHub: https://github.com/obott9/IMEIndicatorClockW
+- GitHub: https://github.com/obott9/IMEIndicator
 - Email: obott9.dev@gmail.com
 
 【ライセンス】

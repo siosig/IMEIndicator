@@ -1,5 +1,5 @@
 =====================================
-IMEIndicatorClockW v1.0.2 - 讀我檔案
+IMEIndicator v1.0.2 - 讀我檔案
 =====================================
 
 [關於]
@@ -12,7 +12,7 @@ IMEIndicatorClockW v1.0.2 - 讀我檔案
 
 [安裝方法]
 1. 將ZIP檔案解壓縮到任意資料夾
-2. 執行 IMEIndicatorClockW.exe
+2. 執行 IMEIndicator.exe
 
 [主要功能]
 - 支援18種以上語言
@@ -41,11 +41,11 @@ IMEIndicatorClockW v1.0.2 - 讀我檔案
 1. 如果啟用了自動啟動，請先從選單中停用
 2. 刪除解壓縮的資料夾
 ※不建立登錄項目
-※設定檔儲存在 %AppData%\IMEIndicatorClockW
+※設定檔儲存在 %AppData%\IMEIndicator
   （如需完全移除，請同時刪除此資料夾）
 
 [支援]
-- GitHub: https://github.com/obott9/IMEIndicatorClockW
+- GitHub: https://github.com/obott9/IMEIndicator
 - Email: obott9.dev@gmail.com
 
 [授權]

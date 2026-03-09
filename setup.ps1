@@ -1,7 +1,7 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    IMEIndicatorClockW セットアップスクリプト
+    IMEIndicator セットアップスクリプト
 
 .DESCRIPTION
     タスクスケジューラーに登録し、Windowsログイン時に管理者権限で
@@ -25,8 +25,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$TaskName = "IMEIndicatorClockW"
-$ExeName  = "IMEIndicatorClockW.exe"
+$TaskName = "IMEIndicator"
+$ExeName  = "IMEIndicator.exe"
 
 # EXEのパスをスクリプトのあるディレクトリから解決
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path

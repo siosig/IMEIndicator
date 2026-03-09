@@ -1,10 +1,10 @@
-# IMEIndicatorClockW
+# IMEIndicator
 
 [日本語](README_ja.md) | [繁體中文](README_zh-Hant.md) | [简体中文](README_zh-Hans.md) | [한국어](README_ko.md)
 
 A Windows utility app that visually displays IME (Input Method Editor) status with a customizable desktop clock.
 
-This is the Windows port of the macOS version [IMEIndicatorClock](https://github.com/obott9/IMEIndicatorClock).
+This is the Windows port of the macOS version [IMEIndicator](https://github.com/obott9/IMEIndicator).
 
 ## Screenshots
 
@@ -99,9 +99,9 @@ We aim to help IME users see their current input mode at a glance.
 
 ## Installation
 
-1. Download the latest release from [Releases](https://github.com/obott9/IMEIndicatorClockW/releases)
+1. Download the latest release from [Releases](https://github.com/obott9/IMEIndicator/releases)
 2. Extract to any folder
-3. Run `IMEIndicatorClockW.exe`
+3. Run `IMEIndicator.exe`
 
 ### Download from Vector
 
@@ -115,8 +115,8 @@ We aim to help IME users see their current input mode at a glance.
 
 ### Build Steps
 ```bash
-git clone https://github.com/obott9/IMEIndicatorClockW.git
-cd IMEIndicatorClockW
+git clone https://github.com/obott9/IMEIndicator.git
+cd IMEIndicator
 dotnet build
 ```
 
@@ -132,7 +132,7 @@ dotnet build
 1. If auto-start is enabled, disable it first from the tray icon menu
 2. Delete the extracted folder
 - No registry entries are created
-- Settings are stored in `%AppData%\IMEIndicatorClockW` (delete this folder for complete removal)
+-- Settings are stored in `%AppData%\IMEIndicator` (delete this folder for complete removal)
 
 ## Security & Privacy
 
@@ -148,7 +148,7 @@ This application uses a **low-level keyboard hook** (`SetWindowsHookEx` API) for
 - Key input content is **never recorded or transmitted**
 - Only IME-related keys are detected (Hankaku/Zenkaku, Ctrl+Space, etc.)
 - No internet communication features
-- Settings are stored locally only (`%AppData%\IMEIndicatorClockW`)
+- Settings are stored locally only (`%AppData%\IMEIndicator`)
 - Source code is open and verifiable
 
 **About antivirus warnings:**

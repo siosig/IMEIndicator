@@ -1,5 +1,5 @@
 =====================================
-IMEIndicatorClockW v1.0.2 - 自述文件
+IMEIndicator v1.0.2 - 自述文件
 =====================================
 
 [关于]
@@ -12,7 +12,7 @@ IMEIndicatorClockW v1.0.2 - 自述文件
 
 [安装方法]
 1. 将ZIP文件解压到任意文件夹
-2. 运行 IMEIndicatorClockW.exe
+2. 运行 IMEIndicator.exe
 
 [主要功能]
 - 支持18种以上语言
@@ -41,11 +41,11 @@ IMEIndicatorClockW v1.0.2 - 自述文件
 1. 如果启用了自动启动，请先从菜单中禁用
 2. 删除解压的文件夹
 ※不创建注册表项
-※设置文件保存在 %AppData%\IMEIndicatorClockW
+※设置文件保存在 %AppData%\IMEIndicator
   （如需完全删除，请同时删除此文件夹）
 
 [支持]
-- GitHub: https://github.com/obott9/IMEIndicatorClockW
+- GitHub: https://github.com/obott9/IMEIndicator
 - Email: obott9.dev@gmail.com
 
 [许可证]

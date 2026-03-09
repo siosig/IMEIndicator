@@ -4,6 +4,10 @@
 [Oo]ut/
 [Bb]uild/
 
+# Build artifacts
+*.exe
+*.pdb
+
 # Visual Studio
 .vs/
 *.user

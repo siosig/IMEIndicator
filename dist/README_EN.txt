@@ -1,5 +1,5 @@
 =====================================
-IMEIndicatorClockW v1.0.2 - README
+IMEIndicator v1.0.2 - README
 =====================================
 
 [About]
@@ -12,7 +12,7 @@ near the mouse cursor and on a customizable desktop clock.
 
 [Installation]
 1. Extract the ZIP file to any folder
-2. Run IMEIndicatorClockW.exe
+2. Run IMEIndicator.exe
 
 [Features]
 - Supports 18+ languages
@@ -41,11 +41,11 @@ running as administrator (e.g., Task Manager).
 1. If auto-start is enabled, disable it from the menu first
 2. Delete the extracted folder
 *No registry entries are created
-*Settings are stored in %AppData%\IMEIndicatorClockW
+*Settings are stored in %AppData%\IMEIndicator
   (Delete this folder for complete removal)
 
 [Support]
-- GitHub: https://github.com/obott9/IMEIndicatorClockW
+- GitHub: https://github.com/obott9/IMEIndicator
 - Email: obott9.dev@gmail.com
 
 [License]

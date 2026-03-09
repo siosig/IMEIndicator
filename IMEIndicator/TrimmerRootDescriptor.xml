@@ -1,0 +1,11 @@
+<linker>
+  <!--
+    部分トリミング（TrimMode=partial）で System.Text.Json がトリミングされた場合でも
+    リフレクションベースの JSON シリアライズ/デシリアライズが確実に動作するよう、
+    モデル型のプロパティを明示的に保持する。
+  -->
+  <assembly fullname="IMEIndicator">
+    <type fullname="IMEIndicator.Models.AppSettings" preserve="all" />
+    <type fullname="IMEIndicator.Models.MouseCursorIndicatorSettings" preserve="all" />
+  </assembly>
+</linker>

@@ -1,10 +1,10 @@
-# IMEIndicatorClockW
+# IMEIndicator
 
 [English](README.md) | [繁體中文](README_zh-Hant.md) | [简体中文](README_zh-Hans.md) | [한국어](README_ko.md)
 
 IME（入力メソッドエディタ）の状態とカスタマイズ可能なデスクトップ時計を視覚的に表示するWindowsユーティリティアプリです。
 
-macOS版 [IMEIndicatorClock](https://github.com/obott9/IMEIndicatorClock) のWindows移植版です。
+macOS版 [IMEIndicator](https://github.com/obott9/IMEIndicator) のWindows移植版です。
 
 ## スクリーンショット
 
@@ -99,9 +99,9 @@ IMEを使用するユーザーが、現在の入力モードを一目で確認�
 
 ## インストール
 
-1. [Releases](https://github.com/obott9/IMEIndicatorClockW/releases) から最新版をダウンロード
+1. [Releases](https://github.com/obott9/IMEIndicator/releases) から最新版をダウンロード
 2. 任意のフォルダに展開
-3. `IMEIndicatorClockW.exe` を実行
+3. `IMEIndicator.exe` を実行
 
 ### Vector からダウンロード
 
@@ -115,8 +115,8 @@ IMEを使用するユーザーが、現在の入力モードを一目で確認�
 
 ### ビルド手順
 ```bash
-git clone https://github.com/obott9/IMEIndicatorClockW.git
-cd IMEIndicatorClockW
+git clone https://github.com/obott9/IMEIndicator.git
+cd IMEIndicator
 dotnet build
 ```
 
@@ -132,7 +132,7 @@ dotnet build
 1. 自動起動を有効にしている場合は、先にメニューから無効にしてください
 2. 展開したフォルダを削除
 - レジストリは使用していません
-- 設定ファイルは `%AppData%\IMEIndicatorClockW` に保存されています（完全削除する場合はこのフォルダも削除）
+- 設定ファイルは `%AppData%\IMEIndicator` に保存されています（完全削除する場合はこのフォルダも削除）
 
 ## セキュリティ・プライバシーについて
 
@@ -148,7 +148,7 @@ dotnet build
 - キー入力の内容は**一切記録・送信しません**
 - 検出するのはIME関連のキー（半角/全角、Ctrl+Space等）のみです
 - インターネット通信機能はありません
-- 設定データはローカル（`%AppData%\IMEIndicatorClockW`）にのみ保存されます
+- 設定データはローカル（`%AppData%\IMEIndicator`）にのみ保存されます
 - ソースコードは公開されており、動作を確認できます
 
 **ウイルス対策ソフトの警告について：**

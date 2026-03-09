@@ -1,4 +1,4 @@
-# IMEIndicatorClockW リリース手順
+# IMEIndicator リリース手順
 
 ## ビルド環境
 
@@ -9,7 +9,7 @@
 ## ディレクトリ構成
 
 ```
-IMEIndicatorClockW/
+IMEIndicator/
 ├── IMEIndicatorW/              # ソースコード
 │   └── IMEIndicatorW.csproj    # バージョン番号はここ
 ├── dist/                       # リリース関連ファイル
@@ -19,9 +19,9 @@ IMEIndicatorClockW/
 │   ├── README_ko.txt           # ZIPに同梱（韓国語）
 │   ├── README_zh-CN.txt        # ZIPに同梱（中国語簡体字）
 │   ├── README_zh-TW.txt        # ZIPに同梱（中国語繁体字）
-│   └── IMEIndicatorClockW_vX.X.X.zip  # ← リリースZIP出力先（.gitignore済み）
+│   └── IMEIndicator_vX.X.X.zip  # ← リリースZIP出力先（.gitignore済み）
 ├── publish/                    # ビルド出力先（.gitignore済み）
-│   └── IMEIndicatorClockW.exe
+│   └── IMEIndicator.exe
 └── .gitignore                  # publish/, dist/*.zip を除外
 ```
 
@@ -38,7 +38,7 @@ dotnet publish IMEIndicatorW/IMEIndicatorW.csproj -c Release -p:SelfContained=tr
 ```
 
 - Self-contained: .NETランタイム同梱（約73MB EXE）
-- 出力先: `publish/IMEIndicatorClockW.exe`
+- 出力先: `publish/IMEIndicator.exe`
 
 ### 3. ZIPファイル作成
 
@@ -47,28 +47,28 @@ dotnet publish IMEIndicatorW/IMEIndicatorW.csproj -c Release -p:SelfContained=tr
 ```bash
 # ステージングディレクトリに必要ファイルを集める
 mkdir -p /tmp/ime_zip
-cp publish/IMEIndicatorClockW.exe /tmp/ime_zip/
+cp publish/IMEIndicator.exe /tmp/ime_zip/
 cp dist/README*.txt /tmp/ime_zip/
 
 # ZIP作成（PowerShell経由）
-powershell.exe -Command "Compress-Archive -Force -Path 'C:\...\ime_zip\*' -DestinationPath 'C:\...\dist\IMEIndicatorClockW_vX.X.X.zip'"
+powershell.exe -Command "Compress-Archive -Force -Path 'C:\...\ime_zip\*' -DestinationPath 'C:\...\dist\IMEIndicator_vX.X.X.zip'"
 
 # またはzipコマンド
-cd /tmp/ime_zip && zip -9 ../../dist/IMEIndicatorClockW_vX.X.X.zip *
+cd /tmp/ime_zip && zip -9 ../../dist/IMEIndicator_vX.X.X.zip *
 ```
 
 ### 4. GitHub Releasesに公開
 
 ```bash
 git push
-gh release create vX.X.X dist/IMEIndicatorClockW_vX.X.X.zip --title "vX.X.X" --notes "リリースノート"
+ gh release create vX.X.X dist/IMEIndicator_vX.X.X.zip --title "vX.X.X" --notes "リリースノート"
 ```
 
 ## ZIPファイルの内容
 
 ```
-IMEIndicatorClockW_vX.X.X.zip
-├── IMEIndicatorClockW.exe   # 単一EXE（Self-contained）
+IMEIndicator_vX.X.X.zip
+├── IMEIndicator.exe   # 単一EXE（Self-contained）
 ├── README.txt               # 日本語
 ├── README_EN.txt            # English
 ├── README_ko.txt            # 韓国語
@@ -105,4 +105,4 @@ If you find this useful, please consider sponsoring!
 
 - Self-contained でビルドすると .NET ランタイムが同梱され、ユーザー環境に依存しない
 - Framework-dependent でビルドするとサイズは小さいが、ユーザーが .NET 8 をインストールする必要がある
-- アセンブリ名は `IMEIndicatorClockW`（開発版 `IMEIndicatorW` と異なる）
+- アセンブリ名は `IMEIndicator`（開発版 `IMEIndicatorW` と異なる）

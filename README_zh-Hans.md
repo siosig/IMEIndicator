@@ -1,10 +1,10 @@
-# IMEIndicatorClockW
+# IMEIndicator
 
 [English](README.md) | [日本語](README_ja.md) | [繁體中文](README_zh-Hant.md) | [한국어](README_ko.md)
 
 一款可视化显示 IME（输入法编辑器）状态并提供可自定义桌面时钟的 Windows 工具应用程序。
 
-这是 macOS 版本 [IMEIndicatorClock](https://github.com/obott9/IMEIndicatorClock) 的 Windows 移植版。
+这是 macOS 版本 [IMEIndicator](https://github.com/obott9/IMEIndicator) 的 Windows 移植版。
 
 ## 屏幕截图
 
@@ -99,9 +99,9 @@
 
 ## 安装
 
-1. 从 [Releases](https://github.com/obott9/IMEIndicatorClockW/releases) 下载最新版本
+1. 从 [Releases](https://github.com/obott9/IMEIndicator/releases) 下载最新版本
 2. 解压到任意文件夹
-3. 运行 `IMEIndicatorClockW.exe`
+3. 运行 `IMEIndicator.exe`
 
 ### 从 Vector 下载
 
@@ -115,8 +115,8 @@
 
 ### 构建步骤
 ```bash
-git clone https://github.com/obott9/IMEIndicatorClockW.git
-cd IMEIndicatorClockW
+git clone https://github.com/obott9/IMEIndicator.git
+cd IMEIndicator
 dotnet build
 ```
 
@@ -132,7 +132,7 @@ dotnet build
 1. 若已启用自动启动，请先从菜单中禁用
 2. 删除解压后的文件夹
 - 不使用注册表
-- 设置文件存储在 `%AppData%\IMEIndicatorClockW`（完全卸载时请一并删除此文件夹）
+-- 设置文件存储在 `%AppData%\IMEIndicator`（完全卸载时请一并删除此文件夹）
 
 ## 安全性与隐私
 
@@ -148,7 +148,7 @@ dotnet build
 - **绝不记录或传送**按键输入内容
 - 仅检测输入法相关按键（半角/全角、Ctrl+Space 等）
 - 没有网络通信功能
-- 设置数据仅存储在本地（`%AppData%\IMEIndicatorClockW`）
+- 设置数据仅存储在本地（`%AppData%\IMEIndicator`）
 - 源代码公开，可供查看
 
 **关于杀毒软件警告：**

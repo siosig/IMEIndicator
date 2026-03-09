@@ -1,5 +1,5 @@
 =====================================
-IMEIndicatorClockW v1.0.2 - 읽어주세요
+IMEIndicator v1.0.2 - 읽어주세요
 =====================================
 
 [소개]
@@ -12,7 +12,7 @@ IMEIndicatorClockW v1.0.2 - 읽어주세요
 
 [설치 방법]
 1. ZIP 파일을 원하는 폴더에 압축 해제
-2. IMEIndicatorClockW.exe 실행
+2. IMEIndicator.exe 실행
 
 [주요 기능]
 - 18개 이상의 언어 지원
@@ -42,11 +42,11 @@ IME 상태를 올바르게 감지하기 위해 필요합니다.
 1. 자동 시작이 활성화된 경우 먼저 메뉴에서 비활성화
 2. 압축 해제한 폴더 삭제
 ※레지스트리 항목은 생성되지 않습니다
-※설정 파일은 %AppData%\IMEIndicatorClockW에 저장됩니다
+※설정 파일은 %AppData%\IMEIndicator에 저장됩니다
   (완전히 제거하려면 이 폴더도 삭제하세요)
 
 [지원]
-- GitHub: https://github.com/obott9/IMEIndicatorClockW
+- GitHub: https://github.com/obott9/IMEIndicator
 - Email: obott9.dev@gmail.com
 
 [라이선스]
