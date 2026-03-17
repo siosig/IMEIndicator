@@ -74,10 +74,6 @@ internal static class TsfGuids
     public static readonly Guid GUID_COMPARTMENT_KEYBOARD_OPENCLOSE =
         new Guid("58273aad-01bb-4164-95c6-755ba0b5162d");
 
-    // GUID_COMPARTMENT_KEYBOARD_INPUTMODE_SENTENCE (韓国語IME用)
-    public static readonly Guid GUID_COMPARTMENT_KEYBOARD_INPUTMODE_SENTENCE =
-        new Guid("ccf05dd9-4a87-11d7-a6e2-00065b84435c");
-
     // CLSID_TF_ThreadMgr
     public static readonly Guid CLSID_TF_ThreadMgr =
         new Guid("529a9e6b-6587-4f23-ab9e-9c7d683e3c50");
@@ -249,42 +245,8 @@ internal static partial class NativeMethods
         public RECT rcCaret;
     }
 
-    // 言語ID定数
+    // 言語ID定数（日本語IME専用）
     public const int LANG_JAPANESE = 0x0411;
-    public const int LANG_KOREAN = 0x0412;
-    public const int LANG_CHINESE_SIMPLIFIED = 0x0804;
-    public const int LANG_CHINESE_TRADITIONAL = 0x0404;
-    public const int LANG_CHINESE_TRADITIONAL_HK = 0x0C04;
-    public const int LANG_ENGLISH_US = 0x0409;
-    public const int LANG_ENGLISH_UK = 0x0809;
-    public const int LANG_THAI = 0x041E;
-    public const int LANG_VIETNAMESE = 0x042A;
-    public const int LANG_ARABIC = 0x0401;
-    public const int LANG_ARABIC_EGYPT = 0x0C01;
-    public const int LANG_ARABIC_UAE = 0x3801;
-    public const int LANG_HEBREW = 0x040D;
-    public const int LANG_HINDI = 0x0439;
-    public const int LANG_BENGALI_IN = 0x0445;
-    public const int LANG_BENGALI_BD = 0x0845;
-    public const int LANG_TAMIL = 0x0449;
-    public const int LANG_TELUGU = 0x044A;
-    public const int LANG_NEPALI = 0x0461;
-    public const int LANG_SINHALA = 0x045B;
-    public const int LANG_MYANMAR = 0x0455;
-    public const int LANG_KHMER = 0x0453;
-    public const int LANG_LAO = 0x0454;
-    public const int LANG_MONGOLIAN = 0x0450;
-    public const int LANG_MONGOLIAN_CN = 0x0850;
-    public const int LANG_PERSIAN = 0x0429;
-    public const int LANG_UKRAINIAN = 0x0422;
-    public const int LANG_RUSSIAN = 0x0419;
-    public const int LANG_GREEK = 0x0408;
-
-    // 言語IDプライマリコード（サブ言語に関係なく判定用）
-    public const int LANG_PRIMARY_KOREAN = 0x12;
-    public const int LANG_PRIMARY_ARABIC = 0x01;
-    public const int LANG_PRIMARY_BENGALI = 0x45;
-    public const int LANG_PRIMARY_MONGOLIAN = 0x50;
 
     // IME変換モード
     public const uint IME_CMODE_ALPHANUMERIC = 0x0000;

@@ -6,8 +6,7 @@ namespace IMEIndicator.Services;
 public enum LanguageType
 {
     English,
-    Japanese,
-    Other
+    Japanese
 }
 
 /// <summary>

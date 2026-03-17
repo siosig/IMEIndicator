@@ -27,14 +27,9 @@ public static class IMEDetector_Common
     /// </summary>
     public static LanguageType GetLanguageType(int langId)
     {
-        int primaryLang = langId & 0xFF;
-
-        return langId switch
-        {
-            NativeMethods.LANG_JAPANESE => LanguageType.Japanese,
-            _ when primaryLang == 0x09 => LanguageType.English,
-            _ => LanguageType.Other
-        };
+        return langId == NativeMethods.LANG_JAPANESE
+            ? LanguageType.Japanese
+            : LanguageType.English;
     }
 
     /// <summary>

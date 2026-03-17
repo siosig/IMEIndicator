@@ -11,7 +11,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>IMEIndicator</AssemblyName>
     <RootNamespace>IMEIndicator</RootNamespace>
-    <Version>1.1.3</Version>
+    <Version>1.2.0</Version>
     <Authors>obott9</Authors>
     <Description>IME Indicator for Windows - Display IME status</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -33,6 +33,8 @@
   <PropertyGroup>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- 日本語専用: jaサテライトアセンブリのみ出力 -->
+    <SatelliteResourceLanguages>ja</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <!-- Self-contained発行設定（.NET同梱一体型） -->
