@@ -53,7 +53,11 @@ public partial class MouseCursorIndicatorWindow : Window
         if (_hwnd != IntPtr.Zero)
         {
             // SWP_NOZORDER: Topmost="True" で維持されるため Z-order の再計算は不要
-            NativeMethods.SetWindowPos(_hwnd, IntPtr.Zero, (int)x, (int)y, 0, 0, NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOZORDER);
+            // SWP_ASYNCWINDOWPOS: DWM合成スレッドをブロックしない
+            // SWP_NOSENDCHANGING: WM_WINDOWPOSCHANGING メッセージ送信を抑制
+            NativeMethods.SetWindowPos(_hwnd, IntPtr.Zero, (int)x, (int)y, 0, 0,
+                NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOZORDER |
+                NativeMethods.SWP_ASYNCWINDOWPOS | NativeMethods.SWP_NOSENDCHANGING);
         }
         else
         {
