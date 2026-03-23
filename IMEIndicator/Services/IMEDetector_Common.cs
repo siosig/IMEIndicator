@@ -77,76 +77,7 @@ public static class IMEDetector_Common
             }
         }
 
-        // 方法3: 候補ウィンドウ検出
-        bool? fallbackResult = DetectIMEByCandidateWindow(hwndForeground);
-        if (fallbackResult.HasValue)
-        {
-            return (fallbackResult.Value, true);
-        }
-
         return (false, false);
-    }
-
-    /// <summary>
-    /// 候補ウィンドウの存在でIME状態を検出
-    /// </summary>
-    private static readonly HashSet<string> CandidateWindowClasses = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "UIWndClass",
-        "CandidateWindow",
-        "Microsoft.IME.UIManager.CandidateWindow",
-        "IME_Candidate",
-        "MSCTFIME UI",
-        "IME",
-        "IMECLASSUI"
-    };
-
-    private static bool? DetectIMEByCandidateWindow(IntPtr ownerHwnd)
-    {
-        if (ownerHwnd == IntPtr.Zero) return null;
-
-        List<IntPtr> ownedWindows = [];
-
-        NativeMethods.EnumWindows(new NativeMethods.EnumWindowsProc((hwnd, lParam) =>
-        {
-            if (!NativeMethods.IsWindowVisible(hwnd))
-                return true;
-
-            IntPtr owner = NativeMethods.GetWindow(hwnd, NativeMethods.GW_OWNER);
-            if (owner == ownerHwnd)
-            {
-                if (NativeMethods.GetWindowRect(hwnd, out var rect))
-                {
-                    int w = rect.Right - rect.Left;
-                    int h = rect.Bottom - rect.Top;
-                    if (w >= 10 && h >= 10)
-                    {
-                        ownedWindows.Add(hwnd);
-                    }
-                }
-            }
-            return true;
-        }), IntPtr.Zero);
-
-        foreach (IntPtr hwnd in ownedWindows)
-        {
-            string className = NativeMethods.GetWindowClassName(hwnd);
-
-            if (CandidateWindowClasses.Contains(className))
-            {
-                return true;
-            }
-
-            foreach (string hint in CandidateWindowClasses)
-            {
-                if (className.Contains(hint, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return null;
     }
 
     /// <summary>
@@ -155,16 +86,18 @@ public static class IMEDetector_Common
     public static (LanguageInfo state, bool reliableStatus) GetCurrentIMEStateEx(
         LanguageType? trackedLanguageForTerminal)
     {
-
         var hwndForeground = NativeMethods.GetForegroundWindow();
         if (hwndForeground == IntPtr.Zero)
         {
             return (new LanguageInfo(LanguageType.English, false), false);
         }
 
+#if DEBUG
         string windowTitle = NativeMethods.GetWindowTitle(hwndForeground);
-        string processName = NativeMethods.GetProcessName(hwndForeground);
         string className = NativeMethods.GetWindowClassName(hwndForeground);
+#endif
+
+        string processName = NativeMethods.GetProcessName(hwndForeground);
 
         uint threadId = NativeMethods.GetWindowThreadProcessId(hwndForeground, out uint processId);
 
@@ -172,7 +105,6 @@ public static class IMEDetector_Common
         guiInfo.cbSize = Marshal.SizeOf(guiInfo);
 
         IntPtr hwndTarget = hwndForeground;
-        string focusInfo = "same";
         uint focusThreadId = threadId;
         if (NativeMethods.GetGUIThreadInfo(threadId, ref guiInfo))
         {
@@ -180,7 +112,9 @@ public static class IMEDetector_Common
             {
                 hwndTarget = guiInfo.hwndFocus;
                 focusThreadId = NativeMethods.GetWindowThreadProcessId(hwndTarget, out _);
-                focusInfo = $"0x{hwndTarget:X} ({NativeMethods.GetWindowClassName(hwndTarget)})";
+#if DEBUG
+                string focusInfo = $"0x{hwndTarget:X} ({NativeMethods.GetWindowClassName(hwndTarget)})";
+#endif
             }
         }
 
@@ -189,20 +123,15 @@ public static class IMEDetector_Common
 
         var (imeOpen, imeSuccess) = GetIMEOpenStatusEx(hwndTarget, hwndForeground);
 
+#if DEBUG
         IntPtr imeWnd = NativeMethods.ImmGetDefaultIMEWnd(hwndForeground);
         string imeWndInfo = imeWnd != IntPtr.Zero ? $"0x{imeWnd:X}" : "NG";
 
-        IntPtr hIMC1 = NativeMethods.ImmGetContext(hwndTarget);
-        IntPtr hIMC2 = NativeMethods.ImmGetContext(hwndForeground);
-        if (hIMC1 != IntPtr.Zero) NativeMethods.ImmReleaseContext(hwndTarget, hIMC1);
-        if (hIMC2 != IntPtr.Zero) NativeMethods.ImmReleaseContext(hwndForeground, hIMC2);
+        string statusInfo = $"IMEWnd:{imeWndInfo}, Status:{(imeSuccess ? "OK" : "NG")}, " +
+                           $"Reliable:{(imeSuccess ? "OK" : "NG")}";
+#endif
 
         bool reliableStatus = imeSuccess;
-
-        string statusInfo = $"IMEWnd:{imeWndInfo}, Status:{(imeSuccess ? "OK" : "NG")}, " +
-                           $"IMC(focus:{(hIMC1 != IntPtr.Zero ? "OK" : "NG")}, fg:{(hIMC2 != IntPtr.Zero ? "OK" : "NG")}), " +
-                           $"Reliable:{(reliableStatus ? "OK" : "NG")}";
-
         bool isTerminalProcess = TerminalProcesses.Contains(processName);
 
         var language = GetLanguageType(langId);

@@ -33,8 +33,14 @@ public partial class IMEMonitor
 
         if (stateChanged)
         {
-            // デバウンス処理: 最後のキー押下から一定時間後にピクセル判定
-            OnTriggerFired();
+            // 楽観的UI更新: 即座にインジケーターを反映
+            var optimisticState = new LanguageInfo(LanguageType.Japanese, _trackedIMEState);
+            _lastState = optimisticState;
+            _optimisticUpdateTimestamp = Environment.TickCount64;
+            IMEStateChanged?.Invoke(optimisticState);
+
+            // 非同期検証: VerificationDelayMs後にピクセル判定で答え合わせ
+            _debounceTimer?.Change(VerificationDelayMs, System.Threading.Timeout.Infinite);
         }
     }
 
@@ -49,9 +55,9 @@ public partial class IMEMonitor
         }
         else
         {
-            System.Windows.Application.Current?.Dispatcher.BeginInvoke(async () =>
+            // デバウンスでIME状態を再チェック（Task.Delay廃止）
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
             {
-                await Task.Delay(150);
                 uint threadId = NativeMethods.GetWindowThreadProcessId(hwnd, out _);
                 IntPtr hkl = NativeMethods.GetKeyboardLayout(threadId);
                 int langId = (int)hkl & 0xFFFF;

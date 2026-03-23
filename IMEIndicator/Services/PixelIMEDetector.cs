@@ -76,7 +76,7 @@ public partial class PixelIMEDetector : IDisposable
     // 入力インジケーターのキャッシュ
     private System.Windows.Rect _cachedIndicatorRect = System.Windows.Rect.Empty;
     private DateTime _lastIndicatorSearch = DateTime.MinValue;
-    private const int IndicatorSearchIntervalMs = 10000; // 10秒間隔で再検索
+    private const int IndicatorSearchIntervalMs = 60000; // 60秒間隔で再検索（位置は滅多に変わらない）
 
     // 判定結果のキャッシュ
     private DateTime _lastPixelCheck = DateTime.MinValue;
@@ -472,16 +472,23 @@ public partial class PixelIMEDetector : IDisposable
                 return null;
             }
 
-            // UI Automationで直接条件指定して検索（高速化）
-            var conditionJa = new PropertyCondition(AutomationElement.NameProperty, "入力インジケーター");
-            var conditionEn = new PropertyCondition(AutomationElement.NameProperty, "Input indicator");
-            var orCondition = new OrCondition(conditionJa, conditionEn);
+            // CacheRequestでIPC往復を削減（必要なプロパティのみ取得）
+            var cacheRequest = new CacheRequest();
+            cacheRequest.Add(AutomationElement.NameProperty);
+            cacheRequest.Add(AutomationElement.BoundingRectangleProperty);
 
-            var indicator = trayElement.FindFirst(TreeScope.Descendants, orCondition);
-            if (indicator != null)
+            using (cacheRequest.Activate())
             {
-                var rect = indicator.Current.BoundingRectangle;
-                return (indicator.Current.Name ?? "", rect);
+                var conditionJa = new PropertyCondition(AutomationElement.NameProperty, "入力インジケーター");
+                var conditionEn = new PropertyCondition(AutomationElement.NameProperty, "Input indicator");
+                var orCondition = new OrCondition(conditionJa, conditionEn);
+
+                var indicator = trayElement.FindFirst(TreeScope.Descendants, orCondition);
+                if (indicator != null)
+                {
+                    var rect = indicator.Cached.BoundingRectangle;
+                    return (indicator.Cached.Name ?? "", rect);
+                }
             }
         }
         catch (Exception ex)

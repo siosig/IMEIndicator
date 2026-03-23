@@ -21,7 +21,11 @@ public partial class IMEMonitor : IDisposable
 
     // デバウンス: 単一Timer.Change()でアロケーションゼロ
     private System.Threading.Timer? _debounceTimer;
-    private const int DebounceDelayMs = 150;
+    private const int DebounceDelayMs = 30;
+
+    // 楽観的UI更新後の非同期検証遅延
+    private const int VerificationDelayMs = 200;
+    private long _optimisticUpdateTimestamp = 0;
 
     // ピクセル判定による状態検証
     private DateTime _lastPixelVerification = DateTime.MinValue;
@@ -147,12 +151,25 @@ public partial class IMEMonitor : IDisposable
                 _lastForegroundWindow = hwndForeground;
             }
 
-            if (currentState.Language != _lastState.Language ||
-                currentState.IsIMEOn != _lastState.IsIMEOn ||
-                forceUpdate)
+            // 楽観的更新からVerificationDelayMs以内かつ状態一致なら発火しない
+            bool stateChanged = currentState.Language != _lastState.Language ||
+                currentState.IsIMEOn != _lastState.IsIMEOn;
+
+            if (stateChanged || forceUpdate)
             {
-                _lastState = currentState;
-                IMEStateChanged?.Invoke(currentState);
+                long elapsed = Environment.TickCount64 - _optimisticUpdateTimestamp;
+                bool withinOptimisticWindow = elapsed >= 0 && elapsed < VerificationDelayMs;
+
+                // 楽観的更新の検証期間内は、不一致の場合のみ修正発火
+                if (withinOptimisticWindow && !stateChanged)
+                {
+                    // 一致 → 何もしない
+                }
+                else
+                {
+                    _lastState = currentState;
+                    IMEStateChanged?.Invoke(currentState);
+                }
             }
         }
         catch (Exception ex)
