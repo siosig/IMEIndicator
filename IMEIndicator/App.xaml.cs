@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading;
 using System.Windows;
 using Hardcodet.Wpf.TaskbarNotification;
 using IMEIndicator.Services;
@@ -9,6 +10,13 @@ namespace IMEIndicator;
 
 public partial class App : Application
 {
+    private const string MutexName = "IMEIndicator_SingleInstance";
+    private const string EventName = "IMEIndicator_PowerToggle";
+
+    private Mutex? _singleInstanceMutex;
+    private EventWaitHandle? _powerToggleEvent;
+    private CancellationTokenSource? _powerToggleCts;
+
     private TaskbarIcon? _trayIcon;
     private IMEMonitor? _imeMonitor;
     private MouseCursorIndicatorWindow? _mouseCursorIndicatorWindow;
@@ -68,6 +76,16 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // /powertoggle コマンドライン引数の処理
+        if (e.Args.Length > 0 && e.Args[0].Equals("/powertoggle", StringComparison.OrdinalIgnoreCase))
+        {
+            HandlePowerToggle();
+            return;
+        }
+
+        // シングルインスタンス用 Mutex を取得（通常起動時）
+        _singleInstanceMutex = new Mutex(true, MutexName, out _);
+
         // デバッグログの初期化
 #if DEBUG
 #else
@@ -105,6 +123,9 @@ public partial class App : Application
 
             // システムトレイアイコン
             InitializeTrayIcon();
+
+            // /powertoggle IPC リスナーを開始
+            StartPowerToggleListener();
 
             // 設定ウィンドウの表示
 #if DEBUG
@@ -193,6 +214,37 @@ public partial class App : Application
 
         menu.Items.Add(new System.Windows.Controls.Separator());
 
+        // 電源モード サブメニュー
+        var powerModeMenu = new System.Windows.Controls.MenuItem { Header = "電源モード" };
+        var powerModes = new[]
+        {
+            (Mode: PowerMode.BestPowerEfficiency, Label: "最適な電力効率"),
+            (Mode: PowerMode.Balanced, Label: "バランス"),
+            (Mode: PowerMode.BestPerformance, Label: "最適なパフォーマンス")
+        };
+        foreach (var (mode, label) in powerModes)
+        {
+            var item = new System.Windows.Controls.MenuItem { Header = label, Tag = mode };
+            item.Click += (s, e) =>
+            {
+                var clicked = (System.Windows.Controls.MenuItem)s!;
+                PowerModeService.SetMode((PowerMode)clicked.Tag);
+            };
+            powerModeMenu.Items.Add(item);
+        }
+        // メニュー表示時に現在の電源モードを反映
+        menu.Opened += (s, e) =>
+        {
+            var current = PowerModeService.GetCurrentMode();
+            foreach (System.Windows.Controls.MenuItem item in powerModeMenu.Items)
+            {
+                item.IsChecked = (PowerMode)item.Tag == current;
+            }
+        };
+        menu.Items.Add(powerModeMenu);
+
+        menu.Items.Add(new System.Windows.Controls.Separator());
+
         // 設定
         var settingsItem = new System.Windows.Controls.MenuItem { Header = "設定" };
         settingsItem.Click += (s, e) =>
@@ -276,6 +328,107 @@ public partial class App : Application
         try { PixelIMEDetector.DisposeInstance(); }
         catch (Exception ex) { Trace.TraceError($"[App.OnExit] PixelIMEDetector Dispose failed: {ex.Message}"); }
 
+        try
+        {
+            _powerToggleCts?.Cancel();
+            _powerToggleCts?.Dispose();
+            _powerToggleEvent?.Dispose();
+            _singleInstanceMutex?.ReleaseMutex();
+            _singleInstanceMutex?.Dispose();
+        }
+        catch (Exception ex) { Trace.TraceError($"[App.OnExit] PowerToggle cleanup failed: {ex.Message}"); }
+
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// /powertoggle コマンドライン引数の処理
+    /// </summary>
+    private void HandlePowerToggle()
+    {
+        var mutex = new Mutex(true, MutexName, out bool createdNew);
+        try
+        {
+            if (!createdNew)
+            {
+                // 既存インスタンスにシグナル送信
+                try
+                {
+                    var evt = EventWaitHandle.OpenExisting(EventName);
+                    evt.Set();
+                    evt.Dispose();
+                }
+                catch (WaitHandleCannotBeOpenedException)
+                {
+                    // イベントが見つからない場合は直接トグル
+                    var next = PowerModeService.ToggleMode();
+                    ShowPowerToggleNotification(next);
+                }
+            }
+            else
+            {
+                // 既存インスタンスなし: 直接トグル
+                var next = PowerModeService.ToggleMode();
+                ShowPowerToggleNotification(next);
+            }
+        }
+        finally
+        {
+            if (createdNew)
+            {
+                mutex.ReleaseMutex();
+            }
+            mutex.Dispose();
+            Shutdown();
+        }
+    }
+
+    /// <summary>
+    /// バルーン通知で電源モード切り替え結果を表示（/powertoggle 未起動時用）
+    /// </summary>
+    private void ShowPowerToggleNotification(PowerMode mode)
+    {
+        var tray = new TaskbarIcon
+        {
+            Icon = System.Drawing.SystemIcons.Information,
+            Visibility = Visibility.Visible
+        };
+        tray.ShowBalloonTip(
+            AppConstants.AppName,
+            $"電源モード: {PowerModeService.GetDisplayName(mode)}",
+            BalloonIcon.Info);
+        // 通知表示のため少し待機してから終了
+        System.Threading.Thread.Sleep(1000);
+        tray.Dispose();
+    }
+
+    /// <summary>
+    /// /powertoggle IPC リスナーを開始（通常起動時）
+    /// </summary>
+    private void StartPowerToggleListener()
+    {
+        _powerToggleEvent = new EventWaitHandle(false, EventResetMode.AutoReset, EventName);
+        _powerToggleCts = new CancellationTokenSource();
+        var token = _powerToggleCts.Token;
+
+        Task.Run(() =>
+        {
+            while (!token.IsCancellationRequested)
+            {
+                // シグナルまたはキャンセルを待機
+                int index = WaitHandle.WaitAny([_powerToggleEvent, token.WaitHandle]);
+                if (index == 1 || token.IsCancellationRequested) break;
+
+                // UIスレッドでトグル実行 + バルーン通知
+                Dispatcher.InvokeAsync(() =>
+                {
+                    var next = PowerModeService.ToggleMode();
+                    _trayIcon?.ShowBalloonTip(
+                        AppConstants.AppName,
+                        $"電源モード: {PowerModeService.GetDisplayName(next)}",
+                        BalloonIcon.Info);
+                });
+            }
+        }, token);
     }
 }

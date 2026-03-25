@@ -344,6 +344,13 @@ internal static partial class NativeMethods
         return len > 0 ? new string(buffer[..len]) : "";
     }
 
+    // powrprof.dll - 電源モード（Overlay）制御
+    [LibraryImport("powrprof.dll", EntryPoint = "PowerSetActiveOverlayScheme")]
+    public static partial uint PowerSetActiveOverlayScheme(Guid overlaySchemeGuid);
+
+    [LibraryImport("powrprof.dll", EntryPoint = "PowerGetActualOverlayScheme")]
+    public static partial uint PowerGetActualOverlayScheme(out Guid actualOverlayGuid);
+
     // プロセス名キャッシュ（hWndベース、ウィンドウ切り替え時のみ更新）
     private static IntPtr _lastProcessHWnd = IntPtr.Zero;
     private static string _lastProcessNameCached = string.Empty;
