@@ -128,6 +128,29 @@ public static class DisplayHelper
     }
 
     /// <summary>
+    /// プライマリモニターのワーキングエリア（タスクバーを除く領域）を物理ピクセルで返す
+    /// </summary>
+    public static (int Left, int Top, int Right, int Bottom) GetPrimaryWorkArea()
+    {
+        var monitors = GetAllMonitors();
+        foreach (var monitor in monitors)
+        {
+            if ((monitor.dwFlags & NativeMethods.MONITORINFOF_PRIMARY) != 0)
+            {
+                var rc = monitor.rcWork;
+                return (rc.Left, rc.Top, rc.Right, rc.Bottom);
+            }
+        }
+        // プライマリが見つからない場合は最初のモニターにフォールバック
+        if (monitors.Length > 0)
+        {
+            var rc = monitors[0].rcWork;
+            return (rc.Left, rc.Top, rc.Right, rc.Bottom);
+        }
+        return (0, 0, 0, 0);
+    }
+
+    /// <summary>
     /// 座標がディスプレイ外の場合、フォールバック位置を返す
     /// </summary>
     /// <param name="x">X座標</param>

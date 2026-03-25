@@ -230,6 +230,7 @@ public partial class App : Application
             {
                 var clicked = (System.Windows.Controls.MenuItem)s!;
                 PowerModeService.SetMode((PowerMode)clicked.Tag);
+                RefreshIndicatorColor();
             };
             powerModeMenu.Items.Add(item);
         }
@@ -385,6 +386,14 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// 電源モード変更後にインジケーターの色を即座に反映する
+    /// </summary>
+    private void RefreshIndicatorColor()
+    {
+        _mainViewModel?.MouseCursorIndicatorViewModel.ReloadSettings();
+    }
+
+    /// <summary>
     /// バルーン通知で電源モード切り替え結果を表示（/powertoggle 未起動時用）
     /// </summary>
     private void ShowPowerToggleNotification(PowerMode mode)
@@ -420,7 +429,7 @@ public partial class App : Application
                 int index = WaitHandle.WaitAny([_powerToggleEvent, token.WaitHandle]);
                 if (index == 1 || token.IsCancellationRequested) break;
 
-                // UIスレッドでトグル実行 + バルーン通知
+                // UIスレッドでトグル実行 + バルーン通知 + インジケーター色更新
                 Dispatcher.InvokeAsync(() =>
                 {
                     var next = PowerModeService.ToggleMode();
@@ -428,6 +437,7 @@ public partial class App : Application
                         AppConstants.AppName,
                         $"電源モード: {PowerModeService.GetDisplayName(next)}",
                         BalloonIcon.Info);
+                    RefreshIndicatorColor();
                 });
             }
         }, token);

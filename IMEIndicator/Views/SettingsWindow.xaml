@@ -4,7 +4,8 @@
         xmlns:viewmodels="clr-namespace:IMEIndicator.ViewModels"
         x:Name="SettingsWindowRoot"
         Width="450"
-        Height="600"
+        SizeToContent="Height"
+        MaxHeight="700"
         WindowStartupLocation="Manual"
         ResizeMode="CanResize"
         Topmost="True"
@@ -18,9 +19,9 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- タイトル -->
-        <TextBlock Grid.Row="0"
-                Text="設定"
+        <!-- タイトル（バージョン付き） -->
+        <TextBlock x:Name="TitleText"
+                Grid.Row="0"
                 FontSize="20"
                 FontWeight="Bold"
                 Margin="0,0,0,10"/>
@@ -62,12 +63,6 @@
                                   Checked="MouseIndicatorVisible_Changed"
                                 Unchecked="MouseIndicatorVisible_Changed"/>
                         <Separator Margin="0,0,0,15"/>
-
-                        <!-- 説明 -->
-                        <TextBlock Text="マウスカーソル付近に日本語IMEのON状態を表示します。色は電源モードに連動します。"
-                                TextWrapping="Wrap"
-                                Margin="0,0,0,15"
-                                Opacity="0.8"/>
 
                         <!-- サイズ -->
                         <TextBlock Text="サイズ"
@@ -167,18 +162,12 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0"
-                            Text="プロセスの優先度を自動制御するルールを管理します。"
-                            TextWrapping="Wrap"
-                            Margin="0,0,0,10"
-                            Opacity="0.8"/>
-
                     <!-- ポーリング間隔設定 -->
-                    <StackPanel Grid.Row="1"
+                    <StackPanel Grid.Row="0"
                             Orientation="Horizontal"
                             Margin="0,0,0,10">
                         <TextBlock Text="監視間隔："
@@ -192,8 +181,10 @@
                                 Opacity="0.7"/>
                     </StackPanel>
 
-                    <DataGrid Grid.Row="2"
+                    <DataGrid Grid.Row="1"
                             x:Name="PriorityRulesGrid"
+                            Height="200"
+                            ScrollViewer.VerticalScrollBarVisibility="Visible"
                             AutoGenerateColumns="False"
                             CanUserAddRows="False"
                             CanUserDeleteRows="False"
@@ -281,7 +272,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <StackPanel Grid.Row="3"
+                    <StackPanel Grid.Row="2"
                             Orientation="Horizontal"
                             Margin="0,10,0,0">
                         <Button Content="追加"
@@ -294,54 +285,13 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
-
-            <!-- ==================== バージョン情報 ==================== -->
-            <TabItem Header="バージョン情報">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="15"
-                            HorizontalAlignment="Center">
-                        <!-- アプリ名とバージョン -->
-                        <TextBlock Text="IME Indicator"
-                                FontSize="24"
-                                FontWeight="Bold"
-                                   HorizontalAlignment="Center"/>
-                        <TextBlock Text="for Windows"
-                                FontSize="14"
-                                Opacity="0.7"
-                                   HorizontalAlignment="Center"
-                                Margin="0,5,0,5"/>
-                        <TextBlock x:Name="LblVersion"
-                                HorizontalAlignment="Center"/>
-                        <TextBlock Text="日本語IMEの状態をマウスカーソル付近に表示するツール"
-                                   HorizontalAlignment="Center"
-                                Margin="0,10,0,0"
-                                   TextWrapping="Wrap"
-                                TextAlignment="Center"
-                                Opacity="0.8"
-                                MaxWidth="400"/>
-                        <TextBlock HorizontalAlignment="Center"
-                                Margin="0,15,0,0">
-                            <Run Text="© 2025-2026 obott9"/>
-                        </TextBlock>
-                        <TextBlock Text="MIT License"
-                                HorizontalAlignment="Center"
-                                Opacity="0.7"/>
-
-                        <Separator Margin="0,20,0,15"/>
-
-                        <Button Content="設定をリセット"
-                                Width="150"
-                                Click="ResetSettings_Click"/>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
         </TabControl>
 
         <!-- ボタン -->
         <StackPanel Grid.Row="3"
                 Orientation="Horizontal"
                 HorizontalAlignment="Right"
-                Margin="0,20,0,0">
+                Margin="0,10,0,0">
             <Button Content="閉じる"
                     Width="80"
                     Click="CloseButton_Click"/>

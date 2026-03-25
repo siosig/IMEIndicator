@@ -27,10 +27,36 @@ public partial class SettingsWindow : Window
         DataContext = viewModel;
 
         InitializeComponent();
+        Loaded += (_, _) => PositionAboveTaskbar();
         LoadCurrentSettings();
         InitializePriorityTab();
 
         _isInitializing = false;
+    }
+
+    /// <summary>
+    /// ウィンドウをプライマリモニターのタスクバー直上（右下）に配置する
+    /// </summary>
+    private void PositionAboveTaskbar()
+    {
+        // DPIスケールを取得（PerMonitorV2対応）
+        var dpiInfo = System.Windows.Media.VisualTreeHelper.GetDpi(this);
+        double scaleX = dpiInfo.DpiScaleX;
+        double scaleY = dpiInfo.DpiScaleY;
+
+        // プライマリモニターのワーキングエリアを取得（物理ピクセル）
+        var workArea = DisplayHelper.GetPrimaryWorkArea();
+
+        // 物理ピクセルをDIPに変換
+        double workRight = workArea.Right / scaleX;
+        double workBottom = workArea.Bottom / scaleY;
+
+        // ウィンドウをワーキングエリアの右下に配置（マージン10DIP）
+        const double margin = 10;
+        double w = double.IsNaN(Width) ? ActualWidth : Width;
+        double h = double.IsNaN(Height) ? ActualHeight : Height;
+        Left = workRight - w - margin;
+        Top = workBottom - h - margin;
     }
 
     private void LoadCurrentSettings()
@@ -53,9 +79,9 @@ public partial class SettingsWindow : Window
                 break;
         }
 
-        // バージョン情報
+        // タイトルにバージョン表示
         var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-        LblVersion.Text = $"v{version?.Major}.{version?.Minor}.{version?.Build}";
+        TitleText.Text = $"設定 (v{version?.Major}.{version?.Minor}.{version?.Build})";
     }
 
     private void PowerMode_Checked(object sender, RoutedEventArgs e)
@@ -79,24 +105,12 @@ public partial class SettingsWindow : Window
         _viewModel.SaveSettings();
     }
 
-    private void ResetSettings_Click(object sender, RoutedEventArgs e)
-    {
-        var result = MessageBox.Show(
-            "すべての設定をデフォルトに戻しますか？",
-            "設定のリセット",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-
-        if (result == MessageBoxResult.Yes)
-        {
-            _viewModel.ResetToDefaults();
-            _isInitializing = true;
-            LoadCurrentSettings();
-            _isInitializing = false;
-        }
-    }
-
     // ==================== プロセス優先度タブ ====================
+
+    /// <summary>
+    /// プロセス優先度ルールの最大数
+    /// </summary>
+    private const int MaxPriorityRules = 30;
 
     private void InitializePriorityTab()
     {
@@ -119,6 +133,12 @@ public partial class SettingsWindow : Window
 
     private void AddPriorityRule_Click(object sender, RoutedEventArgs e)
     {
+        if (_priorityViewModel != null && _priorityViewModel.Rules.Count >= MaxPriorityRules)
+        {
+            MessageBox.Show($"ルールは最大{MaxPriorityRules}件までです。", "上限",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
         _priorityViewModel?.AddRuleCommand.Execute(null);
     }
 
