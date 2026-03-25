@@ -322,6 +322,38 @@ public class SettingsManagerTests : IDisposable
     }
 
     [Fact]
+    public void UseECoreOnly_SaveAndLoad_RoundTrip()
+    {
+        // UseECoreOnly=true が保存→読込で保持されることを確認
+        var manager = new SettingsManager(_tempDir);
+        manager.Settings.ProcessPriorityRules =
+        [
+            new() { ProcessName = "test", UseECoreOnly = true }
+        ];
+        manager.Save();
+
+        var manager2 = new SettingsManager(_tempDir);
+        manager2.Load();
+
+        Assert.True(manager2.Settings.ProcessPriorityRules[0].UseECoreOnly);
+    }
+
+    [Fact]
+    public void UseECoreOnly_MissingInJson_DefaultsFalse()
+    {
+        // 旧フォーマット（UseECoreOnly未定義）のJSONから読込時にfalseがデフォルトになることを確認
+        Directory.CreateDirectory(_tempDir);
+        var manager = new SettingsManager(_tempDir);
+        File.WriteAllText(manager.GetSettingsFilePath(),
+            """{"processPriorityRules": [{"processName": "test", "targetPriority": "Normal"}]}""");
+
+        manager.Load();
+
+        Assert.Single(manager.Settings.ProcessPriorityRules);
+        Assert.False(manager.Settings.ProcessPriorityRules[0].UseECoreOnly);
+    }
+
+    [Fact]
     public void ProcessPriorityRules_EnumSerializedAsString()
     {
         // PriorityLevel が文字列として JSON に保存されることを確認

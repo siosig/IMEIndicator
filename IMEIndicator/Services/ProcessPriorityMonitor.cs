@@ -145,16 +145,36 @@ public class ProcessPriorityMonitor : IDisposable
         bool anyChanged = false;
         bool anyFailed = false;
 
+        bool applyAffinity = rule.UseECoreOnly && ECoreCpuInfo.Instance.HasECores;
+        long eCoreMask = applyAffinity ? ECoreCpuInfo.Instance.ECoreMask : 0;
+
         foreach (var (pid, currentPriority) in processes)
         {
-            if (currentPriority == targetClass)
-                continue;
+            if (currentPriority != targetClass)
+            {
+                bool success = _service.SetPriority(pid, targetClass);
+                if (success)
+                    anyChanged = true;
+                else
+                    anyFailed = true;
+            }
 
-            bool success = _service.SetPriority(pid, targetClass);
-            if (success)
-                anyChanged = true;
-            else
-                anyFailed = true;
+            if (applyAffinity)
+            {
+                long? currentAffinity = _service.GetAffinity(pid);
+                if (currentAffinity == null)
+                {
+                    anyFailed = true;
+                }
+                else if (currentAffinity.Value != eCoreMask)
+                {
+                    bool affinityResult = _service.SetAffinity(pid, eCoreMask);
+                    if (affinityResult)
+                        anyChanged = true;
+                    else
+                        anyFailed = true;
+                }
+            }
         }
 
         if (anyFailed)

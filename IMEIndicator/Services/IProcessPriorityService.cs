@@ -18,4 +18,16 @@ public interface IProcessPriorityService
     /// </summary>
     /// <returns>成功した場合 true</returns>
     bool SetPriority(int processId, ProcessPriorityClass priority);
+
+    /// <summary>
+    /// 指定プロセスIDの現在のプロセッサアフィニティを取得する
+    /// </summary>
+    /// <returns>アフィニティマスク。取得失敗時は null</returns>
+    long? GetAffinity(int processId);
+
+    /// <summary>
+    /// 指定プロセスIDのプロセッサアフィニティを設定する
+    /// </summary>
+    /// <returns>成功した場合 true</returns>
+    bool SetAffinity(int processId, long affinityMask);
 }

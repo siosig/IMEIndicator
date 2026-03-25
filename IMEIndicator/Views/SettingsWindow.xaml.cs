@@ -265,12 +265,14 @@ public partial class SettingsWindow : Window
             case System.Windows.Input.Key.Down:
                 if (listBox.SelectedIndex < listBox.Items.Count - 1)
                     listBox.SelectedIndex++;
+                listBox.ScrollIntoView(listBox.SelectedItem);
                 e.Handled = true;
                 break;
 
             case System.Windows.Input.Key.Up:
                 if (listBox.SelectedIndex > 0)
                     listBox.SelectedIndex--;
+                listBox.ScrollIntoView(listBox.SelectedItem);
                 e.Handled = true;
                 break;
 
@@ -310,11 +312,16 @@ public partial class SettingsWindow : Window
     {
         if (sender is not TextBox textBox) return;
 
-        // ListBox へのクリック中にフォーカスが移る場合があるため少し遅延
+        // ListBox へのクリック中にフォーカスが移る場合があるため遅延して判定
         Dispatcher.InvokeAsync(() =>
         {
-            var (popup, _) = FindPopupAndListBox(textBox);
-            if (popup != null) popup.IsOpen = false;
+            var (popup, listBox) = FindPopupAndListBox(textBox);
+            if (popup == null) return;
+
+            // マウスが ListBox 上にある場合は閉じない（クリック選択中）
+            if (listBox != null && listBox.IsMouseOver) return;
+
+            popup.IsOpen = false;
         }, System.Windows.Threading.DispatcherPriority.Background);
     }
 
@@ -340,12 +347,13 @@ public partial class SettingsWindow : Window
 
     /// <summary>
     /// ListBox から親の Popup を取得するヘルパー
+    /// （Popup のコンテンツは別ビジュアルツリーのため LogicalTreeHelper を使用）
     /// </summary>
     private static (Popup? popup, TextBox? textBox) FindPopupFromListBox(System.Windows.Controls.ListBox listBox)
     {
         Popup? popup = null;
         if (listBox.Parent is Border border)
-            popup = System.Windows.Media.VisualTreeHelper.GetParent(border) as Popup;
+            popup = LogicalTreeHelper.GetParent(border) as Popup;
 
         var textBox = popup?.PlacementTarget as TextBox;
         return (popup, textBox);

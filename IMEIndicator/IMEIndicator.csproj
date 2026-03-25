@@ -11,7 +11,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>IMEIndicator</AssemblyName>
     <RootNamespace>IMEIndicator</RootNamespace>
-    <Version>1.2.1</Version>
+    <Version>1.2.4</Version>
     <Authors>obott9</Authors>
     <Description>IME Indicator for Windows - Display IME status</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>

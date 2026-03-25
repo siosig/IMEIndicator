@@ -63,4 +63,53 @@ public class ProcessPriorityService : IProcessPriorityService
             return false;
         }
     }
+
+    public long? GetAffinity(int processId)
+    {
+        try
+        {
+            using var proc = Process.GetProcessById(processId);
+            return (long)proc.ProcessorAffinity;
+        }
+        catch (Win32Exception ex)
+        {
+            Debug.WriteLine($"[ProcessPriorityService] GetAffinity failed (access denied) for PID {processId}: {ex.Message}");
+            return null;
+        }
+        catch (InvalidOperationException ex)
+        {
+            Debug.WriteLine($"[ProcessPriorityService] GetAffinity failed (process exited) for PID {processId}: {ex.Message}");
+            return null;
+        }
+        catch (ArgumentException ex)
+        {
+            Debug.WriteLine($"[ProcessPriorityService] GetAffinity failed (process not found) for PID {processId}: {ex.Message}");
+            return null;
+        }
+    }
+
+    public bool SetAffinity(int processId, long affinityMask)
+    {
+        try
+        {
+            using var proc = Process.GetProcessById(processId);
+            proc.ProcessorAffinity = (IntPtr)affinityMask;
+            return true;
+        }
+        catch (Win32Exception ex)
+        {
+            Debug.WriteLine($"[ProcessPriorityService] SetAffinity failed (access denied) for PID {processId}: {ex.Message}");
+            return false;
+        }
+        catch (InvalidOperationException ex)
+        {
+            Debug.WriteLine($"[ProcessPriorityService] SetAffinity failed (process exited) for PID {processId}: {ex.Message}");
+            return false;
+        }
+        catch (ArgumentException ex)
+        {
+            Debug.WriteLine($"[ProcessPriorityService] SetAffinity failed (process not found) for PID {processId}: {ex.Message}");
+            return false;
+        }
+    }
 }

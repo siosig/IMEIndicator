@@ -49,6 +49,11 @@ public class ProcessPriorityRule
     public bool IsEnabled { get; set; } = true;
 
     /// <summary>
+    /// E-Core（効率コア）のみに固定するかどうか
+    /// </summary>
+    public bool UseECoreOnly { get; set; } = false;
+
+    /// <summary>
     /// バリデーション済みの MaxBackoffExponent を返す（0～10）
     /// </summary>
     [JsonIgnore]

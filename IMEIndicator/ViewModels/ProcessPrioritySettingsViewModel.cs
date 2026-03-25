@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IMEIndicator.Models;
 using IMEIndicator.Services;
+using System.Diagnostics;
 
 namespace IMEIndicator.ViewModels;
 
@@ -21,6 +22,11 @@ public partial class ProcessPrioritySettingsViewModel : ObservableObject
     /// </summary>
     public static IReadOnlyList<PriorityLevel> PriorityLevels { get; } =
         Enum.GetValues<PriorityLevel>();
+
+    /// <summary>
+    /// このCPUにE-Coreが存在するかどうか
+    /// </summary>
+    public static bool HasECores => ECoreCpuInfo.Instance.HasECores;
 
     /// <summary>
     /// システム全体のポーリング間隔（秒）
