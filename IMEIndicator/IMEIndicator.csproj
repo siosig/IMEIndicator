@@ -7,11 +7,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>IMEIndicator</AssemblyName>
     <RootNamespace>IMEIndicator</RootNamespace>
-    <Version>1.2.6</Version>
+    <Version>1.2.7</Version>
     <Authors>obott9</Authors>
     <Description>IME Indicator for Windows - Display IME status</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -42,7 +41,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishReadyToRun>true</PublishReadyToRun>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    <!-- トリミングは .NET 10 で WPF/WinForms 非サポートのため無効 -->
+    <!-- トリミングは .NET 10 で WPF 非サポートのため無効 -->
   </PropertyGroup>
 
   <ItemGroup>

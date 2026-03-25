@@ -5,18 +5,18 @@ namespace IMEIndicator.Tests;
 
 /// <summary>
 /// DisplayHelperのユニットテスト
-/// Screen.AllScreensに依存するため、ディスプレイがない環境ではスキップ
+/// ディスプレイがない環境ではスキップ
 /// </summary>
 public class DisplayHelperTests
 {
-    private static bool HasScreens => System.Windows.Forms.Screen.AllScreens.Length > 0;
+    private static bool HasScreens => DisplayHelper.GetScreenCount() > 0;
 
     [Fact]
     public void GetDisplayIndexFromPosition_PrimaryCenter_ReturnsZero()
     {
         if (!HasScreens) return;
 
-        var primary = System.Windows.Forms.Screen.AllScreens[0].Bounds;
+        var primary = DisplayHelper.GetScreenBounds(0);
         double centerX = primary.Left + primary.Width / 2.0;
         double centerY = primary.Top + primary.Height / 2.0;
 
@@ -51,7 +51,7 @@ public class DisplayHelperTests
     {
         if (!HasScreens) return;
 
-        var primary = System.Windows.Forms.Screen.AllScreens[0].Bounds;
+        var primary = DisplayHelper.GetScreenBounds(0);
         double centerX = primary.Left + primary.Width / 2.0;
         double centerY = primary.Top + primary.Height / 2.0;
 
@@ -69,7 +69,7 @@ public class DisplayHelperTests
     {
         if (!HasScreens) return;
 
-        var primary = System.Windows.Forms.Screen.AllScreens[0].Bounds;
+        var primary = DisplayHelper.GetScreenBounds(0);
         double x = primary.Left + 100;
         double y = primary.Top + 100;
 

@@ -2,9 +2,52 @@ namespace IMEIndicator.Services;
 
 /// <summary>
 /// マルチディスプレイ関連のヘルパーメソッド
+/// Win32 API (EnumDisplayMonitors/GetMonitorInfo) を使用してモニター情報を取得
 /// </summary>
 public static class DisplayHelper
 {
+    /// <summary>
+    /// 全モニターの情報を取得する
+    /// </summary>
+    private static NativeMethods.MONITORINFOEX[] GetAllMonitors()
+    {
+        var monitors = new List<NativeMethods.MONITORINFOEX>();
+
+        NativeMethods.EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero,
+            (IntPtr hMonitor, IntPtr hdcMonitor, ref NativeMethods.RECT lprcMonitor, IntPtr dwData) =>
+            {
+                var info = NativeMethods.MONITORINFOEX.Create();
+                if (NativeMethods.GetMonitorInfo(hMonitor, ref info))
+                {
+                    monitors.Add(info);
+                }
+                return true;
+            }, IntPtr.Zero);
+
+        return monitors.ToArray();
+    }
+
+    /// <summary>
+    /// モニター数を取得する
+    /// </summary>
+    public static int GetScreenCount()
+    {
+        return GetAllMonitors().Length;
+    }
+
+    /// <summary>
+    /// 指定モニターのBoundsを取得する
+    /// </summary>
+    public static (int Left, int Top, int Width, int Height) GetScreenBounds(int index)
+    {
+        var monitors = GetAllMonitors();
+        if (index < 0 || index >= monitors.Length)
+            return (0, 0, 0, 0);
+
+        var rc = monitors[index].rcMonitor;
+        return (rc.Left, rc.Top, rc.Right - rc.Left, rc.Bottom - rc.Top);
+    }
+
     /// <summary>
     /// 座標からディスプレイインデックスを検出
     /// </summary>
@@ -15,17 +58,17 @@ public static class DisplayHelper
     /// <returns>ディスプレイインデックス（見つからない場合は-1）</returns>
     public static int GetDisplayIndexFromPosition(double x, double y, double width, double height)
     {
-        var screens = System.Windows.Forms.Screen.AllScreens;
-        if (screens.Length == 0) return -1;
+        var monitors = GetAllMonitors();
+        if (monitors.Length == 0) return -1;
 
         // ウィンドウの中心座標
         double centerX = x + width / 2;
         double centerY = y + height / 2;
 
         // 中心座標がどのディスプレイに属するか検出
-        for (int i = 0; i < screens.Length; i++)
+        for (int i = 0; i < monitors.Length; i++)
         {
-            var bounds = screens[i].Bounds;
+            var bounds = monitors[i].rcMonitor;
             if (centerX >= bounds.Left && centerX < bounds.Right &&
                 centerY >= bounds.Top && centerY < bounds.Bottom)
             {
@@ -37,11 +80,11 @@ public static class DisplayHelper
         int nearestIndex = 0;
         double minDistance = double.MaxValue;
 
-        for (int i = 0; i < screens.Length; i++)
+        for (int i = 0; i < monitors.Length; i++)
         {
-            var bounds = screens[i].Bounds;
-            double screenCenterX = bounds.Left + bounds.Width / 2.0;
-            double screenCenterY = bounds.Top + bounds.Height / 2.0;
+            var bounds = monitors[i].rcMonitor;
+            double screenCenterX = bounds.Left + (bounds.Right - bounds.Left) / 2.0;
+            double screenCenterY = bounds.Top + (bounds.Bottom - bounds.Top) / 2.0;
 
             double distance = Math.Sqrt(
                 Math.Pow(centerX - screenCenterX, 2) +
@@ -62,8 +105,8 @@ public static class DisplayHelper
     /// </summary>
     public static bool IsValidDisplayIndex(int displayIndex)
     {
-        var screens = System.Windows.Forms.Screen.AllScreens;
-        return displayIndex >= 0 && displayIndex < screens.Length;
+        var monitors = GetAllMonitors();
+        return displayIndex >= 0 && displayIndex < monitors.Length;
     }
 
     /// <summary>
@@ -71,10 +114,10 @@ public static class DisplayHelper
     /// </summary>
     public static bool IsPositionOnAnyDisplay(double x, double y)
     {
-        var screens = System.Windows.Forms.Screen.AllScreens;
-        foreach (var screen in screens)
+        var monitors = GetAllMonitors();
+        foreach (var monitor in monitors)
         {
-            var bounds = screen.Bounds;
+            var bounds = monitor.rcMonitor;
             if (x >= bounds.Left && x < bounds.Right &&
                 y >= bounds.Top && y < bounds.Bottom)
             {
@@ -98,15 +141,15 @@ public static class DisplayHelper
         double x, double y, double width, double height,
         int preferredDisplayIndex, bool useTopRight = false)
     {
-        var screens = System.Windows.Forms.Screen.AllScreens;
-        if (screens.Length == 0)
+        var monitors = GetAllMonitors();
+        if (monitors.Length == 0)
         {
             return (x, y, 0);
         }
 
         // 優先ディスプレイが有効かチェック
         int targetDisplay = preferredDisplayIndex;
-        if (!IsValidDisplayIndex(targetDisplay))
+        if (targetDisplay < 0 || targetDisplay >= monitors.Length)
         {
             targetDisplay = 0;
         }
@@ -124,19 +167,19 @@ public static class DisplayHelper
         }
 
         // 無効な座標の場合、ターゲットディスプレイのデフォルト位置に配置
-        var screen = screens[targetDisplay].WorkingArea;
+        var workArea = monitors[targetDisplay].rcWork;
         const double offset = 10;
 
         double newX, newY;
         if (useTopRight)
         {
-            newX = screen.Right - width - offset;
-            newY = screen.Top + offset;
+            newX = workArea.Right - width - offset;
+            newY = workArea.Top + offset;
         }
         else
         {
-            newX = screen.Left + offset;
-            newY = screen.Top + offset;
+            newX = workArea.Left + offset;
+            newY = workArea.Top + offset;
         }
         return (newX, newY, targetDisplay);
     }

@@ -186,6 +186,41 @@ internal static partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
 
+    // EnumDisplayMonitors用デリゲートとAPI
+    // Note: デリゲートコールバックを使用するため DllImport を維持（EnumWindowsと同パターン）
+    public delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
+
+    // Note: MONITORINFOEX の ByValTStr が LibraryImport 非対応のため DllImport を維持
+    [DllImport("user32.dll", EntryPoint = "GetMonitorInfoW", CharSet = CharSet.Unicode)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFOEX lpmi);
+
+    // MONITORINFOEX 構造体
+    public const uint MONITORINFOF_PRIMARY = 0x00000001;
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct MONITORINFOEX
+    {
+        public int cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public uint dwFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string szDevice;
+
+        public static MONITORINFOEX Create()
+        {
+            var info = new MONITORINFOEX();
+            info.cbSize = Marshal.SizeOf<MONITORINFOEX>();
+            info.szDevice = string.Empty;
+            return info;
+        }
+    }
+
     // GetWindow フラグ
     public const int GW_OWNER = 4;
 
