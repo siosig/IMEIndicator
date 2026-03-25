@@ -47,9 +47,7 @@ public class SettingsManagerTests : IDisposable
     {
         // Arrange
         var manager = new SettingsManager(_tempDir);
-        manager.Settings.ImeOnColor = "#FF0000";
         manager.Settings.ImeOnText = "日";
-        manager.Settings.ImeOffColor = "#0000FF";
         manager.Settings.ImeOffText = "E";
         manager.Settings.MouseCursorIndicator.Size = 50;
         manager.Settings.MouseCursorIndicator.Opacity = 0.5;
@@ -62,9 +60,7 @@ public class SettingsManagerTests : IDisposable
         // Assert
         Assert.True(saveResult);
         Assert.True(loadResult);
-        Assert.Equal("#FF0000", manager2.Settings.ImeOnColor);
         Assert.Equal("日", manager2.Settings.ImeOnText);
-        Assert.Equal("#0000FF", manager2.Settings.ImeOffColor);
         Assert.Equal("E", manager2.Settings.ImeOffText);
         Assert.Equal(50, manager2.Settings.MouseCursorIndicator.Size);
         Assert.Equal(0.5, manager2.Settings.MouseCursorIndicator.Opacity);
@@ -87,7 +83,7 @@ public class SettingsManagerTests : IDisposable
         Assert.NotNull(manager.LastError);
         // デフォルト設定にフォールバック
         Assert.NotNull(manager.Settings);
-        Assert.Equal(new AppSettings().ImeOnColor, manager.Settings.ImeOnColor);
+        Assert.Equal(new AppSettings().ImeOnText, manager.Settings.ImeOnText);
     }
 
     [Fact]
@@ -97,7 +93,7 @@ public class SettingsManagerTests : IDisposable
         Directory.CreateDirectory(_tempDir);
         var manager = new SettingsManager(_tempDir);
         var filePath = manager.GetSettingsFilePath();
-        File.WriteAllText(filePath, """{"imeOnColor": "#FF0000"}""");
+        File.WriteAllText(filePath, """{"imeOnText": "日"}""");
 
         // Act
         var result = manager.Load();
@@ -145,7 +141,7 @@ public class SettingsManagerTests : IDisposable
     {
         // Arrange
         var manager = new SettingsManager(_tempDir);
-        manager.Settings.ImeOnColor = "#999999";
+        manager.Settings.ImeOnText = "テスト";
         manager.Settings.MouseCursorIndicator.Size = 80;
         manager.Save();
 
@@ -154,45 +150,8 @@ public class SettingsManagerTests : IDisposable
 
         // Assert
         var defaults = new AppSettings();
-        Assert.Equal(defaults.ImeOnColor, manager.Settings.ImeOnColor);
+        Assert.Equal(defaults.ImeOnText, manager.Settings.ImeOnText);
         Assert.Equal(defaults.MouseCursorIndicator.Size, manager.Settings.MouseCursorIndicator.Size);
-    }
-
-    [Fact]
-    public void HideWhenImeOff_DefaultIsTrue()
-    {
-        // デフォルト値が true であることを確認
-        var settings = new MouseCursorIndicatorSettings();
-        Assert.True(settings.HideWhenImeOff);
-    }
-
-    [Fact]
-    public void HideWhenImeOff_SaveAndLoad_Preserved()
-    {
-        // Arrange
-        var manager = new SettingsManager(_tempDir);
-        manager.Settings.MouseCursorIndicator.HideWhenImeOff = false;
-
-        // Act
-        manager.Save();
-        var manager2 = new SettingsManager(_tempDir);
-        manager2.Load();
-
-        // Assert
-        Assert.False(manager2.Settings.MouseCursorIndicator.HideWhenImeOff);
-    }
-
-    [Fact]
-    public void HideWhenImeOff_MissingInJson_FallsBackToDefault()
-    {
-        // settings.json に hideWhenImeOff がない場合、デフォルト true が使用される
-        Directory.CreateDirectory(_tempDir);
-        var manager = new SettingsManager(_tempDir);
-        File.WriteAllText(manager.GetSettingsFilePath(), """{"mouseCursorIndicator": {"isVisible": true}}""");
-
-        manager.Load();
-
-        Assert.True(manager.Settings.MouseCursorIndicator.HideWhenImeOff);
     }
 
     [Fact]
@@ -200,7 +159,7 @@ public class SettingsManagerTests : IDisposable
     {
         // アトミック保存後に .tmp ファイルが残らないことを確認
         var manager = new SettingsManager(_tempDir);
-        manager.Settings.ImeOnColor = "#AABBCC";
+        manager.Settings.ImeOnText = "テスト";
 
         var result = manager.Save();
 
@@ -214,7 +173,7 @@ public class SettingsManagerTests : IDisposable
     {
         // アトミック保存結果が有効な JSON であることを確認
         var manager = new SettingsManager(_tempDir);
-        manager.Settings.ImeOnColor = "#112233";
+        manager.Settings.ImeOnText = "日";
         manager.Settings.MouseCursorIndicator.Size = 42;
         manager.Save();
 
@@ -225,7 +184,7 @@ public class SettingsManagerTests : IDisposable
         });
 
         Assert.NotNull(parsed);
-        Assert.Equal("#112233", parsed.ImeOnColor);
+        Assert.Equal("日", parsed.ImeOnText);
         Assert.Equal(42, parsed.MouseCursorIndicator.Size);
     }
 
@@ -367,5 +326,20 @@ public class SettingsManagerTests : IDisposable
         var json = File.ReadAllText(manager.GetSettingsFilePath());
         Assert.Contains("\"High\"", json); // 数値ではなく文字列
         Assert.DoesNotContain("\"4\"", json); // High の enum 数値
+    }
+
+    [Fact]
+    public void Load_OldFormatWithImeColors_IgnoredGracefully()
+    {
+        // 旧フォーマット（imeOnColor/imeOffColor）のJSONを読み込んでもエラーにならないことを確認
+        Directory.CreateDirectory(_tempDir);
+        var manager = new SettingsManager(_tempDir);
+        File.WriteAllText(manager.GetSettingsFilePath(),
+            """{"imeOnColor": "#FF0000", "imeOffColor": "#0000FF", "imeOnText": "あ"}""");
+
+        var result = manager.Load();
+
+        Assert.True(result);
+        Assert.Equal("あ", manager.Settings.ImeOnText);
     }
 }

@@ -13,6 +13,7 @@
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -22,10 +23,34 @@
                 Text="設定"
                 FontSize="20"
                 FontWeight="Bold"
-                Margin="0,0,0,20"/>
+                Margin="0,0,0,10"/>
+
+        <!-- 電源モード選択 -->
+        <StackPanel Grid.Row="1"
+                Orientation="Horizontal"
+                Margin="0,0,0,15">
+            <TextBlock Text="電源モード："
+                    VerticalAlignment="Center"
+                    Margin="0,0,10,0"
+                    FontWeight="SemiBold"/>
+            <RadioButton x:Name="PowerModeEfficiency"
+                    Content="最適な電力効率"
+                    GroupName="PowerMode"
+                    Margin="0,0,15,0"
+                    Checked="PowerMode_Checked"/>
+            <RadioButton x:Name="PowerModeBalanced"
+                    Content="バランス"
+                    GroupName="PowerMode"
+                    Margin="0,0,15,0"
+                    Checked="PowerMode_Checked"/>
+            <RadioButton x:Name="PowerModePerformance"
+                    Content="最適なパフォーマンス"
+                    GroupName="PowerMode"
+                    Checked="PowerMode_Checked"/>
+        </StackPanel>
 
         <!-- タブコントロール -->
-        <TabControl Grid.Row="1">
+        <TabControl Grid.Row="2">
             <!-- ==================== マウスカーソルインジケーター設定 ==================== -->
             <TabItem Header="インジケーター">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -33,18 +58,13 @@
                         <!-- 表示スイッチ -->
                         <CheckBox x:Name="MouseIndicatorVisibleCheck"
                                 Content="インジケーターを表示"
-                                Margin="0,0,0,8"
+                                Margin="0,0,0,15"
                                   Checked="MouseIndicatorVisible_Changed"
                                 Unchecked="MouseIndicatorVisible_Changed"/>
-                        <CheckBox x:Name="HideWhenImeOffCheck"
-                                Content="IME ONの時のみ表示（OFFの時は非表示）"
-                                Margin="20,0,0,15"
-                                  Checked="HideWhenImeOff_Changed"
-                                Unchecked="HideWhenImeOff_Changed"/>
                         <Separator Margin="0,0,0,15"/>
 
                         <!-- 説明 -->
-                        <TextBlock Text="マウスカーソル付近に日本語IMEのON/OFF状態を表示します。"
+                        <TextBlock Text="マウスカーソル付近に日本語IMEのON状態を表示します。色は電源モードに連動します。"
                                 TextWrapping="Wrap"
                                 Margin="0,0,0,15"
                                 Opacity="0.8"/>
@@ -137,85 +157,6 @@
                                     VerticalAlignment="Center"/>
                         </Grid>
 
-                        <Separator Margin="0,15,0,15"/>
-
-                        <!-- IME ON 設定 -->
-                        <TextBlock Text="IME ON（日本語入力時）"
-                                FontWeight="SemiBold"
-                                Margin="0,0,0,5"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0"
-                                    Margin="0,0,10,0">
-                                <TextBlock Text="背景色"/>
-                                <Grid Margin="0,3,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="24"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border x:Name="ImeOnColorPreview"
-                                            Width="20"
-                                            Height="20"
-                                            CornerRadius="3"
-                                            BorderBrush="#CBD5E1"
-                                            BorderThickness="1"
-                                            Margin="0,0,5,0"/>
-                                    <TextBox x:Name="ImeOnColorText"
-                                            Grid.Column="1"
-                                            MaxLength="7"
-                                             TextChanged="ImeOnColor_TextChanged"/>
-                                </Grid>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="表示文字"/>
-                                <TextBox x:Name="ImeOnTextInput"
-                                        Margin="0,3,0,0"
-                                        MaxLength="4"
-                                         TextChanged="ImeOnText_TextChanged"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- IME OFF 設定 -->
-                        <TextBlock Text="IME OFF（英数入力時）"
-                                FontWeight="SemiBold"
-                                Margin="0,10,0,5"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0"
-                                    Margin="0,0,10,0">
-                                <TextBlock Text="背景色"/>
-                                <Grid Margin="0,3,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="24"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border x:Name="ImeOffColorPreview"
-                                            Width="20"
-                                            Height="20"
-                                            CornerRadius="3"
-                                            BorderBrush="#CBD5E1"
-                                            BorderThickness="1"
-                                            Margin="0,0,5,0"/>
-                                    <TextBox x:Name="ImeOffColorText"
-                                            Grid.Column="1"
-                                            MaxLength="7"
-                                             TextChanged="ImeOffColor_TextChanged"/>
-                                </Grid>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="表示文字"/>
-                                <TextBox x:Name="ImeOffTextInput"
-                                        Margin="0,3,0,0"
-                                        MaxLength="4"
-                                         TextChanged="ImeOffText_TextChanged"/>
-                            </StackPanel>
-                        </Grid>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -397,7 +338,7 @@
         </TabControl>
 
         <!-- ボタン -->
-        <StackPanel Grid.Row="2"
+        <StackPanel Grid.Row="3"
                 Orientation="Horizontal"
                 HorizontalAlignment="Right"
                 Margin="0,20,0,0">

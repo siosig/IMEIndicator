@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Media;
 using IMEIndicator.Models;
 using IMEIndicator.Services;
 using IMEIndicator.ViewModels;
@@ -38,70 +37,39 @@ public partial class SettingsWindow : Window
     {
         // マウスインジケーター表示状態
         MouseIndicatorVisibleCheck.IsChecked = _viewModel.MouseCursorIndicatorViewModel.IsVisible;
-        HideWhenImeOffCheck.IsChecked = _viewModel.MouseCursorIndicatorViewModel.HideWhenImeOff;
 
-        // IME ON/OFF 色・文字
-        var settings = _viewModel.SettingsManager.Settings;
-        ImeOnColorText.Text = settings.ImeOnColor;
-        ImeOnTextInput.Text = settings.ImeOnText;
-        ImeOffColorText.Text = settings.ImeOffColor;
-        ImeOffTextInput.Text = settings.ImeOffText;
-        UpdateColorPreview(ImeOnColorPreview, settings.ImeOnColor);
-        UpdateColorPreview(ImeOffColorPreview, settings.ImeOffColor);
+        // 電源モードラジオボタンの初期化
+        var currentMode = PowerModeService.GetCurrentMode();
+        switch (currentMode)
+        {
+            case PowerMode.BestPowerEfficiency:
+                PowerModeEfficiency.IsChecked = true;
+                break;
+            case PowerMode.BestPerformance:
+                PowerModePerformance.IsChecked = true;
+                break;
+            default:
+                PowerModeBalanced.IsChecked = true;
+                break;
+        }
 
         // バージョン情報
         var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
         LblVersion.Text = $"v{version?.Major}.{version?.Minor}.{version?.Build}";
     }
 
-    private static void UpdateColorPreview(Border preview, string hex)
-    {
-        if (ColorHelper.IsValidHexColor(hex))
-            preview.Background = new SolidColorBrush(ColorHelper.ParseColor(hex));
-        else
-            preview.Background = System.Windows.Media.Brushes.Transparent;
-    }
-
-    private void ImeOnColor_TextChanged(object sender, TextChangedEventArgs e)
+    private void PowerMode_Checked(object sender, RoutedEventArgs e)
     {
         if (_isInitializing) return;
-        var hex = ImeOnColorText.Text;
-        UpdateColorPreview(ImeOnColorPreview, hex);
-        if (!ColorHelper.IsValidHexColor(hex)) return;
-        _viewModel.SettingsManager.Settings.ImeOnColor = hex;
-        _viewModel.MouseCursorIndicatorViewModel.ReloadSettings();
-        _viewModel.SaveSettings();
-    }
 
-    private void ImeOnText_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (_isInitializing) return;
-        var text = ImeOnTextInput.Text;
-        if (string.IsNullOrEmpty(text)) return;
-        _viewModel.SettingsManager.Settings.ImeOnText = text;
-        _viewModel.MouseCursorIndicatorViewModel.ReloadSettings();
-        _viewModel.SaveSettings();
-    }
+        PowerMode mode = sender switch
+        {
+            System.Windows.Controls.RadioButton rb when rb == PowerModeEfficiency => PowerMode.BestPowerEfficiency,
+            System.Windows.Controls.RadioButton rb when rb == PowerModePerformance => PowerMode.BestPerformance,
+            _ => PowerMode.Balanced
+        };
 
-    private void ImeOffColor_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (_isInitializing) return;
-        var hex = ImeOffColorText.Text;
-        UpdateColorPreview(ImeOffColorPreview, hex);
-        if (!ColorHelper.IsValidHexColor(hex)) return;
-        _viewModel.SettingsManager.Settings.ImeOffColor = hex;
-        _viewModel.MouseCursorIndicatorViewModel.ReloadSettings();
-        _viewModel.SaveSettings();
-    }
-
-    private void ImeOffText_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (_isInitializing) return;
-        var text = ImeOffTextInput.Text;
-        if (string.IsNullOrEmpty(text)) return;
-        _viewModel.SettingsManager.Settings.ImeOffText = text;
-        _viewModel.MouseCursorIndicatorViewModel.ReloadSettings();
-        _viewModel.SaveSettings();
+        PowerModeService.SetMode(mode);
     }
 
     private void MouseIndicatorVisible_Changed(object sender, RoutedEventArgs e)
@@ -109,14 +77,6 @@ public partial class SettingsWindow : Window
         if (_isInitializing) return;
         _viewModel.MouseCursorIndicatorViewModel.IsVisible = MouseIndicatorVisibleCheck.IsChecked == true;
         _viewModel.SaveSettings();
-    }
-
-    private void HideWhenImeOff_Changed(object sender, RoutedEventArgs e)
-    {
-        if (_isInitializing) return;
-        _viewModel.MouseCursorIndicatorViewModel.HideWhenImeOff = HideWhenImeOffCheck.IsChecked == true;
-        _viewModel.SaveSettings();
-        App.Instance.ApplyCurrentVisibility();
     }
 
     private void ResetSettings_Click(object sender, RoutedEventArgs e)

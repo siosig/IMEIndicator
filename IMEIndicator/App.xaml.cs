@@ -161,6 +161,7 @@ public partial class App : Application
             ToolTipText = AppConstants.AppName,
             ContextMenu = CreateContextMenu()
         };
+        _trayIcon.TrayLeftMouseUp += (_, _) => OpenSettingsWindow();
     }
 
     private System.Drawing.Icon LoadIcon()
@@ -283,7 +284,7 @@ public partial class App : Application
         if (!settings.IsVisible) return;
 
         bool isJapaneseImeOn = languageInfo.Language == LanguageType.Japanese && languageInfo.IsIMEOn;
-        bool shouldShow = !settings.HideWhenImeOff || isJapaneseImeOn;
+        bool shouldShow = isJapaneseImeOn;
 
         if (shouldShow) _mouseCursorIndicatorWindow.Show();
         else _mouseCursorIndicatorWindow.Hide();

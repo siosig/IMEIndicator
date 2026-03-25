@@ -56,6 +56,17 @@ public static class PowerModeService
     }
 
     /// <summary>
+    /// 電源モードに対応するインジケーター色（HEX）を返す
+    /// </summary>
+    public static string GetIndicatorColor(PowerMode mode) => mode switch
+    {
+        PowerMode.BestPowerEfficiency => "#3B82F6",
+        PowerMode.Balanced => "#EF4444",
+        PowerMode.BestPerformance => "#EAB308",
+        _ => "#EF4444"
+    };
+
+    /// <summary>
     /// 電源モードをトグルする（最適な電力効率 ↔ バランス）
     /// 最適なパフォーマンスからの場合はバランスへ遷移
     /// </summary>

@@ -19,12 +19,9 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
     // Brush/FontFamily のキャッシュ（Freeze済みで再利用、アロケーションゼロ）
     private static readonly FontFamily MeiryoUiFont = new("Meiryo UI");
     private static readonly FontFamily SegoeUiFont = new("Segoe UI");
-    private SolidColorBrush? _imeOnBgBrush;
-    private SolidColorBrush? _imeOnGlowBrush;
-    private SolidColorBrush? _imeOffBgBrush;
-    private SolidColorBrush? _imeOffGlowBrush;
-    private string? _cachedImeOnColor;
-    private string? _cachedImeOffColor;
+    private SolidColorBrush? _powerModeBgBrush;
+    private SolidColorBrush? _powerModeGlowBrush;
+    private PowerMode? _cachedPowerMode;
 
     [ObservableProperty]
     private double _size = 34;
@@ -62,9 +59,6 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
     [ObservableProperty]
     private bool _isVisible = true;
 
-    [ObservableProperty]
-    private bool _hideWhenImeOff = true;
-
     public MouseCursorIndicatorViewModel(SettingsManager settingsManager)
     {
         _settingsManager = settingsManager;
@@ -79,26 +73,19 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 設定の色文字列からFrozen Brushを生成・キャッシュする
+    /// 電源モードに基づくFrozen Brushを生成・キャッシュする
     /// </summary>
-    private void EnsureBrushCache()
+    private void EnsurePowerModeBrushCache()
     {
-        var appSettings = _settingsManager.Settings;
+        var currentMode = PowerModeService.GetCurrentMode();
 
-        if (_cachedImeOnColor != appSettings.ImeOnColor || _imeOnBgBrush == null)
+        if (_cachedPowerMode != currentMode || _powerModeBgBrush == null)
         {
-            var color = ColorHelper.ParseColor(appSettings.ImeOnColor);
-            _imeOnBgBrush = CreateFrozenBrush(color);
-            _imeOnGlowBrush = CreateFrozenBrush(Color.FromArgb(179, color.R, color.G, color.B));
-            _cachedImeOnColor = appSettings.ImeOnColor;
-        }
-
-        if (_cachedImeOffColor != appSettings.ImeOffColor || _imeOffBgBrush == null)
-        {
-            var color = ColorHelper.ParseColor(appSettings.ImeOffColor);
-            _imeOffBgBrush = CreateFrozenBrush(color);
-            _imeOffGlowBrush = CreateFrozenBrush(Color.FromArgb(179, color.R, color.G, color.B));
-            _cachedImeOffColor = appSettings.ImeOffColor;
+            var hex = PowerModeService.GetIndicatorColor(currentMode);
+            var color = ColorHelper.ParseColor(hex);
+            _powerModeBgBrush = CreateFrozenBrush(color);
+            _powerModeGlowBrush = CreateFrozenBrush(Color.FromArgb(179, color.R, color.G, color.B));
+            _cachedPowerMode = currentMode;
         }
     }
 
@@ -109,37 +96,29 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
         OffsetX = Settings.OffsetX;
         OffsetY = Settings.OffsetY;
         IsVisible = Settings.IsVisible;
-        HideWhenImeOff = Settings.HideWhenImeOff;
         FontSize = Size * FontSizeRatio;
 
         // Brushキャッシュを初期化
-        EnsureBrushCache();
+        EnsurePowerModeBrushCache();
 
         // 初期表示をIME OFF状態に設定
         ApplyIMEColors(isIMEOn: false);
     }
 
     /// <summary>
-    /// IME ON/OFF に応じた色とテキストを適用（キャッシュ済みBrushを再利用）
+    /// IME ON/OFF に応じた色とテキストを適用（電源モード連動色を使用）
     /// </summary>
     private void ApplyIMEColors(bool isIMEOn)
     {
-        EnsureBrushCache();
         var appSettings = _settingsManager.Settings;
 
         if (isIMEOn)
         {
+            EnsurePowerModeBrushCache();
             DisplayText = appSettings.ImeOnText;
-            BackgroundColor = _imeOnBgBrush!;
-            GlowColor = _imeOnGlowBrush!;
+            BackgroundColor = _powerModeBgBrush!;
+            GlowColor = _powerModeGlowBrush!;
             FontFamily = MeiryoUiFont;
-        }
-        else
-        {
-            DisplayText = appSettings.ImeOffText;
-            BackgroundColor = _imeOffBgBrush!;
-            GlowColor = _imeOffGlowBrush!;
-            FontFamily = SegoeUiFont;
         }
     }
 
@@ -174,7 +153,6 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
     partial void OnOffsetXChanged(double value) => Settings.OffsetX = value;
     partial void OnOffsetYChanged(double value) => Settings.OffsetY = value;
     partial void OnIsVisibleChanged(bool value) => Settings.IsVisible = value;
-    partial void OnHideWhenImeOffChanged(bool value) => Settings.HideWhenImeOff = value;
 
     /// <summary>
     /// 設定を再読み込みする
@@ -182,8 +160,7 @@ public partial class MouseCursorIndicatorViewModel : ObservableObject
     public void ReloadSettings()
     {
         // Brushキャッシュを強制再生成
-        _cachedImeOnColor = null;
-        _cachedImeOffColor = null;
+        _cachedPowerMode = null;
 
         LoadSettings();
         if (_currentLanguageInfo.HasValue)
