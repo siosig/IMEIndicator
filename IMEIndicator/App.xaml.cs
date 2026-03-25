@@ -14,6 +14,7 @@ public partial class App : Application
     private MouseCursorIndicatorWindow? _mouseCursorIndicatorWindow;
     private SettingsManager? _settingsManager;
     private MainViewModel? _mainViewModel;
+    private ProcessPriorityMonitor? _processPriorityMonitor;
 
     // 外部からアクセス可能なインスタンス
     public static App Instance => (App)Current;
@@ -21,6 +22,7 @@ public partial class App : Application
     public SettingsManager? SettingsManager => _settingsManager;
     public IMEMonitor? IMEMonitor => _imeMonitor;
     public MainViewModel? MainViewModel => _mainViewModel;
+    public ProcessPriorityMonitor? ProcessPriorityMonitor => _processPriorityMonitor;
 
     /// <summary>
     /// 設定ウィンドウが開いているかどうか
@@ -93,6 +95,11 @@ public partial class App : Application
             _mouseCursorIndicatorWindow = new MouseCursorIndicatorWindow(_mainViewModel.MouseCursorIndicatorViewModel);
             // HideWhenImeOff を含む全設定を考慮した初期表示
             ApplyWindowVisibility(_imeMonitor.CurrentState);
+
+            // プロセス優先度モニターの初期化・開始
+            _processPriorityMonitor = new ProcessPriorityMonitor(new ProcessPriorityService());
+            if (_settingsManager.Settings.ProcessPriorityRules.Count > 0)
+                _processPriorityMonitor.Start(_settingsManager.Settings.ProcessPriorityRules);
 
             // システムトレイアイコン
             InitializeTrayIcon();
@@ -248,6 +255,9 @@ public partial class App : Application
             _imeMonitor.IMEStateChanged -= OnIMEStateChanged;
             _imeMonitor.CursorPositionChanged -= OnCursorPositionChanged;
         }
+
+        try { _processPriorityMonitor?.Dispose(); }
+        catch (Exception ex) { Trace.TraceError($"[App.OnExit] ProcessPriorityMonitor Dispose failed: {ex.Message}"); }
 
         try { _imeMonitor?.Dispose(); }
         catch (Exception ex) { Trace.TraceError($"[App.OnExit] IMEMonitor Dispose failed: {ex.Message}"); }

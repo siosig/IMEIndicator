@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows;
 using IMEIndicator.Models;
 
@@ -27,7 +28,8 @@ public class SettingsManager
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() }
     };
 
     /// <summary>
@@ -121,6 +123,14 @@ public class SettingsManager
         var s = Settings;
         s.MouseCursorIndicator.Opacity = Math.Clamp(s.MouseCursorIndicator.Opacity, 0.1, 1.0);
         s.MouseCursorIndicator.Size = Math.Clamp(s.MouseCursorIndicator.Size, 20, 100);
+
+        // ProcessPriorityRules のバリデーション
+        s.ProcessPriorityRules ??= [];
+        foreach (var rule in s.ProcessPriorityRules)
+        {
+            rule.IntervalSeconds = Math.Max(10, rule.IntervalSeconds);
+            rule.MaxBackoffExponent = Math.Clamp(rule.MaxBackoffExponent, 0, 10);
+        }
     }
 
     /// <summary>

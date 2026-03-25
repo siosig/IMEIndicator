@@ -242,4 +242,77 @@ public class SettingsManagerTests : IDisposable
 
         Assert.False(File.Exists(tmpPath));
     }
+
+    [Fact]
+    public void ProcessPriorityRules_SaveAndLoad_RoundTrip()
+    {
+        // Arrange
+        var manager = new SettingsManager(_tempDir);
+        manager.Settings.ProcessPriorityRules =
+        [
+            new() { ProcessName = "nextcloud.exe", TargetPriority = IMEIndicator.Models.PriorityLevel.Idle, IntervalSeconds = 60, MaxBackoffExponent = 6, IsEnabled = true },
+            new() { ProcessName = "chrome", TargetPriority = IMEIndicator.Models.PriorityLevel.BelowNormal, IntervalSeconds = 30, MaxBackoffExponent = 4, IsEnabled = false }
+        ];
+
+        // Act
+        manager.Save();
+        var manager2 = new SettingsManager(_tempDir);
+        manager2.Load();
+
+        // Assert
+        Assert.Equal(2, manager2.Settings.ProcessPriorityRules.Count);
+
+        var rule1 = manager2.Settings.ProcessPriorityRules[0];
+        Assert.Equal("nextcloud.exe", rule1.ProcessName);
+        Assert.Equal(IMEIndicator.Models.PriorityLevel.Idle, rule1.TargetPriority);
+        Assert.Equal(60, rule1.IntervalSeconds);
+        Assert.Equal(6, rule1.MaxBackoffExponent);
+        Assert.True(rule1.IsEnabled);
+
+        var rule2 = manager2.Settings.ProcessPriorityRules[1];
+        Assert.Equal("chrome", rule2.ProcessName);
+        Assert.Equal(IMEIndicator.Models.PriorityLevel.BelowNormal, rule2.TargetPriority);
+        Assert.False(rule2.IsEnabled);
+    }
+
+    [Fact]
+    public void ProcessPriorityRules_Validation_ClampsValues()
+    {
+        var manager = new SettingsManager(_tempDir);
+        manager.Settings.ProcessPriorityRules =
+        [
+            new() { ProcessName = "test", IntervalSeconds = 3, MaxBackoffExponent = 15 }
+        ];
+
+        manager.ValidateAndClampSettings();
+
+        var rule = manager.Settings.ProcessPriorityRules[0];
+        Assert.Equal(10, rule.IntervalSeconds); // 最小10
+        Assert.Equal(10, rule.MaxBackoffExponent); // 最大10
+    }
+
+    [Fact]
+    public void ProcessPriorityRules_EmptyByDefault()
+    {
+        var manager = new SettingsManager(_tempDir);
+        manager.Load();
+        Assert.NotNull(manager.Settings.ProcessPriorityRules);
+        Assert.Empty(manager.Settings.ProcessPriorityRules);
+    }
+
+    [Fact]
+    public void ProcessPriorityRules_EnumSerializedAsString()
+    {
+        // PriorityLevel が文字列として JSON に保存されることを確認
+        var manager = new SettingsManager(_tempDir);
+        manager.Settings.ProcessPriorityRules =
+        [
+            new() { ProcessName = "test", TargetPriority = IMEIndicator.Models.PriorityLevel.High }
+        ];
+        manager.Save();
+
+        var json = File.ReadAllText(manager.GetSettingsFilePath());
+        Assert.Contains("\"High\"", json); // 数値ではなく文字列
+        Assert.DoesNotContain("\"4\"", json); // High の enum 数値
+    }
 }

@@ -36,6 +36,11 @@ public class AppSettings
     /// 初回起動フラグ
     /// </summary>
     public bool IsFirstLaunch { get; set; } = true;
+
+    /// <summary>
+    /// プロセス優先度制御ルール一覧
+    /// </summary>
+    public List<ProcessPriorityRule> ProcessPriorityRules { get; set; } = [];
 }
 
 /// <summary>

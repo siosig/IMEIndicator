@@ -219,6 +219,60 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- ==================== プロセス優先度 ==================== -->
+            <TabItem Header="プロセス優先度">
+                <Grid Margin="15">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                            Text="プロセスの優先度を自動制御するルールを管理します。"
+                            TextWrapping="Wrap"
+                            Margin="0,0,0,10"
+                            Opacity="0.8"/>
+
+                    <DataGrid Grid.Row="1"
+                            x:Name="PriorityRulesGrid"
+                            AutoGenerateColumns="False"
+                            CanUserAddRows="False"
+                            CanUserDeleteRows="False"
+                            SelectionMode="Single"
+                            HeadersVisibility="Column"
+                            GridLinesVisibility="Horizontal"
+                            CellEditEnding="PriorityRulesGrid_CellEditEnding">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="有効"
+                                                    Binding="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}"
+                                                    Width="40"/>
+                            <DataGridTextColumn Header="プロセス名"
+                                                Binding="{Binding ProcessName, UpdateSourceTrigger=LostFocus}"
+                                                Width="*"/>
+                            <DataGridComboBoxColumn Header="優先度"
+                                                    SelectedItemBinding="{Binding TargetPriority, UpdateSourceTrigger=PropertyChanged}"
+                                                    Width="100"/>
+                            <DataGridTextColumn Header="間隔(秒)"
+                                                Binding="{Binding IntervalSeconds, UpdateSourceTrigger=LostFocus}"
+                                                Width="65"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="2"
+                            Orientation="Horizontal"
+                            Margin="0,10,0,0">
+                        <Button Content="追加"
+                                Width="60"
+                                Margin="0,0,5,0"
+                                Click="AddPriorityRule_Click"/>
+                        <Button Content="削除"
+                                Width="60"
+                                Click="RemovePriorityRule_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
             <!-- ==================== バージョン情報 ==================== -->
             <TabItem Header="バージョン情報">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">

@@ -1,5 +1,7 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
+using IMEIndicator.Models;
 using IMEIndicator.Services;
 using IMEIndicator.ViewModels;
 
@@ -11,6 +13,7 @@ namespace IMEIndicator.Views;
 public partial class SettingsWindow : Window
 {
     private readonly MainViewModel _viewModel;
+    private ProcessPrioritySettingsViewModel? _priorityViewModel;
     private bool _isInitializing = true;
 
     public SettingsWindow(MainViewModel viewModel)
@@ -20,6 +23,7 @@ public partial class SettingsWindow : Window
 
         InitializeComponent();
         LoadCurrentSettings();
+        InitializePriorityTab();
 
         _isInitializing = false;
     }
@@ -128,14 +132,48 @@ public partial class SettingsWindow : Window
         }
     }
 
+    private void InitializePriorityTab()
+    {
+        var monitor = App.Instance.ProcessPriorityMonitor;
+        if (monitor == null) return;
+
+        _priorityViewModel = new ProcessPrioritySettingsViewModel(_viewModel.SettingsManager, monitor);
+        PriorityRulesGrid.ItemsSource = _priorityViewModel.Rules;
+
+        // ComboBox 列に PriorityLevel の選択肢を設定
+        var comboColumn = PriorityRulesGrid.Columns[2] as DataGridComboBoxColumn;
+        if (comboColumn != null)
+            comboColumn.ItemsSource = ProcessPrioritySettingsViewModel.PriorityLevels;
+    }
+
+    private void AddPriorityRule_Click(object sender, RoutedEventArgs e)
+    {
+        _priorityViewModel?.AddRuleCommand.Execute(null);
+    }
+
+    private void RemovePriorityRule_Click(object sender, RoutedEventArgs e)
+    {
+        var selected = PriorityRulesGrid.SelectedItem as ProcessPriorityRule;
+        _priorityViewModel?.RemoveRuleCommand.Execute(selected);
+    }
+
+    private void PriorityRulesGrid_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
+    {
+        // セル編集完了後に保存・同期（Dispatcher で遅延実行して編集値の反映を待つ）
+        Dispatcher.InvokeAsync(() => _priorityViewModel?.SaveAndSync(),
+            System.Windows.Threading.DispatcherPriority.Background);
+    }
+
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
+        _priorityViewModel?.SaveAndSync();
         _viewModel.SaveSettings();
         Close();
     }
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
+        _priorityViewModel?.SaveAndSync();
         _viewModel.SaveSettings();
         base.OnClosing(e);
     }
