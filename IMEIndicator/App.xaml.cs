@@ -99,7 +99,9 @@ public partial class App : Application
             // プロセス優先度モニターの初期化・開始
             _processPriorityMonitor = new ProcessPriorityMonitor(new ProcessPriorityService());
             if (_settingsManager.Settings.ProcessPriorityRules.Count > 0)
-                _processPriorityMonitor.Start(_settingsManager.Settings.ProcessPriorityRules);
+                _processPriorityMonitor.Start(
+                    _settingsManager.Settings.ProcessPriorityRules,
+                    _settingsManager.Settings.PollingIntervalSeconds);
 
             // システムトレイアイコン
             InitializeTrayIcon();

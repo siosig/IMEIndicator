@@ -25,76 +25,70 @@ public class ProcessPriorityMonitorTests : IDisposable
     }
 
     [Fact]
-    public async Task EvaluateRule_ProcessNotRunning_Skips()
+    public void EvaluateRule_ProcessNotRunning_Skips()
     {
         var rule = new ProcessPriorityRule
         {
             ProcessName = "nonexistent",
-            TargetPriority = PriorityLevel.Idle,
-            IntervalSeconds = 10
+            TargetPriority = PriorityLevel.Idle
         };
-        var state = new RuleRuntimeState(rule);
+        var state = new RuleRuntimeState(rule, pollingIntervalSeconds: 1);
 
         _monitor.EvaluateRule(rule, state);
 
         Assert.Equal(MonitorResult.Skipped, state.LastResult);
-        Assert.Equal(0, state.CurrentExponent); // リセット
+        Assert.Equal(0, state.CurrentExponent);
     }
 
     [Fact]
-    public async Task EvaluateRule_PriorityNeedsChange_SetsPriority()
+    public void EvaluateRule_PriorityNeedsChange_SetsPriority()
     {
         var rule = new ProcessPriorityRule
         {
             ProcessName = "testproc",
-            TargetPriority = PriorityLevel.Idle,
-            IntervalSeconds = 10
+            TargetPriority = PriorityLevel.Idle
         };
-        var state = new RuleRuntimeState(rule);
+        var state = new RuleRuntimeState(rule, pollingIntervalSeconds: 1);
 
-        // プロセスが通常優先度で実行中
         _mockService.AddProcess("testproc", 1234, ProcessPriorityClass.Normal);
 
         _monitor.EvaluateRule(rule, state);
 
         Assert.Equal(MonitorResult.Success, state.LastResult);
-        Assert.Equal(0, state.CurrentExponent); // 変更後はリセット
+        Assert.Equal(0, state.CurrentExponent);
         Assert.True(_mockService.SetPriorityCalled);
         Assert.Equal(ProcessPriorityClass.Idle, _mockService.LastSetPriority);
     }
 
     [Fact]
-    public async Task EvaluateRule_PriorityAlreadyTarget_BacksOff()
+    public void EvaluateRule_PriorityAlreadyTarget_BacksOff()
     {
         var rule = new ProcessPriorityRule
         {
             ProcessName = "testproc",
             TargetPriority = PriorityLevel.Idle,
-            IntervalSeconds = 10,
             MaxBackoffExponent = 6
         };
-        var state = new RuleRuntimeState(rule);
+        var state = new RuleRuntimeState(rule, pollingIntervalSeconds: 1);
 
-        // プロセスが既に目標優先度
         _mockService.AddProcess("testproc", 1234, ProcessPriorityClass.Idle);
 
         _monitor.EvaluateRule(rule, state);
 
         Assert.Equal(MonitorResult.Skipped, state.LastResult);
-        Assert.Equal(1, state.CurrentExponent); // バックオフ増加
+        Assert.Equal(1, state.CurrentExponent);
         Assert.False(_mockService.SetPriorityCalled);
     }
 
     [Fact]
-    public async Task EvaluateRule_MultipleInstances_SetsAllPriorities()
+    public void EvaluateRule_MultipleInstances_SetsAllPriorities()
     {
         var rule = new ProcessPriorityRule
         {
             ProcessName = "testproc",
-            TargetPriority = PriorityLevel.BelowNormal,
-            IntervalSeconds = 10
+            TargetPriority = PriorityLevel.BelowNormal
         };
-        var state = new RuleRuntimeState(rule);
+        var state = new RuleRuntimeState(rule, pollingIntervalSeconds: 1);
 
         _mockService.AddProcess("testproc", 1001, ProcessPriorityClass.Normal);
         _mockService.AddProcess("testproc", 1002, ProcessPriorityClass.Normal);
@@ -105,15 +99,14 @@ public class ProcessPriorityMonitorTests : IDisposable
     }
 
     [Fact]
-    public async Task EvaluateRule_SetPriorityFails_ResultIsFailed()
+    public void EvaluateRule_SetPriorityFails_ResultIsFailed()
     {
         var rule = new ProcessPriorityRule
         {
             ProcessName = "testproc",
-            TargetPriority = PriorityLevel.Realtime,
-            IntervalSeconds = 10
+            TargetPriority = PriorityLevel.Realtime
         };
-        var state = new RuleRuntimeState(rule);
+        var state = new RuleRuntimeState(rule, pollingIntervalSeconds: 1);
 
         _mockService.AddProcess("testproc", 1234, ProcessPriorityClass.Normal);
         _mockService.FailOnSetPriority = true;
@@ -121,7 +114,7 @@ public class ProcessPriorityMonitorTests : IDisposable
         _monitor.EvaluateRule(rule, state);
 
         Assert.Equal(MonitorResult.Failed, state.LastResult);
-        Assert.Equal(0, state.CurrentExponent); // エラー時はリセット
+        Assert.Equal(0, state.CurrentExponent);
     }
 
     [Fact]
@@ -129,8 +122,8 @@ public class ProcessPriorityMonitorTests : IDisposable
     {
         var rules = new List<ProcessPriorityRule>
         {
-            new() { ProcessName = "proc1", IntervalSeconds = 10 },
-            new() { ProcessName = "proc2", IntervalSeconds = 20 }
+            new() { ProcessName = "proc1" },
+            new() { ProcessName = "proc2" }
         };
 
         _monitor.UpdateRules(rules);
@@ -142,16 +135,34 @@ public class ProcessPriorityMonitorTests : IDisposable
     {
         var rules = new List<ProcessPriorityRule>
         {
-            new() { ProcessName = "proc1", IntervalSeconds = 10 },
-            new() { ProcessName = "proc2", IntervalSeconds = 20 }
+            new() { ProcessName = "proc1" },
+            new() { ProcessName = "proc2" }
         };
 
         _monitor.UpdateRules(rules);
         Assert.Equal(2, _monitor.RuntimeStatesCount);
 
-        // proc2 を削除
         _monitor.UpdateRules([rules[0]]);
         Assert.Equal(1, _monitor.RuntimeStatesCount);
+    }
+
+    [Fact]
+    public void PollingIntervalSeconds_DefaultIsOne()
+    {
+        Assert.Equal(1, _monitor.PollingIntervalSeconds);
+    }
+
+    [Fact]
+    public void UpdatePollingInterval_ClampsToValidRange()
+    {
+        _monitor.UpdatePollingInterval(0);
+        Assert.Equal(1, _monitor.PollingIntervalSeconds);
+
+        _monitor.UpdatePollingInterval(2000);
+        Assert.Equal(1800, _monitor.PollingIntervalSeconds);
+
+        _monitor.UpdatePollingInterval(30);
+        Assert.Equal(30, _monitor.PollingIntervalSeconds);
     }
 
     /// <summary>

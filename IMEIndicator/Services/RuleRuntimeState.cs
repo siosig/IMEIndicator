@@ -16,15 +16,18 @@ public enum MonitorResult
 }
 
 /// <summary>
-/// ルールごとの指数バックオフ状態を管理するランタイムオブジェクト
+/// ルールごとの指数バックオフ状態を管理するランタイムオブジェクト。
+/// ポーリング間隔はシステム全体で共通（外部から注入）。
 /// </summary>
 public class RuleRuntimeState
 {
     private readonly ProcessPriorityRule _rule;
+    private int _pollingIntervalSeconds;
 
-    public RuleRuntimeState(ProcessPriorityRule rule)
+    public RuleRuntimeState(ProcessPriorityRule rule, int pollingIntervalSeconds)
     {
         _rule = rule;
+        _pollingIntervalSeconds = Math.Max(1, pollingIntervalSeconds);
         Reset();
     }
 
@@ -34,9 +37,9 @@ public class RuleRuntimeState
     public int CurrentExponent { get; private set; }
 
     /// <summary>
-    /// 現在の実際の監視間隔（秒）
+    /// 現在の実際の監視間隔（秒）= PollingIntervalSeconds * 2^CurrentExponent
     /// </summary>
-    public int CurrentIntervalSeconds => _rule.ValidatedIntervalSeconds * (1 << CurrentExponent);
+    public int CurrentIntervalSeconds => _pollingIntervalSeconds * (1 << CurrentExponent);
 
     /// <summary>
     /// 次回チェック予定時刻
@@ -52,6 +55,14 @@ public class RuleRuntimeState
     /// チェック時刻に達しているか
     /// </summary>
     public bool IsDue(DateTime now) => now >= NextCheckTime;
+
+    /// <summary>
+    /// ポーリング間隔を更新する（設定変更時）
+    /// </summary>
+    public void UpdatePollingInterval(int pollingIntervalSeconds)
+    {
+        _pollingIntervalSeconds = Math.Max(1, pollingIntervalSeconds);
+    }
 
     /// <summary>
     /// 優先度が目標通りだった場合：バックオフ指数を増加

@@ -22,10 +22,17 @@ public partial class ProcessPrioritySettingsViewModel : ObservableObject
     public static IReadOnlyList<PriorityLevel> PriorityLevels { get; } =
         Enum.GetValues<PriorityLevel>();
 
+    /// <summary>
+    /// システム全体のポーリング間隔（秒）
+    /// </summary>
+    [ObservableProperty]
+    private int _pollingIntervalSeconds;
+
     public ProcessPrioritySettingsViewModel(SettingsManager settingsManager, ProcessPriorityMonitor monitor)
     {
         _settingsManager = settingsManager;
         _monitor = monitor;
+        _pollingIntervalSeconds = settingsManager.Settings.PollingIntervalSeconds;
         LoadRules();
     }
 
@@ -49,7 +56,6 @@ public partial class ProcessPrioritySettingsViewModel : ObservableObject
         {
             ProcessName = string.Empty,
             TargetPriority = PriorityLevel.Idle,
-            IntervalSeconds = 60,
             MaxBackoffExponent = 6,
             IsEnabled = true
         };
@@ -74,7 +80,9 @@ public partial class ProcessPrioritySettingsViewModel : ObservableObject
     public void SaveAndSync()
     {
         _settingsManager.Settings.ProcessPriorityRules = [.. Rules];
+        _settingsManager.Settings.PollingIntervalSeconds = PollingIntervalSeconds;
         _settingsManager.Save();
         _monitor.UpdateRules(_settingsManager.Settings.ProcessPriorityRules);
+        _monitor.UpdatePollingInterval(PollingIntervalSeconds);
     }
 }

@@ -9,20 +9,6 @@ namespace IMEIndicator.Tests;
 /// </summary>
 public class ProcessPriorityRuleTests
 {
-    [Fact]
-    public void ValidatedIntervalSeconds_BelowMinimum_ClampedTo10()
-    {
-        var rule = new ProcessPriorityRule { IntervalSeconds = 3 };
-        Assert.Equal(10, rule.ValidatedIntervalSeconds);
-    }
-
-    [Fact]
-    public void ValidatedIntervalSeconds_AboveMinimum_ReturnsSameValue()
-    {
-        var rule = new ProcessPriorityRule { IntervalSeconds = 60 };
-        Assert.Equal(60, rule.ValidatedIntervalSeconds);
-    }
-
     [Theory]
     [InlineData(-1, 0)]
     [InlineData(0, 0)]
@@ -49,11 +35,10 @@ public class ProcessPriorityRuleTests
     [Theory]
     [InlineData("", false)]
     [InlineData("  ", false)]
-    [InlineData(null, false)]
     [InlineData("notepad", true)]
-    public void IsValid_ChecksProcessNameNotEmpty(string? processName, bool expected)
+    public void IsValid_ChecksProcessNameNotEmpty(string processName, bool expected)
     {
-        var rule = new ProcessPriorityRule { ProcessName = processName ?? string.Empty };
+        var rule = new ProcessPriorityRule { ProcessName = processName };
         Assert.Equal(expected, rule.IsValid);
     }
 

@@ -248,10 +248,11 @@ public class SettingsManagerTests : IDisposable
     {
         // Arrange
         var manager = new SettingsManager(_tempDir);
+        manager.Settings.PollingIntervalSeconds = 5;
         manager.Settings.ProcessPriorityRules =
         [
-            new() { ProcessName = "nextcloud.exe", TargetPriority = IMEIndicator.Models.PriorityLevel.Idle, IntervalSeconds = 60, MaxBackoffExponent = 6, IsEnabled = true },
-            new() { ProcessName = "chrome", TargetPriority = IMEIndicator.Models.PriorityLevel.BelowNormal, IntervalSeconds = 30, MaxBackoffExponent = 4, IsEnabled = false }
+            new() { ProcessName = "nextcloud.exe", TargetPriority = IMEIndicator.Models.PriorityLevel.Idle, MaxBackoffExponent = 6, IsEnabled = true },
+            new() { ProcessName = "chrome", TargetPriority = IMEIndicator.Models.PriorityLevel.BelowNormal, MaxBackoffExponent = 4, IsEnabled = false }
         ];
 
         // Act
@@ -260,12 +261,12 @@ public class SettingsManagerTests : IDisposable
         manager2.Load();
 
         // Assert
+        Assert.Equal(5, manager2.Settings.PollingIntervalSeconds);
         Assert.Equal(2, manager2.Settings.ProcessPriorityRules.Count);
 
         var rule1 = manager2.Settings.ProcessPriorityRules[0];
         Assert.Equal("nextcloud.exe", rule1.ProcessName);
         Assert.Equal(IMEIndicator.Models.PriorityLevel.Idle, rule1.TargetPriority);
-        Assert.Equal(60, rule1.IntervalSeconds);
         Assert.Equal(6, rule1.MaxBackoffExponent);
         Assert.True(rule1.IsEnabled);
 
@@ -281,14 +282,34 @@ public class SettingsManagerTests : IDisposable
         var manager = new SettingsManager(_tempDir);
         manager.Settings.ProcessPriorityRules =
         [
-            new() { ProcessName = "test", IntervalSeconds = 3, MaxBackoffExponent = 15 }
+            new() { ProcessName = "test", MaxBackoffExponent = 15 }
         ];
 
         manager.ValidateAndClampSettings();
 
         var rule = manager.Settings.ProcessPriorityRules[0];
-        Assert.Equal(10, rule.IntervalSeconds); // 最小10
         Assert.Equal(10, rule.MaxBackoffExponent); // 最大10
+    }
+
+    [Fact]
+    public void PollingIntervalSeconds_DefaultIsOne()
+    {
+        var manager = new SettingsManager(_tempDir);
+        manager.Load();
+        Assert.Equal(1, manager.Settings.PollingIntervalSeconds);
+    }
+
+    [Fact]
+    public void PollingIntervalSeconds_Validation_Clamps()
+    {
+        var manager = new SettingsManager(_tempDir);
+        manager.Settings.PollingIntervalSeconds = 0;
+        manager.ValidateAndClampSettings();
+        Assert.Equal(1, manager.Settings.PollingIntervalSeconds);
+
+        manager.Settings.PollingIntervalSeconds = 2000;
+        manager.ValidateAndClampSettings();
+        Assert.Equal(1800, manager.Settings.PollingIntervalSeconds);
     }
 
     [Fact]

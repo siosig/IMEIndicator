@@ -39,12 +39,7 @@ public class ProcessPriorityRule
     public PriorityLevel TargetPriority { get; set; } = PriorityLevel.Normal;
 
     /// <summary>
-    /// 初期監視間隔（秒）。指数バックオフの基準値。最小10秒。
-    /// </summary>
-    public int IntervalSeconds { get; set; } = 60;
-
-    /// <summary>
-    /// バックオフ最大指数。最大間隔 = IntervalSeconds * 2^MaxBackoffExponent
+    /// バックオフ最大指数。最大間隔 = PollingIntervalSeconds * 2^MaxBackoffExponent
     /// </summary>
     public int MaxBackoffExponent { get; set; } = 6;
 
@@ -52,12 +47,6 @@ public class ProcessPriorityRule
     /// ルールの有効/無効
     /// </summary>
     public bool IsEnabled { get; set; } = true;
-
-    /// <summary>
-    /// バリデーション済みの IntervalSeconds を返す（最小10秒）
-    /// </summary>
-    [JsonIgnore]
-    public int ValidatedIntervalSeconds => Math.Max(10, IntervalSeconds);
 
     /// <summary>
     /// バリデーション済みの MaxBackoffExponent を返す（0～10）

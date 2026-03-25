@@ -9,13 +9,13 @@ namespace IMEIndicator.Tests;
 /// </summary>
 public class RuleRuntimeStateTests
 {
-    private static ProcessPriorityRule CreateRule(int interval = 10, int maxExponent = 6)
-        => new() { ProcessName = "test", IntervalSeconds = interval, MaxBackoffExponent = maxExponent };
+    private static ProcessPriorityRule CreateRule(int maxExponent = 6)
+        => new() { ProcessName = "test", MaxBackoffExponent = maxExponent };
 
     [Fact]
     public void Initial_ExponentIsZero()
     {
-        var state = new RuleRuntimeState(CreateRule());
+        var state = new RuleRuntimeState(CreateRule(), pollingIntervalSeconds: 1);
         Assert.Equal(0, state.CurrentExponent);
         Assert.Null(state.LastResult);
     }
@@ -23,80 +23,73 @@ public class RuleRuntimeStateTests
     [Fact]
     public void Initial_IsDueImmediately()
     {
-        var state = new RuleRuntimeState(CreateRule());
+        var state = new RuleRuntimeState(CreateRule(), pollingIntervalSeconds: 1);
         Assert.True(state.IsDue(DateTime.UtcNow));
     }
 
     [Fact]
     public void BackoffIncrease_DoublesInterval()
     {
-        var rule = CreateRule(interval: 10, maxExponent: 6);
-        var state = new RuleRuntimeState(rule);
+        var state = new RuleRuntimeState(CreateRule(maxExponent: 6), pollingIntervalSeconds: 1);
         var now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         state.BackoffIncrease(now);
         Assert.Equal(1, state.CurrentExponent);
-        Assert.Equal(20, state.CurrentIntervalSeconds); // 10 * 2^1
-        Assert.Equal(now.AddSeconds(20), state.NextCheckTime);
+        Assert.Equal(2, state.CurrentIntervalSeconds); // 1 * 2^1
+        Assert.Equal(now.AddSeconds(2), state.NextCheckTime);
         Assert.Equal(MonitorResult.Skipped, state.LastResult);
     }
 
     [Fact]
     public void BackoffIncrease_ExponentialGrowth()
     {
-        var rule = CreateRule(interval: 10, maxExponent: 6);
-        var state = new RuleRuntimeState(rule);
+        var state = new RuleRuntimeState(CreateRule(maxExponent: 6), pollingIntervalSeconds: 1);
         var now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        // exponent: 0→1→2→3
-        state.BackoffIncrease(now);
-        Assert.Equal(20, state.CurrentIntervalSeconds); // 10*2
+        state.BackoffIncrease(now); // exponent=1, interval=2
+        Assert.Equal(2, state.CurrentIntervalSeconds);
 
-        state.BackoffIncrease(now);
-        Assert.Equal(40, state.CurrentIntervalSeconds); // 10*4
+        state.BackoffIncrease(now); // exponent=2, interval=4
+        Assert.Equal(4, state.CurrentIntervalSeconds);
 
-        state.BackoffIncrease(now);
-        Assert.Equal(80, state.CurrentIntervalSeconds); // 10*8
+        state.BackoffIncrease(now); // exponent=3, interval=8
+        Assert.Equal(8, state.CurrentIntervalSeconds);
     }
 
     [Fact]
     public void BackoffIncrease_CapsAtMaxExponent()
     {
-        var rule = CreateRule(interval: 10, maxExponent: 2);
-        var state = new RuleRuntimeState(rule);
+        var state = new RuleRuntimeState(CreateRule(maxExponent: 2), pollingIntervalSeconds: 1);
         var now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        state.BackoffIncrease(now); // exponent=1, interval=20
-        state.BackoffIncrease(now); // exponent=2, interval=40
-        state.BackoffIncrease(now); // exponent=2 (capped), interval=40
+        state.BackoffIncrease(now); // exponent=1, interval=2
+        state.BackoffIncrease(now); // exponent=2, interval=4
+        state.BackoffIncrease(now); // exponent=2 (capped), interval=4
         Assert.Equal(2, state.CurrentExponent);
-        Assert.Equal(40, state.CurrentIntervalSeconds);
+        Assert.Equal(4, state.CurrentIntervalSeconds);
     }
 
     [Fact]
     public void ResetAfterChange_ResetsToInitialInterval()
     {
-        var rule = CreateRule(interval: 10, maxExponent: 6);
-        var state = new RuleRuntimeState(rule);
+        var state = new RuleRuntimeState(CreateRule(maxExponent: 6), pollingIntervalSeconds: 1);
         var now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        // バックオフを進めてからリセット
         state.BackoffIncrease(now);
         state.BackoffIncrease(now);
         Assert.Equal(2, state.CurrentExponent);
 
         state.ResetAfterChange(now);
         Assert.Equal(0, state.CurrentExponent);
-        Assert.Equal(10, state.CurrentIntervalSeconds);
-        Assert.Equal(now.AddSeconds(10), state.NextCheckTime);
+        Assert.Equal(1, state.CurrentIntervalSeconds);
+        Assert.Equal(now.AddSeconds(1), state.NextCheckTime);
         Assert.Equal(MonitorResult.Success, state.LastResult);
     }
 
     [Fact]
     public void ResetAfterSkipOrError_ResetsExponent()
     {
-        var rule = CreateRule(interval: 10, maxExponent: 6);
-        var state = new RuleRuntimeState(rule);
+        var state = new RuleRuntimeState(CreateRule(maxExponent: 6), pollingIntervalSeconds: 1);
         var now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         state.BackoffIncrease(now);
@@ -110,11 +103,10 @@ public class RuleRuntimeStateTests
     [Fact]
     public void Reset_MakesImmediatelyDue()
     {
-        var rule = CreateRule(interval: 10);
-        var state = new RuleRuntimeState(rule);
+        var state = new RuleRuntimeState(CreateRule(), pollingIntervalSeconds: 1);
         var future = DateTime.UtcNow.AddHours(1);
 
-        state.BackoffIncrease(future); // NextCheckTime を遠い未来に設定
+        state.BackoffIncrease(future);
         Assert.False(state.IsDue(DateTime.UtcNow));
 
         state.Reset();
@@ -122,10 +114,23 @@ public class RuleRuntimeStateTests
     }
 
     [Fact]
-    public void CurrentIntervalSeconds_WithZeroExponent_EqualsBaseInterval()
+    public void CurrentIntervalSeconds_UsesPollingInterval()
     {
-        var rule = CreateRule(interval: 30);
-        var state = new RuleRuntimeState(rule);
-        Assert.Equal(30, state.CurrentIntervalSeconds); // 30 * 2^0 = 30
+        var state = new RuleRuntimeState(CreateRule(), pollingIntervalSeconds: 10);
+        Assert.Equal(10, state.CurrentIntervalSeconds); // 10 * 2^0 = 10
+
+        var now = DateTime.UtcNow;
+        state.BackoffIncrease(now);
+        Assert.Equal(20, state.CurrentIntervalSeconds); // 10 * 2^1 = 20
+    }
+
+    [Fact]
+    public void UpdatePollingInterval_ChangesBaseInterval()
+    {
+        var state = new RuleRuntimeState(CreateRule(), pollingIntervalSeconds: 1);
+        Assert.Equal(1, state.CurrentIntervalSeconds);
+
+        state.UpdatePollingInterval(5);
+        Assert.Equal(5, state.CurrentIntervalSeconds); // 5 * 2^0 = 5
     }
 }

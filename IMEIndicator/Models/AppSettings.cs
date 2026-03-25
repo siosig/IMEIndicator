@@ -41,6 +41,11 @@ public class AppSettings
     /// プロセス優先度制御ルール一覧
     /// </summary>
     public List<ProcessPriorityRule> ProcessPriorityRules { get; set; } = [];
+
+    /// <summary>
+    /// プロセス優先度監視のポーリング間隔（秒）。全ルール共通。最小1、最大1800（30分）。
+    /// </summary>
+    public int PollingIntervalSeconds { get; set; } = 1;
 }
 
 /// <summary>

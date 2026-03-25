@@ -124,11 +124,13 @@ public class SettingsManager
         s.MouseCursorIndicator.Opacity = Math.Clamp(s.MouseCursorIndicator.Opacity, 0.1, 1.0);
         s.MouseCursorIndicator.Size = Math.Clamp(s.MouseCursorIndicator.Size, 20, 100);
 
+        // ポーリング間隔のバリデーション（1～1800秒）
+        s.PollingIntervalSeconds = Math.Clamp(s.PollingIntervalSeconds, 1, 1800);
+
         // ProcessPriorityRules のバリデーション
         s.ProcessPriorityRules ??= [];
         foreach (var rule in s.ProcessPriorityRules)
         {
-            rule.IntervalSeconds = Math.Max(10, rule.IntervalSeconds);
             rule.MaxBackoffExponent = Math.Clamp(rule.MaxBackoffExponent, 0, 10);
         }
     }

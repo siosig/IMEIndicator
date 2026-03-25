@@ -5,16 +5,15 @@ namespace IMEIndicator.Services;
 
 /// <summary>
 /// プロセス優先度の定期監視エンジン。
-/// 単一 PeriodicTimer で全ルールを評価し、指数バックオフで間隔を自動調整する。
+/// システム全体で1つのポーリング間隔で全ルールを評価し、指数バックオフで間隔を自動調整する。
 /// </summary>
 public class ProcessPriorityMonitor : IDisposable
 {
-    private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(5);
-
     private readonly IProcessPriorityService _service;
     private readonly Dictionary<ProcessPriorityRule, RuleRuntimeState> _runtimeStates = [];
     private readonly object _lock = new();
 
+    private int _pollingIntervalSeconds = 1;
     private PeriodicTimer? _timer;
     private CancellationTokenSource? _cts;
     private Task? _loopTask;
@@ -34,11 +33,17 @@ public class ProcessPriorityMonitor : IDisposable
     }
 
     /// <summary>
+    /// 現在のポーリング間隔（秒）
+    /// </summary>
+    public int PollingIntervalSeconds => _pollingIntervalSeconds;
+
+    /// <summary>
     /// 監視を開始する
     /// </summary>
-    public void Start(IReadOnlyList<ProcessPriorityRule> rules)
+    public void Start(IReadOnlyList<ProcessPriorityRule> rules, int pollingIntervalSeconds)
     {
         Stop();
+        _pollingIntervalSeconds = Math.Clamp(pollingIntervalSeconds, 1, 1800);
         SyncRuleStates(rules);
         StartLoop();
     }
@@ -53,7 +58,6 @@ public class ProcessPriorityMonitor : IDisposable
         _timer = null;
         _isRunning = false;
 
-        // バックグラウンドタスクの完了を短時間待機
         if (_loopTask is { IsCompleted: false })
         {
             try { _loopTask.Wait(TimeSpan.FromSeconds(2)); }
@@ -73,9 +77,33 @@ public class ProcessPriorityMonitor : IDisposable
     {
         SyncRuleStates(rules);
 
-        // 有効なルールがあり、ループが未開始なら開始
         if (!_isRunning && rules.Any(r => r.IsValid && r.IsEnabled))
         {
+            StartLoop();
+        }
+    }
+
+    /// <summary>
+    /// ポーリング間隔を変更する（タイマー再起動）
+    /// </summary>
+    public void UpdatePollingInterval(int pollingIntervalSeconds)
+    {
+        var newInterval = Math.Clamp(pollingIntervalSeconds, 1, 1800);
+        if (newInterval == _pollingIntervalSeconds) return;
+
+        _pollingIntervalSeconds = newInterval;
+
+        // 全ルールのランタイム状態を更新
+        lock (_lock)
+        {
+            foreach (var state in _runtimeStates.Values)
+                state.UpdatePollingInterval(_pollingIntervalSeconds);
+        }
+
+        // タイマーを再起動して新しい間隔を適用
+        if (_isRunning)
+        {
+            Stop();
             StartLoop();
         }
     }
@@ -108,21 +136,19 @@ public class ProcessPriorityMonitor : IDisposable
             return;
         }
 
-        // プロセス未起動
         if (processes.Count == 0)
         {
             state.ResetAfterSkipOrError(now, MonitorResult.Skipped);
             return;
         }
 
-        // 全インスタンスを評価
         bool anyChanged = false;
         bool anyFailed = false;
 
         foreach (var (pid, currentPriority) in processes)
         {
             if (currentPriority == targetClass)
-                continue; // 既に目標通り
+                continue;
 
             bool success = _service.SetPriority(pid, targetClass);
             if (success)
@@ -132,28 +158,17 @@ public class ProcessPriorityMonitor : IDisposable
         }
 
         if (anyFailed)
-        {
             state.ResetAfterSkipOrError(now, MonitorResult.Failed);
-        }
         else if (anyChanged)
-        {
             state.ResetAfterChange(now);
-        }
         else
-        {
-            // 全インスタンスが既に目標通り → バックオフ
             state.BackoffIncrease(now);
-        }
     }
 
-    /// <summary>
-    /// ルールと RuntimeState の同期（ロック内処理）
-    /// </summary>
     private void SyncRuleStates(IReadOnlyList<ProcessPriorityRule> rules)
     {
         lock (_lock)
         {
-            // HashSet で O(1) ルックアップ
             var ruleSet = new HashSet<ProcessPriorityRule>(rules);
 
             var toRemove = _runtimeStates.Keys
@@ -165,20 +180,17 @@ public class ProcessPriorityMonitor : IDisposable
             foreach (var rule in rules)
             {
                 if (!_runtimeStates.ContainsKey(rule))
-                    _runtimeStates[rule] = new RuleRuntimeState(rule);
+                    _runtimeStates[rule] = new RuleRuntimeState(rule, _pollingIntervalSeconds);
             }
         }
     }
 
-    /// <summary>
-    /// タイマーループを開始する（二重開始を防止）
-    /// </summary>
     private void StartLoop()
     {
         if (_isRunning) return;
 
         _cts = new CancellationTokenSource();
-        _timer = new PeriodicTimer(TickInterval);
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(_pollingIntervalSeconds));
         _isRunning = true;
         _loopTask = RunLoopAsync(_cts.Token);
     }
