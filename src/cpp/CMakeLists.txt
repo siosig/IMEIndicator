@@ -27,6 +27,16 @@ target_sources(IMEIndicator PRIVATE
     services/SettingsManager.cpp
     services/PowerModeBackup.cpp
 
+    # サービス（Phase 3 / US1 描画支援）
+    services/ColorHelper.cpp
+    services/PowerModeService.cpp
+    services/DisplayHelper.cpp
+
+    # サービス（Phase 3 / US1 入力監視）
+    services/MouseTracker.cpp
+    services/KeyboardHook.cpp
+    services/WinEventHook.cpp
+
     # リソース
     resources/app.rc
 )

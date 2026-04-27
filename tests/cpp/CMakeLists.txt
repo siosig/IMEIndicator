@@ -17,6 +17,10 @@ target_sources(IMEIndicatorTests PRIVATE
     unit/PowerModeBackupTests.cpp
     unit/JsonSchemaCompatTests.cpp
 
+    # Phase 3 / US1 ユニットテスト（描画支援）
+    unit/ColorHelperTests.cpp
+    unit/DisplayHelperTests.cpp
+
     # 被テストコード（IMEIndicator 本体と同じソースを直接組み込む。
     # 静的ライブラリにせずに重複ビルドする方針：MSVC の WIN32 アプリと
     # コンソール TEST EXE で /SUBSYSTEM が異なるため、本体ライブラリ化はせず）
@@ -29,6 +33,8 @@ target_sources(IMEIndicatorTests PRIVATE
     ${CMAKE_SOURCE_DIR}/src/cpp/services/Logger.cpp
     ${CMAKE_SOURCE_DIR}/src/cpp/services/SettingsManager.cpp
     ${CMAKE_SOURCE_DIR}/src/cpp/services/PowerModeBackup.cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/services/ColorHelper.cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/services/DisplayHelper.cpp
 )
 
 target_include_directories(IMEIndicatorTests PRIVATE
