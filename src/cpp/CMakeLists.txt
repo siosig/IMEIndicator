@@ -42,6 +42,12 @@ target_sources(IMEIndicator PRIVATE
     services/PixelIMEDetector.cpp
     services/IMEMonitor.cpp
 
+    # ビュー（Phase 3 / US1 描画ウィンドウ）
+    views/MouseCursorIndicatorWindow.cpp
+
+    # ビュー（Phase 3 / US1 トレイアイコン）
+    views/TrayIcon.cpp
+
     # リソース
     resources/app.rc
 )

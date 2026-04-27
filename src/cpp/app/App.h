@@ -1,22 +1,32 @@
 #pragma once
 
 #include "../models/AppSettings.h"
+#include "../models/LanguageInfo.h"
 #include "../services/SettingsManager.h"
 
+#include <atomic>
 #include <filesystem>
 #include <memory>
+#include <thread>
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
 
+namespace imeindicator::services {
+class IMEMonitor;
+}
+namespace imeindicator::views {
+class MouseCursorIndicatorWindow;
+class TrayIcon;
+}
+
 namespace imeindicator::app {
 
-// アプリ全体のライフサイクル統括（旧 App.xaml.cs 相当）。
-// Phase 2 ではコンストラクション・初期化・終了処理だけを定義し、
-// IMEMonitor / MouseCursorIndicatorWindow / TrayIcon / ProcessPriorityMonitor 等の
-// 具体的サービスは Phase 3〜5 で composeServices() に追加される。
+// アプリ全体のライフサイクル統括。
+// IMEMonitor / MouseCursorIndicatorWindow / TrayIcon / PowerModeBackup と
+// /powertoggle IPC を統合する（既存 [App.xaml.cs] 相当）。
 class App {
 public:
     App();
@@ -25,36 +35,53 @@ public:
     App(const App&) = delete;
     App& operator=(const App&) = delete;
 
-    // 初期化: 設定読み込み・ロガー初期化・サービス構築
     bool initialize(HINSTANCE hInstance);
-
-    // 終了処理: サービス停止・PowerModeBackup クリーンアップ・ロガー shutdown
     void shutdown();
+    int  runMessageLoop();
 
-    // メッセージループ。`/powertoggle` の二重起動側からは呼ばれない。
-    int runMessageLoop();
-
-    // メインウィンドウ HWND（メッセージ受信専用、非表示）
     HWND messageHwnd() const noexcept { return messageHwnd_; }
-
-    // 設定マネージャ取得（設定ダイアログから利用）
     services::SettingsManager& settingsManager() noexcept { return settingsManager_; }
-
-    // ローカル AppData ディレクトリ（ログ・状態用）
     std::filesystem::path localAppDataDir() const noexcept { return localAppDataDir_; }
 
+    // /powertoggle 経由で電源モードをトグル + バルーン通知（UI スレッドから呼ぶ）
+    void togglePowerModeAndNotify();
+
+    // 表示切替（トレイメニュー）
+    void setMouseIndicatorVisible(bool visible);
+
 private:
-    // メッセージウィンドウ（非表示）を作成し、トレイ通知などをここで受ける
     bool createMessageWindow(HINSTANCE hInstance);
-
     static LRESULT CALLBACK messageWndProc(HWND, UINT, WPARAM, LPARAM);
+    LRESULT handleMessage(UINT msg, WPARAM wp, LPARAM lp);
 
+    void onIMEStateChanged(const models::LanguageInfo& info);  // ワーカスレッドから呼ばれる → PostMessage でマーシャリング
+    void onCursorPositionChanged(int x, int y);
+    void applyWindowVisibility(const models::LanguageInfo& info);
+    void refreshIndicatorColor();
+
+    void startPowerToggleListener();
+    void stopPowerToggleListener();
+
+    // 内部状態
     HINSTANCE hInstance_{nullptr};
     HWND messageHwnd_{nullptr};
     ATOM messageWndClass_{0};
     std::filesystem::path localAppDataDir_;
 
     services::SettingsManager settingsManager_;
+    std::unique_ptr<services::IMEMonitor> imeMonitor_;
+    std::unique_ptr<views::MouseCursorIndicatorWindow> indicatorWindow_;
+    std::unique_ptr<views::TrayIcon> trayIcon_;
+
+    // 直近の IME 状態（メッセージ経由で UI スレッドへ渡す保管領域）
+    std::atomic<int> latestLanguage_{0};
+    std::atomic<bool> latestImeOn_{false};
+
+    // /powertoggle IPC
+    HANDLE powerToggleEvent_{nullptr};
+    HANDLE powerToggleStopEvent_{nullptr};
+    std::thread powerToggleThread_;
+    std::atomic<bool> powerToggleStop_{false};
 };
 
 } // namespace imeindicator::app

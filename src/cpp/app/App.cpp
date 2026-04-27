@@ -1,8 +1,14 @@
 #include "App.h"
 
 #include "AppConstants.h"
+#include "../services/IMEMonitor.h"
 #include "../services/Logger.h"
 #include "../services/PowerModeBackup.h"
+#include "../services/PowerModeService.h"
+#include "../services/ColorHelper.h"
+#include "../views/MouseCursorIndicatorWindow.h"
+#include "../views/TrayIcon.h"
+#include "../win32/NativeConstants.h"
 #include "../win32/UnicodeUtil.h"
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -20,7 +26,7 @@ namespace {
 
 constexpr wchar_t kMessageWindowClassName[] = L"IMEIndicator_MessageWindow";
 
-std::filesystem::path localAppDataDir()
+std::filesystem::path resolveLocalAppDataDir()
 {
     PWSTR raw = nullptr;
     HRESULT hr = ::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &raw);
@@ -51,12 +57,10 @@ App::~App()
 bool App::initialize(HINSTANCE hInstance)
 {
     hInstance_ = hInstance;
-    localAppDataDir_ = localAppDataDir();
+    localAppDataDir_ = resolveLocalAppDataDir();
 
-    // 設定読み込み（ログ初期化前なのでログ無し）
     settingsManager_.load();
 
-    // ロガー初期化
     auto logsDir = localAppDataDir_ /
                    std::filesystem::path(AppConstants::LogsSubDir);
     services::Logger::init(logsDir, settingsManager_.settings().logLevel);
@@ -67,17 +71,17 @@ bool App::initialize(HINSTANCE hInstance)
     }
 
     // PowerModeBackup の前回異常終了復元（FR-011）
-    auto stateDir = localAppDataDir_ /
-                    std::filesystem::path(AppConstants::StateSubDir);
-    services::PowerModeBackup backup(stateDir);
-    if (auto rec = backup.tryLoad()) {
-        // Phase 2 では PowerModeService が未実装のため、復元は Phase 5 で配線する。
-        // ここではバックアップを残したまま、Phase 5 で起動シーケンスから再評価される。
-        if (auto log = spdlog::get(std::string(AppConstants::LoggerPower))) {
-            log->warn("Found power-mode backup (mode={}, savedAtMs={}); "
-                      "deferring restore to ProcessPriorityMonitor (Phase 5)",
-                      models::powerModeToStableString(rec->previousMode),
-                      rec->savedAtUnixMs);
+    {
+        auto stateDir = localAppDataDir_ /
+                        std::filesystem::path(AppConstants::StateSubDir);
+        services::PowerModeBackup backup(stateDir);
+        if (auto rec = backup.tryLoad()) {
+            services::PowerModeService::setMode(rec->previousMode);
+            backup.deleteFile();
+            if (auto log = spdlog::get(std::string(AppConstants::LoggerPower))) {
+                log->info("Restored power mode from backup: {}",
+                          models::powerModeToStableString(rec->previousMode));
+            }
         }
     }
 
@@ -88,11 +92,72 @@ bool App::initialize(HINSTANCE hInstance)
         return false;
     }
 
+    // ---- インジケーターウィンドウ ----
+    indicatorWindow_ = std::make_unique<views::MouseCursorIndicatorWindow>();
+    if (!indicatorWindow_->initialize(hInstance)) {
+        if (auto log = spdlog::get(std::string(AppConstants::LoggerApp))) {
+            log->error("MouseCursorIndicatorWindow init failed");
+        }
+        return false;
+    }
+    indicatorWindow_->updateSettings(settingsManager_.settings().mouseCursorIndicator);
+    indicatorWindow_->updateText(settingsManager_.settings().imeOnText);
+    refreshIndicatorColor();
+
+    // ---- トレイアイコン ----
+    trayIcon_ = std::make_unique<views::TrayIcon>();
+    if (!trayIcon_->initialize(hInstance)) {
+        if (auto log = spdlog::get(std::string(AppConstants::LoggerApp))) {
+            log->error("TrayIcon init failed");
+        }
+        return false;
+    }
+    trayIcon_->setOpenSettingsCallback([]() {
+        // 設定ダイアログは US2 で実装。ここでは何もしない。
+    });
+    trayIcon_->setExitCallback([]() {
+        ::PostQuitMessage(0);
+    });
+    trayIcon_->setToggleVisibleCallback([this](bool v) {
+        setMouseIndicatorVisible(v);
+    });
+    trayIcon_->setSetPowerModeCallback([this](models::PowerMode mode) {
+        services::PowerModeService::setMode(mode);
+        refreshIndicatorColor();
+    });
+    trayIcon_->setGetCurrentPowerModeCallback([]() {
+        return services::PowerModeService::getCurrentMode();
+    });
+    trayIcon_->setGetIsVisibleCallback([this]() {
+        return settingsManager_.settings().mouseCursorIndicator.isVisible;
+    });
+
+    // ---- IMEMonitor ----
+    imeMonitor_ = std::make_unique<services::IMEMonitor>();
+    imeMonitor_->setPixelVerificationIntervalMs(
+        settingsManager_.settings().pixelVerificationIntervalMs);
+    imeMonitor_->setIMEStateCallback([this](const models::LanguageInfo& info) {
+        onIMEStateChanged(info);
+    });
+    imeMonitor_->setCursorPositionCallback([this](int x, int y) {
+        onCursorPositionChanged(x, y);
+    });
+    imeMonitor_->start();
+
+    startPowerToggleListener();
     return true;
 }
 
 void App::shutdown()
 {
+    stopPowerToggleListener();
+
+    if (imeMonitor_) imeMonitor_->stop();
+    imeMonitor_.reset();
+
+    trayIcon_.reset();
+    indicatorWindow_.reset();
+
     if (messageHwnd_) {
         ::DestroyWindow(messageHwnd_);
         messageHwnd_ = nullptr;
@@ -120,24 +185,43 @@ bool App::createMessageWindow(HINSTANCE hInstance)
     messageWndClass_ = ::RegisterClassExW(&wc);
     if (!messageWndClass_) return false;
 
-    // HWND_MESSAGE で非表示メッセージ専用ウィンドウを作る
     messageHwnd_ = ::CreateWindowExW(
-        0,
-        kMessageWindowClassName,
-        L"",
-        0,
+        0, kMessageWindowClassName, L"", 0,
         0, 0, 0, 0,
-        HWND_MESSAGE,
-        nullptr,
-        hInstance,
-        this);
+        HWND_MESSAGE, nullptr, hInstance, this);
     return messageHwnd_ != nullptr;
 }
 
-LRESULT CALLBACK App::messageWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK App::messageWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-    // Phase 2 では空のメッセージ処理。Phase 3 以降で WM_APP_TRAY_NOTIFY 等を処理する。
-    return ::DefWindowProcW(hwnd, msg, wParam, lParam);
+    if (msg == WM_NCCREATE) {
+        auto* cs = reinterpret_cast<CREATESTRUCTW*>(lp);
+        ::SetWindowLongPtrW(hwnd, GWLP_USERDATA,
+                            reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
+        return ::DefWindowProcW(hwnd, msg, wp, lp);
+    }
+    auto* self = reinterpret_cast<App*>(::GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+    if (self) return self->handleMessage(msg, wp, lp);
+    return ::DefWindowProcW(hwnd, msg, wp, lp);
+}
+
+LRESULT App::handleMessage(UINT msg, WPARAM /*wp*/, LPARAM /*lp*/)
+{
+    using namespace imeindicator::win32;
+
+    if (msg == WM_APP_IME_STATE_CHANGED) {
+        models::LanguageInfo info{
+            static_cast<models::LanguageType>(latestLanguage_.load()),
+            latestImeOn_.load()
+        };
+        applyWindowVisibility(info);
+        return 0;
+    }
+    if (msg == WM_APP_POWER_TOGGLE) {
+        togglePowerModeAndNotify();
+        return 0;
+    }
+    return ::DefWindowProcW(messageHwnd_, msg, 0, 0);
 }
 
 int App::runMessageLoop()
@@ -148,6 +232,109 @@ int App::runMessageLoop()
         ::DispatchMessageW(&msg);
     }
     return static_cast<int>(msg.wParam);
+}
+
+void App::onIMEStateChanged(const models::LanguageInfo& info)
+{
+    // ワーカスレッドからの呼び出しのため、メインメッセージスレッドへマーシャリング。
+    latestLanguage_.store(static_cast<int>(info.language));
+    latestImeOn_.store(info.isImeOn);
+    if (messageHwnd_) {
+        ::PostMessageW(messageHwnd_,
+                       imeindicator::win32::WM_APP_IME_STATE_CHANGED, 0, 0);
+    }
+}
+
+void App::onCursorPositionChanged(int x, int y)
+{
+    // MouseTracker は SetTimer ベースで UI スレッドから呼ばれるため、直接更新可能。
+    if (indicatorWindow_) indicatorWindow_->updatePosition(x, y);
+}
+
+void App::applyWindowVisibility(const models::LanguageInfo& info)
+{
+    if (!indicatorWindow_) return;
+    const auto& cfg = settingsManager_.settings().mouseCursorIndicator;
+    if (!cfg.isVisible) {
+        indicatorWindow_->hide();
+        return;
+    }
+    const bool shouldShow = (info.language == models::LanguageType::Japanese)
+                          && info.isImeOn;
+    if (shouldShow) indicatorWindow_->show();
+    else            indicatorWindow_->hide();
+}
+
+void App::refreshIndicatorColor()
+{
+    if (!indicatorWindow_) return;
+    const auto mode = services::PowerModeService::getCurrentMode();
+    const auto hex = services::PowerModeService::getIndicatorColorHex(mode);
+    indicatorWindow_->updateColor(services::ColorHelper::parseColor(hex));
+}
+
+void App::setMouseIndicatorVisible(bool visible)
+{
+    auto s = settingsManager_.settings();
+    s.mouseCursorIndicator.isVisible = visible;
+    settingsManager_.setSettings(std::move(s));
+    settingsManager_.save();
+
+    if (visible) {
+        if (imeMonitor_) applyWindowVisibility(imeMonitor_->currentState());
+        else if (indicatorWindow_) indicatorWindow_->show();
+    } else if (indicatorWindow_) {
+        indicatorWindow_->hide();
+    }
+}
+
+void App::togglePowerModeAndNotify()
+{
+    const auto next = services::PowerModeService::toggleMode();
+    refreshIndicatorColor();
+    if (trayIcon_) {
+        std::wstring body = L"電源モード: ";
+        body += services::PowerModeService::getDisplayName(next);
+        trayIcon_->showBalloon(L"IME Indicator", body);
+    }
+}
+
+void App::startPowerToggleListener()
+{
+    powerToggleStop_.store(false);
+    powerToggleStopEvent_ = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    powerToggleEvent_ = ::CreateEventW(
+        nullptr, FALSE, FALSE,
+        std::wstring(AppConstants::PowerToggleEventName).c_str());
+    if (!powerToggleEvent_ || !powerToggleStopEvent_) return;
+
+    powerToggleThread_ = std::thread([this]() {
+        HANDLE handles[2] = { powerToggleEvent_, powerToggleStopEvent_ };
+        for (;;) {
+            DWORD rc = ::WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+            if (rc != WAIT_OBJECT_0) break;
+            if (powerToggleStop_.load()) break;
+            if (messageHwnd_) {
+                ::PostMessageW(messageHwnd_,
+                               imeindicator::win32::WM_APP_POWER_TOGGLE, 0, 0);
+            }
+        }
+    });
+}
+
+void App::stopPowerToggleListener()
+{
+    powerToggleStop_.store(true);
+    if (powerToggleStopEvent_) ::SetEvent(powerToggleStopEvent_);
+    if (powerToggleThread_.joinable()) powerToggleThread_.join();
+    if (powerToggleEvent_) {
+        ::CloseHandle(powerToggleEvent_);
+        powerToggleEvent_ = nullptr;
+    }
+    if (powerToggleStopEvent_) {
+        ::CloseHandle(powerToggleStopEvent_);
+        powerToggleStopEvent_ = nullptr;
+    }
 }
 
 } // namespace imeindicator::app
