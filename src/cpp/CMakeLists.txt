@@ -37,6 +37,11 @@ target_sources(IMEIndicator PRIVATE
     services/KeyboardHook.cpp
     services/WinEventHook.cpp
 
+    # サービス（Phase 3 / US1 IME 検出）
+    services/IMEDetector.cpp
+    services/PixelIMEDetector.cpp
+    services/IMEMonitor.cpp
+
     # リソース
     resources/app.rc
 )
