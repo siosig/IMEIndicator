@@ -124,6 +124,15 @@ bool App::initialize(HINSTANCE hInstance)
     trayIcon_->setSetPowerModeCallback([this](models::PowerMode mode) {
         services::PowerModeService::setMode(mode);
         refreshIndicatorColor();
+        // tray-ui-contract.md は `/powertoggle 受信時のみ` のバルーン通知を規定するが、
+        // メニュー経由で切り替えた際の視覚フィードバックが他に無いため
+        // （IME OFF 中はインジケーター自体が非表示でカラー変化が見えない）
+        // ユーザビリティを優先してメニュー経由でも通知を出す。
+        if (trayIcon_) {
+            std::wstring body = L"電源モード: ";
+            body += services::PowerModeService::getDisplayName(mode);
+            trayIcon_->showBalloon(L"IME Indicator", body);
+        }
     });
     trayIcon_->setGetCurrentPowerModeCallback([]() {
         return services::PowerModeService::getCurrentMode();
@@ -236,6 +245,10 @@ int App::runMessageLoop()
 
 void App::onIMEStateChanged(const models::LanguageInfo& info)
 {
+    if (auto log = spdlog::get(std::string(AppConstants::LoggerApp))) {
+        log->debug("App: onIMEStateChanged lang={} ime={}",
+                   static_cast<int>(info.language), info.isImeOn);
+    }
     // ワーカスレッドからの呼び出しのため、メインメッセージスレッドへマーシャリング。
     latestLanguage_.store(static_cast<int>(info.language));
     latestImeOn_.store(info.isImeOn);
@@ -255,6 +268,10 @@ void App::applyWindowVisibility(const models::LanguageInfo& info)
 {
     if (!indicatorWindow_) return;
     const auto& cfg = settingsManager_.settings().mouseCursorIndicator;
+    if (auto log = spdlog::get(std::string(AppConstants::LoggerApp))) {
+        log->debug("App: applyWindowVisibility lang={} ime={} cfgVisible={}",
+                   static_cast<int>(info.language), info.isImeOn, cfg.isVisible);
+    }
     if (!cfg.isVisible) {
         indicatorWindow_->hide();
         return;

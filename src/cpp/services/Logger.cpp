@@ -106,6 +106,9 @@ void Logger::init(const std::filesystem::path& logsDirectory,
             spdlog::async_overflow_policy::overrun_oldest);
         logger->set_pattern(kLogPattern);
         logger->set_level(level);
+        // warn 以上は即時 flush して、クラッシュ・強制終了でもエラーログを失わない。
+        // info/debug/trace は flush_every(3s) でまとめて書き出す。
+        logger->flush_on(spdlog::level::warn);
         spdlog::register_logger(logger);
     }
 

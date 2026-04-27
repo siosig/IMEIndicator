@@ -55,6 +55,9 @@ bool MouseTracker::start(unsigned intervalMs)
         return false;
     }
     ::GetCursorPos(&lastPos_);
+    // 初回コールバックを即時発火する。差分検出ベースのため、これがないと
+    // ユーザーがマウスを動かすまでウィンドウが (0,0) に固定されてしまう。
+    if (callback_) callback_(lastPos_.x, lastPos_.y);
     return true;
 }
 

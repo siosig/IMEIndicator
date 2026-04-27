@@ -1,5 +1,8 @@
 #include "MouseCursorIndicatorWindow.h"
 
+#include "../app/AppConstants.h"
+#include "../win32/UnicodeUtil.h"
+
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -12,8 +15,15 @@
 #include <dxgi1_2.h>
 #include <shellscalingapi.h>
 
+#include <spdlog/spdlog.h>
+
 #include <algorithm>
 #include <cmath>
+
+#define IND_LOG_DEBUG(...) \
+    do { if (auto _log = spdlog::get(std::string(imeindicator::app::AppConstants::LoggerApp))) _log->debug(__VA_ARGS__); } while(0)
+#define IND_LOG_ERROR(...) \
+    do { if (auto _log = spdlog::get(std::string(imeindicator::app::AppConstants::LoggerApp))) _log->error(__VA_ARGS__); } while(0)
 
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "d3d11.lib")
@@ -64,6 +74,7 @@ MouseCursorIndicatorWindow::~MouseCursorIndicatorWindow()
 bool MouseCursorIndicatorWindow::initialize(HINSTANCE hInstance)
 {
     hInstance_ = hInstance;
+    IND_LOG_DEBUG("MCI: initialize start");
 
     // ---- ウィンドウクラス登録 ----
     WNDCLASSEXW wc{};
@@ -98,11 +109,24 @@ bool MouseCursorIndicatorWindow::initialize(HINSTANCE hInstance)
     if (!hwnd_) return false;
 
     currentDpi_ = getDpiForHwnd(hwnd_);
+    IND_LOG_DEBUG("MCI: hwnd={}, dpi={}", reinterpret_cast<uintptr_t>(hwnd_), currentDpi_);
 
-    if (!createDeviceIndependentResources()) return false;
-    if (!createDeviceResources()) return false;
-    if (!ensureSwapChainSize(physicalSize())) return false;
-
+    if (!createDeviceIndependentResources()) {
+        IND_LOG_ERROR("MCI: createDeviceIndependentResources FAILED");
+        return false;
+    }
+    IND_LOG_DEBUG("MCI: device-independent resources OK");
+    if (!createDeviceResources()) {
+        IND_LOG_ERROR("MCI: createDeviceResources FAILED");
+        return false;
+    }
+    IND_LOG_DEBUG("MCI: device resources OK");
+    int ps = physicalSize();
+    if (!ensureSwapChainSize(ps)) {
+        IND_LOG_ERROR("MCI: ensureSwapChainSize({}) FAILED", ps);
+        return false;
+    }
+    IND_LOG_DEBUG("MCI: swapchain ready (size={})", ps);
     return true;
 }
 
@@ -140,6 +164,7 @@ bool MouseCursorIndicatorWindow::createDeviceIndependentResources()
 bool MouseCursorIndicatorWindow::createDeviceResources()
 {
     if (deviceResourcesValid_) return true;
+    IND_LOG_DEBUG("MCI: createDeviceResources begin");
 
     UINT createFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #ifdef _DEBUG
@@ -174,33 +199,37 @@ bool MouseCursorIndicatorWindow::createDeviceResources()
             nullptr,
             d3dContext_.GetAddressOf());
     }
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: D3D11CreateDevice hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
+    IND_LOG_DEBUG("MCI: D3D11CreateDevice OK");
 
     hr = d3dDevice_.As(&dxgiDevice_);
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: As IDXGIDevice hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
 
     Microsoft::WRL::ComPtr<IDXGIAdapter> adapter;
     hr = dxgiDevice_->GetAdapter(adapter.GetAddressOf());
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: GetAdapter hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
     hr = adapter->GetParent(IID_PPV_ARGS(dxgiFactory_.GetAddressOf()));
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: GetParent IDXGIFactory2 hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
+    IND_LOG_DEBUG("MCI: DXGI factory OK");
 
     hr = d2dFactory_->CreateDevice(dxgiDevice_.Get(), d2dDevice_.GetAddressOf());
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: D2D CreateDevice hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
     hr = d2dDevice_->CreateDeviceContext(
         D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
         d2dContext_.GetAddressOf());
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: D2D CreateDeviceContext hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
+    IND_LOG_DEBUG("MCI: D2D device context OK");
 
     hr = ::DCompositionCreateDevice(
         dxgiDevice_.Get(),
         IID_PPV_ARGS(dcompDevice_.GetAddressOf()));
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: DCompositionCreateDevice hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
     hr = dcompDevice_->CreateTargetForHwnd(hwnd_, TRUE,
                                             dcompTarget_.GetAddressOf());
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: CreateTargetForHwnd hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
     hr = dcompDevice_->CreateVisual(dcompVisual_.GetAddressOf());
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: CreateVisual hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
+    IND_LOG_DEBUG("MCI: DComposition OK");
 
     deviceResourcesValid_ = true;
     return true;
@@ -227,6 +256,9 @@ bool MouseCursorIndicatorWindow::ensureSwapChainSize(int physical)
 {
     if (physical < 1) physical = 1;
     if (currentSwapChainSize_ == physical && swapChain_ && targetBitmap_) return true;
+    IND_LOG_DEBUG("MCI: ensureSwapChainSize requested={} current={} hasSwap={} hasBitmap={}",
+                  physical, currentSwapChainSize_,
+                  swapChain_ ? 1 : 0, targetBitmap_ ? 1 : 0);
 
     // 既存のリソースを解放（ターゲットビットマップは作り直し）
     targetBitmap_.Reset();
@@ -245,29 +277,36 @@ bool MouseCursorIndicatorWindow::ensureSwapChainSize(int physical)
     if (!swapChain_) {
         HRESULT hr = dxgiFactory_->CreateSwapChainForComposition(
             d3dDevice_.Get(), &desc, nullptr, swapChain_.GetAddressOf());
-        if (FAILED(hr)) return false;
-        dcompVisual_->SetContent(swapChain_.Get());
-        dcompTarget_->SetRoot(dcompVisual_.Get());
+        if (FAILED(hr)) { IND_LOG_ERROR("MCI: CreateSwapChainForComposition hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
+        IND_LOG_DEBUG("MCI: swapchain created");
     } else {
         HRESULT hr = swapChain_->ResizeBuffers(
             desc.BufferCount, desc.Width, desc.Height, desc.Format, 0);
-        if (FAILED(hr)) return false;
+        if (FAILED(hr)) { IND_LOG_ERROR("MCI: ResizeBuffers hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
+        IND_LOG_DEBUG("MCI: swapchain resized to {}x{}", desc.Width, desc.Height);
     }
 
+    HRESULT hr = dcompVisual_->SetContent(swapChain_.Get());
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: Visual.SetContent hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
+    hr = dcompTarget_->SetRoot(dcompVisual_.Get());
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: Target.SetRoot hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
+
     Microsoft::WRL::ComPtr<IDXGISurface2> surface;
-    HRESULT hr = swapChain_->GetBuffer(0, IID_PPV_ARGS(surface.GetAddressOf()));
-    if (FAILED(hr)) return false;
+    hr = swapChain_->GetBuffer(0, IID_PPV_ARGS(surface.GetAddressOf()));
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: GetBuffer hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
 
     D2D1_BITMAP_PROPERTIES1 props = D2D1::BitmapProperties1(
         D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
         D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED),
-        96.0f, 96.0f);  // Direct2D は物理ピクセルで描画するため DPI=96 固定
+        96.0f, 96.0f);
     hr = d2dContext_->CreateBitmapFromDxgiSurface(surface.Get(), &props, targetBitmap_.GetAddressOf());
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: CreateBitmapFromDxgiSurface hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
     d2dContext_->SetTarget(targetBitmap_.Get());
 
     currentSwapChainSize_ = physical;
-    dcompDevice_->Commit();
+    hr = dcompDevice_->Commit();
+    if (FAILED(hr)) { IND_LOG_ERROR("MCI: dcomp Commit hr=0x{:08x}", static_cast<uint32_t>(hr)); return false; }
+    IND_LOG_DEBUG("MCI: ensureSwapChainSize OK size={}", physical);
     return true;
 }
 
@@ -318,6 +357,12 @@ void MouseCursorIndicatorWindow::updatePosition(int x, int y)
 void MouseCursorIndicatorWindow::show() noexcept
 {
     if (hwnd_) {
+        RECT rc{};
+        ::GetWindowRect(hwnd_, &rc);
+        BOOL wasVisible = ::IsWindowVisible(hwnd_);
+        IND_LOG_DEBUG("MCI: show() pos=({},{}) size={}x{} prevVisible={}",
+                      rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
+                      wasVisible ? 1 : 0);
         ::ShowWindow(hwnd_, SW_SHOWNOACTIVATE);
         render();
     }
@@ -325,7 +370,10 @@ void MouseCursorIndicatorWindow::show() noexcept
 
 void MouseCursorIndicatorWindow::hide() noexcept
 {
-    if (hwnd_) ::ShowWindow(hwnd_, SW_HIDE);
+    if (hwnd_) {
+        IND_LOG_DEBUG("MCI: hide()");
+        ::ShowWindow(hwnd_, SW_HIDE);
+    }
 }
 
 void MouseCursorIndicatorWindow::onDpiChanged(UINT newDpi)
@@ -487,17 +535,22 @@ void MouseCursorIndicatorWindow::render()
 
     HRESULT hr = d2dContext_->EndDraw();
     if (hr == D2DERR_RECREATE_TARGET) {
-        // デバイスロスト時はリソースを作り直す。
+        IND_LOG_ERROR("MCI: EndDraw D2DERR_RECREATE_TARGET, recreating");
         releaseDeviceResources();
         if (createDeviceResources()) {
             ensureSwapChainSize(physicalSize());
         }
         return;
     }
+    if (FAILED(hr)) {
+        IND_LOG_ERROR("MCI: EndDraw hr=0x{:08x}", static_cast<uint32_t>(hr));
+    }
 
     DXGI_PRESENT_PARAMETERS pp{};
-    swapChain_->Present1(1, 0, &pp);
-    dcompDevice_->Commit();
+    HRESULT phr = swapChain_->Present1(1, 0, &pp);
+    if (FAILED(phr)) IND_LOG_ERROR("MCI: Present1 hr=0x{:08x}", static_cast<uint32_t>(phr));
+    HRESULT chr = dcompDevice_->Commit();
+    if (FAILED(chr)) IND_LOG_ERROR("MCI: render Commit hr=0x{:08x}", static_cast<uint32_t>(chr));
 }
 
 } // namespace imeindicator::views

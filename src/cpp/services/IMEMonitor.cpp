@@ -6,8 +6,15 @@
 #include "PixelIMEDetector.h"
 #include "WinEventHook.h"
 
+#include "../app/AppConstants.h"
+
+#include <spdlog/spdlog.h>
+
 #include <chrono>
 #include <memory>
+
+#define IME_LOG(...) \
+    do { if (auto _log = spdlog::get(std::string(imeindicator::app::AppConstants::LoggerIme))) _log->debug(__VA_ARGS__); } while(0)
 
 namespace imeindicator::services {
 
@@ -65,19 +72,22 @@ bool IMEMonitor::start()
     auto& kbd = KeyboardHook::instance();
     kbd.setImeKeyCallback([this](int vk) { onIMEKeyPressed(vk); });
     kbd.setLanguageSwitchCallback([this]() { onLanguageSwitchDetected(); });
-    kbd.start();
+    bool kbdOk = kbd.start();
+    IME_LOG("IMEMonitor: KeyboardHook.start={}", kbdOk);
 
     // WinEventHook（シングルトン）でフォアグラウンド変更を購読
     auto& we = WinEventHook::instance();
     we.setFocusChangedCallback([this]() { onTriggerFired(); });
-    we.start();
+    bool weOk = we.start();
+    IME_LOG("IMEMonitor: WinEventHook.start={}", weOk);
 
     // MouseTracker は所有
     mouseTracker_ = std::make_unique<MouseTracker>();
     mouseTracker_->setCallback([this](int x, int y) {
         if (cursorPositionCallback_) cursorPositionCallback_(x, y);
     });
-    mouseTracker_->start();
+    bool mtOk = mouseTracker_->start();
+    IME_LOG("IMEMonitor: MouseTracker.start={}", mtOk);
 
     // 初回チェック
     onTriggerFired();
@@ -145,7 +155,10 @@ void IMEMonitor::checkIMEState(bool forceUpdate)
     } releaser{isChecking_};
 
     HWND hwndForeground = ::GetForegroundWindow();
-    if (!hwndForeground) return;
+    if (!hwndForeground) {
+        IME_LOG("IMEMonitor: checkIMEState skipped (no foreground window)");
+        return;
+    }
 
     auto detection = IMEDetector::getCurrentIMEStateEx(trackedLanguageForTerminal_);
     auto state = detection.state;
@@ -199,6 +212,7 @@ void IMEMonitor::onIMEKeyPressed(int vkCode)
     constexpr int kVkKanji = 0x19;
     constexpr int kVkOemAuto = 0xF3;
     constexpr int kVkOemEnlw = 0xF4;
+    IME_LOG("IMEMonitor: onIMEKeyPressed vk=0x{:02x}", vkCode);
 
     bool stateChanged = false;
     models::LanguageInfo optimisticState{};

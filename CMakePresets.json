@@ -7,7 +7,7 @@
       "displayName": "Windows x64 Release (VS18, static CRT)",
       "generator": "Visual Studio 18 2026",
       "architecture": { "value": "x64", "strategy": "set" },
-      "binaryDir": "C:/build/imeindicator/release",
+      "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/external/vcpkg/scripts/buildsystems/vcpkg.cmake",
@@ -20,7 +20,7 @@
       "name": "windows-x64-debug",
       "displayName": "Windows x64 Debug (VS18, static CRT)",
       "inherits": "windows-x64-release",
-      "binaryDir": "C:/build/imeindicator/debug",
+      "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
