@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "mouseCursorIndicator": {
+    "isVisible": true,
+    "size": 34.0,
+    "opacity": 0.9,
+    "offsetX": 15.0,
+    "offsetY": 15.0
+  },
+  "imeOnText": "あ",
+  "imeOffText": "A",
+  "isFirstLaunch": false,
+  "processPriorityRules": [
+    {
+      "processName": "code.exe",
+      "targetPriority": "AboveNormal",
+      "maxBackoffExponent": 4,
+      "isEnabled": true,
+      "useECoreOnly": false
+    },
+    {
+      "processName": "msedge",
+      "targetPriority": "BelowNormal",
+      "maxBackoffExponent": 6,
+      "isEnabled": true,
+      "useECoreOnly": false
+    }
+  ],
+  "pollingIntervalSeconds": 1,
+  "logLevel": "warn",
+  "pixelVerificationIntervalMs": 2000
+}

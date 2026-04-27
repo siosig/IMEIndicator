@@ -60,3 +60,18 @@ release/
 # Release zip
 dist/*.zip
 /ref/
+
+# C++ ポーティング (009-port-to-cpp)
+build/
+dist/
+external/vcpkg/buildtrees/
+external/vcpkg/downloads/
+external/vcpkg/installed/
+external/vcpkg/packages/
+*.obj
+*.lib
+*.dll
+*.ilk
+*.exp
+.cache/
+CMakeUserPresets.json
