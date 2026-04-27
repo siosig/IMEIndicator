@@ -136,6 +136,10 @@ bool App::initialize(HINSTANCE hInstance)
                 // IME 状態に応じた表示再評価
                 if (imeMonitor_) applyWindowVisibility(imeMonitor_->currentState());
             });
+        settingsDialog_->setAccessDeniedCountCallback(
+            [this]() -> int {
+                return priorityService_ ? priorityService_->accessDeniedCount() : 0;
+            });
         settingsDialog_->show(hInstance_);
         settingsDialog_.reset();
     });
