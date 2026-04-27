@@ -17,6 +17,7 @@ constexpr UINT WM_APP_IME_STATE_CHANGED    = WM_APP + 1;
 constexpr UINT WM_APP_CURSOR_POSITION      = WM_APP + 2;
 constexpr UINT WM_APP_TRAY_NOTIFY          = WM_APP + 3;
 constexpr UINT WM_APP_PRIORITY_RULE_RESULT = WM_APP + 4;
+constexpr UINT WM_APP_OPEN_SETTINGS        = WM_APP + 5;
 
 // ---- 電源モード（Power Overlay Scheme）GUID ----
 // 既存 C# 版 PowerModeService.cs の値と一致させる。

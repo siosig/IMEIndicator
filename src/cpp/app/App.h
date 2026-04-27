@@ -16,10 +16,13 @@
 
 namespace imeindicator::services {
 class IMEMonitor;
+class ProcessPriorityService;
+class ProcessPriorityMonitor;
 }
 namespace imeindicator::views {
 class MouseCursorIndicatorWindow;
 class TrayIcon;
+class SettingsDialog;
 }
 
 namespace imeindicator::app {
@@ -62,6 +65,11 @@ private:
     void startPowerToggleListener();
     void stopPowerToggleListener();
 
+    // FR-011: 電源モードを設定する直前にバックアップを書き出す。
+    void backupCurrentPowerMode();
+    // 正常終了時にバックアップファイルを削除（次回起動で復元発火を防ぐ）。
+    void clearPowerModeBackup();
+
     // 内部状態
     HINSTANCE hInstance_{nullptr};
     HWND messageHwnd_{nullptr};
@@ -72,6 +80,9 @@ private:
     std::unique_ptr<services::IMEMonitor> imeMonitor_;
     std::unique_ptr<views::MouseCursorIndicatorWindow> indicatorWindow_;
     std::unique_ptr<views::TrayIcon> trayIcon_;
+    std::shared_ptr<services::ProcessPriorityService> priorityService_;
+    std::unique_ptr<services::ProcessPriorityMonitor> priorityMonitor_;
+    std::unique_ptr<views::SettingsDialog> settingsDialog_;
 
     // 直近の IME 状態（メッセージ経由で UI スレッドへ渡す保管領域）
     std::atomic<int> latestLanguage_{0};

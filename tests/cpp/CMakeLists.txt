@@ -21,6 +21,11 @@ target_sources(IMEIndicatorTests PRIVATE
     unit/ColorHelperTests.cpp
     unit/DisplayHelperTests.cpp
 
+    # Phase 5 / US3 ユニットテスト（プロセス優先度・電源モード）
+    unit/ECoreCpuInfoTests.cpp
+    unit/RuleRuntimeStateTests.cpp
+    unit/ProcessPriorityMonitorTests.cpp
+
     # 被テストコード（IMEIndicator 本体と同じソースを直接組み込む。
     # 静的ライブラリにせずに重複ビルドする方針：MSVC の WIN32 アプリと
     # コンソール TEST EXE で /SUBSYSTEM が異なるため、本体ライブラリ化はせず）
@@ -35,6 +40,10 @@ target_sources(IMEIndicatorTests PRIVATE
     ${CMAKE_SOURCE_DIR}/src/cpp/services/PowerModeBackup.cpp
     ${CMAKE_SOURCE_DIR}/src/cpp/services/ColorHelper.cpp
     ${CMAKE_SOURCE_DIR}/src/cpp/services/DisplayHelper.cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/services/ECoreCpuInfo.cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/services/ProcessPriorityService.cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/services/RuleRuntimeState.cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/services/ProcessPriorityMonitor.cpp
 )
 
 target_include_directories(IMEIndicatorTests PRIVATE

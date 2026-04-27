@@ -5,9 +5,12 @@
 #include "../services/Logger.h"
 #include "../services/PowerModeBackup.h"
 #include "../services/PowerModeService.h"
+#include "../services/ProcessPriorityService.h"
+#include "../services/ProcessPriorityMonitor.h"
 #include "../services/ColorHelper.h"
 #include "../views/MouseCursorIndicatorWindow.h"
 #include "../views/TrayIcon.h"
+#include "../views/SettingsDialog.h"
 #include "../win32/NativeConstants.h"
 #include "../win32/UnicodeUtil.h"
 
@@ -112,8 +115,29 @@ bool App::initialize(HINSTANCE hInstance)
         }
         return false;
     }
-    trayIcon_->setOpenSettingsCallback([]() {
-        // 設定ダイアログは US2 で実装。ここでは何もしない。
+    trayIcon_->setOpenSettingsCallback([this]() {
+        if (settingsDialog_ && settingsDialog_->isOpen()) return;
+        settingsDialog_ = std::make_unique<views::SettingsDialog>(settingsManager_);
+        settingsDialog_->setAppliedCallback(
+            [this](const models::AppSettings& s) {
+                if (indicatorWindow_) {
+                    indicatorWindow_->updateSettings(s.mouseCursorIndicator);
+                    indicatorWindow_->updateText(s.imeOnText);
+                }
+                if (imeMonitor_) {
+                    imeMonitor_->setPixelVerificationIntervalMs(
+                        s.pixelVerificationIntervalMs);
+                }
+                services::Logger::setGlobalLevel(s.logLevel);
+                if (priorityMonitor_) {
+                    priorityMonitor_->updateRules(s.processPriorityRules);
+                    priorityMonitor_->updatePollingInterval(s.pollingIntervalSeconds);
+                }
+                // IME 状態に応じた表示再評価
+                if (imeMonitor_) applyWindowVisibility(imeMonitor_->currentState());
+            });
+        settingsDialog_->show(hInstance_);
+        settingsDialog_.reset();
     });
     trayIcon_->setExitCallback([]() {
         ::PostQuitMessage(0);
@@ -122,6 +146,7 @@ bool App::initialize(HINSTANCE hInstance)
         setMouseIndicatorVisible(v);
     });
     trayIcon_->setSetPowerModeCallback([this](models::PowerMode mode) {
+        backupCurrentPowerMode();
         services::PowerModeService::setMode(mode);
         refreshIndicatorColor();
         // tray-ui-contract.md は `/powertoggle 受信時のみ` のバルーン通知を規定するが、
@@ -153,7 +178,29 @@ bool App::initialize(HINSTANCE hInstance)
     });
     imeMonitor_->start();
 
+    // ---- ProcessPriorityMonitor (Phase 5 / US3) ----
+    priorityService_ = std::make_shared<services::ProcessPriorityService>();
+    priorityMonitor_ = std::make_unique<services::ProcessPriorityMonitor>(priorityService_);
+    {
+        const auto& s = settingsManager_.settings();
+        if (!s.processPriorityRules.empty()) {
+            priorityMonitor_->start(s.processPriorityRules, s.pollingIntervalSeconds);
+        }
+    }
+
     startPowerToggleListener();
+
+    // ---- 初回起動時に設定画面を自動表示 (Phase 4 / US2) ----
+    if (settingsManager_.settings().isFirstLaunch) {
+        auto s = settingsManager_.settings();
+        s.isFirstLaunch = false;
+        settingsManager_.setSettings(std::move(s));
+        settingsManager_.save();
+        // トレイアイコンの「設定」を開くのと同じ経路を起動完了後に発火させる。
+        // 直接呼び出すと initialize 内で別メッセージループが回り composing が複雑化するため
+        // メッセージ経由に固定する。
+        ::PostMessageW(messageHwnd_, imeindicator::win32::WM_APP_OPEN_SETTINGS, 0, 0);
+    }
     return true;
 }
 
@@ -161,11 +208,19 @@ void App::shutdown()
 {
     stopPowerToggleListener();
 
+    if (priorityMonitor_) priorityMonitor_->stop();
+    priorityMonitor_.reset();
+    priorityService_.reset();
+
     if (imeMonitor_) imeMonitor_->stop();
     imeMonitor_.reset();
 
+    settingsDialog_.reset();
     trayIcon_.reset();
     indicatorWindow_.reset();
+
+    // 正常終了の証としてバックアップを削除（次回起動で復元発火を防ぐ）
+    if (!localAppDataDir_.empty()) clearPowerModeBackup();
 
     if (messageHwnd_) {
         ::DestroyWindow(messageHwnd_);
@@ -228,6 +283,35 @@ LRESULT App::handleMessage(UINT msg, WPARAM /*wp*/, LPARAM /*lp*/)
     }
     if (msg == WM_APP_POWER_TOGGLE) {
         togglePowerModeAndNotify();
+        return 0;
+    }
+    if (msg == WM_APP_OPEN_SETTINGS) {
+        if (trayIcon_) {
+            // トレイの open settings コールバックを再利用（重複防止つき）
+            // 直接 settingsDialog を作るのではなく、トレイ経由のロジックを再利用。
+            // 簡略化のため Tray の callback を直接呼ぶ。
+            if (settingsDialog_ && settingsDialog_->isOpen()) return 0;
+            settingsDialog_ = std::make_unique<views::SettingsDialog>(settingsManager_);
+            settingsDialog_->setAppliedCallback(
+                [this](const models::AppSettings& s) {
+                    if (indicatorWindow_) {
+                        indicatorWindow_->updateSettings(s.mouseCursorIndicator);
+                        indicatorWindow_->updateText(s.imeOnText);
+                    }
+                    if (imeMonitor_) {
+                        imeMonitor_->setPixelVerificationIntervalMs(
+                            s.pixelVerificationIntervalMs);
+                    }
+                    services::Logger::setGlobalLevel(s.logLevel);
+                    if (priorityMonitor_) {
+                        priorityMonitor_->updateRules(s.processPriorityRules);
+                        priorityMonitor_->updatePollingInterval(s.pollingIntervalSeconds);
+                    }
+                    if (imeMonitor_) applyWindowVisibility(imeMonitor_->currentState());
+                });
+            settingsDialog_->show(hInstance_);
+            settingsDialog_.reset();
+        }
         return 0;
     }
     return ::DefWindowProcW(messageHwnd_, msg, 0, 0);
@@ -307,6 +391,7 @@ void App::setMouseIndicatorVisible(bool visible)
 
 void App::togglePowerModeAndNotify()
 {
+    backupCurrentPowerMode();
     const auto next = services::PowerModeService::toggleMode();
     refreshIndicatorColor();
     if (trayIcon_) {
@@ -314,6 +399,24 @@ void App::togglePowerModeAndNotify()
         body += services::PowerModeService::getDisplayName(next);
         trayIcon_->showBalloon(L"IME Indicator", body);
     }
+}
+
+void App::backupCurrentPowerMode()
+{
+    auto stateDir = localAppDataDir_ /
+                    std::filesystem::path(AppConstants::StateSubDir);
+    services::PowerModeBackup backup(stateDir);
+    services::PowerModeBackupRecord rec{};
+    rec.previousMode = services::PowerModeService::getCurrentMode();
+    backup.save(rec);
+}
+
+void App::clearPowerModeBackup()
+{
+    auto stateDir = localAppDataDir_ /
+                    std::filesystem::path(AppConstants::StateSubDir);
+    services::PowerModeBackup backup(stateDir);
+    backup.deleteFile();
 }
 
 void App::startPowerToggleListener()

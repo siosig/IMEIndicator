@@ -42,11 +42,20 @@ target_sources(IMEIndicator PRIVATE
     services/PixelIMEDetector.cpp
     services/IMEMonitor.cpp
 
+    # サービス（Phase 5 / US3 プロセス優先度・電源モード制御）
+    services/ECoreCpuInfo.cpp
+    services/ProcessPriorityService.cpp
+    services/RuleRuntimeState.cpp
+    services/ProcessPriorityMonitor.cpp
+
     # ビュー（Phase 3 / US1 描画ウィンドウ）
     views/MouseCursorIndicatorWindow.cpp
 
     # ビュー（Phase 3 / US1 トレイアイコン）
     views/TrayIcon.cpp
+
+    # ビュー（Phase 4 / US2 設定ダイアログ）
+    views/SettingsDialog.cpp
 
     # リソース
     resources/app.rc
@@ -71,7 +80,7 @@ target_compile_definitions(IMEIndicator PRIVATE
     IMEINDICATOR_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
     IMEINDICATOR_VERSION_MINOR=${PROJECT_VERSION_MINOR}
     IMEINDICATOR_VERSION_PATCH=${PROJECT_VERSION_PATCH}
-    IMEINDICATOR_VERSION_BUILD=7
+    IMEINDICATOR_VERSION_BUILD=9
 )
 
 target_link_libraries(IMEIndicator PRIVATE

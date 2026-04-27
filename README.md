@@ -2,6 +2,9 @@
 
 IMEIndicator は、Windows 11 上で日本語 IME の ON 状態をマウスカーソル付近に表示する常駐アプリです。通常はタスクトレイに常駐し、設定画面から表示サイズやオフセット、プロセス優先度ルールを変更できます。
 
+> [!IMPORTANT]
+> v1.3.0 から **ネイティブ C++ 版が主実装** になりました。.NET ランタイム不要の単一 EXE（約 0.8 MB）として配布されます。旧 C#/WPF 版は `IMEIndicator/` ディレクトリ配下に参照用として残しています（[レガシー C#/WPF 版](#レガシー-cwpf-版) を参照）。
+
 ## できること
 
 - 日本語 IME が ON のときだけ、カーソル付近にインジケーターを表示する
@@ -12,11 +15,11 @@ IMEIndicator は、Windows 11 上で日本語 IME の ON 状態をマウスカ�
 
 ## 対応環境
 
-- Windows 11
-- .NET 10
+- Windows 11 64-bit
+- ランタイム不要（C++ 版はスタティック CRT で単一 EXE）
 
-> [!IMPORTANT]
-> 配布済みの単一 EXE が Self-contained でない場合は .NET 10 ランタイムが必要です。Self-contained 版を publish した EXE ならランタイムは不要です。
+> [!NOTE]
+> C++ 版は .NET / WPF / WinForms ランタイム依存ゼロです。配布された `IMEIndicator.exe` を任意のフォルダに置くだけで動作します（管理者権限不要）。プロセス優先度ルールでシステムプロセスを操作する場合のみ管理者権限を推奨。
 
 ## クイックスタート
 
@@ -143,36 +146,67 @@ IMEIndicator.exe /powertoggle
 - processPriorityRules
 - pollingIntervalSeconds
 
-## ビルド
+## ビルド（C++ 版・本実装）
 
-リポジトリルートで実行します。
+### 前提
 
-```powershell
-dotnet build IMEIndicator.sln
-```
+- Visual Studio 2022 (17.8 以降) もしくは Visual Studio 2026
+- C++ デスクトップ開発ワークロード + Windows 11 SDK
+- CMake 3.27 以降（VS 同梱で OK）
+- Git submodule で vcpkg を取得（初回のみ）
 
-## テスト
-
-```powershell
-dotnet test IMEIndicator.sln
-```
-
-## 単一 EXE の発行例
-
-Framework-dependent の単一 EXE:
+### 初回セットアップ
 
 ```powershell
-dotnet publish IMEIndicator/IMEIndicator.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o release
+git submodule update --init --recursive
+external\vcpkg\bootstrap-vcpkg.bat -disableMetrics
 ```
 
-Self-contained の単一 EXE:
+### Release ビルド
 
 ```powershell
-dotnet publish IMEIndicator/IMEIndicator.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o release-self-contained
+cmake --preset windows-x64-release
+cmake --build --preset windows-x64-release
 ```
+
+成果物: `build/release/bin/Release/IMEIndicator.exe`（約 0.8 MB）
+
+### Debug ビルド
+
+```powershell
+cmake --build --preset windows-x64-debug
+```
+
+### テスト
+
+```powershell
+ctest --preset windows-x64-release
+```
+
+GoogleTest による単体テスト 69 件が実行されます。
+
+### バージョン管理
+
+リリースビルドごとに [src/cpp/resources/version.h](src/cpp/resources/version.h) と
+[src/cpp/CMakeLists.txt](src/cpp/CMakeLists.txt) の `IMEINDICATOR_VERSION_BUILD` を 1 ずつ
+インクリメントしてください（FR-009）。
+
+### 配布
+
+`build/release/bin/Release/IMEIndicator.exe` をそのまま配布できます。OS 同梱 DLL のみに依存し、VC ランタイム再頒布パッケージは不要です。署名手順は [自己署名.md](自己署名.md) を参照。
 
 ## 補足
 
-- 設定ウィンドウはタスクバー右下付近に表示されます
+- 設定ウィンドウはタスクバー直上に表示されます
 - 設定ウィンドウを開けるのは 1 つだけです
-- アプリはシングルインスタンス動作です
+- アプリはシングルインスタンス動作です（名前付き Mutex `IMEIndicator_SingleInstance`）
+
+## レガシー C#/WPF 版
+
+旧実装は `IMEIndicator/` 以下に保存されており、`IMEIndicator.sln` で開けます。新規開発は C++ 版で行うため、C#/WPF 版は **メンテナンス停止** 扱いです。
+
+```powershell
+# レガシー版のビルド（参照のみ）
+dotnet build IMEIndicator.sln
+dotnet test IMEIndicator.sln
+```
