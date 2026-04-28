@@ -3,7 +3,7 @@
 IMEIndicator は、Windows 11 上で日本語 IME の ON 状態をマウスカーソル付近に表示する常駐アプリです。通常はタスクトレイに常駐し、設定画面から表示サイズやオフセット、プロセス優先度ルールを変更できます。
 
 > [!IMPORTANT]
-> v1.3.0 から **ネイティブ C++ 版が主実装** になりました。.NET ランタイム不要の単一 EXE（約 0.8 MB）として配布されます。旧 C#/WPF 版は `IMEIndicator/` ディレクトリ配下に参照用として残しています（[レガシー C#/WPF 版](#レガシー-cwpf-版) を参照）。
+> v1.3.0 から **ネイティブ C++ 実装** に移行しました。.NET ランタイム不要の単一 EXE（約 0.8 MB）として配布されます。
 
 ## できること
 
@@ -183,7 +183,7 @@ IMEIndicator.exe /powertoggle
 - processPriorityRules
 - pollingIntervalSeconds
 
-## ビルド（C++ 版・本実装）
+## ビルド
 
 ### 前提
 
@@ -237,16 +237,6 @@ GoogleTest による単体テスト 69 件が実行されます。
 - 設定ウィンドウはタスクバー直上に表示されます
 - 設定ウィンドウを開けるのは 1 つだけです
 - アプリはシングルインスタンス動作です（名前付き Mutex `IMEIndicator_SingleInstance`）
-
-## レガシー C#/WPF 版
-
-旧実装は `IMEIndicator/` 以下に保存されており、`IMEIndicator.sln` で開けます。新規開発は C++ 版で行うため、C#/WPF 版は **メンテナンス停止** 扱いです。
-
-```powershell
-# レガシー版のビルド（参照のみ）
-dotnet build IMEIndicator.sln
-dotnet test IMEIndicator.sln
-```
 
 ## ライセンス
 
