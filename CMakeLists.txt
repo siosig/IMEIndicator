@@ -14,7 +14,10 @@ project(IMEIndicator
 )
 
 # ---- 言語規格 ----
-set(CMAKE_CXX_STANDARD 20)
+# C++23: HotkeyP モダン化版コード（services/hotkey/）が std::expected を多用しているため必須。
+# MSVC v143（VS 2022 17.4+ / VS 2026 18 Community）で <expected> がサポートされる。
+# 既存 009-port-to-cpp のコードは C++20 互換だが C++23 でも問題なくビルドできる（後方互換）。
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 

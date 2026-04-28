@@ -18,6 +18,8 @@
 #include <system_error>
 
 
+#include "../../../models/hotkey/HotKeyEntry.h"
+
 namespace imeindicator::services::hotkey {
 
 // HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）

@@ -12,7 +12,16 @@
 
 #include "InputRouter.h"
 
-#include <imm.h>  // VK_DBE_DBCSCHAR / VK_DBE_SBCSCHAR の定義
+// IME 拡張仮想キー定数（Microsoft IME 専用、Windows SDK の WinUser.h には含まれず
+// imm.h でも version によっては未定義。直接定数値で定義する）。
+// 参考: Microsoft IME Virtual Key Codes
+//   https://learn.microsoft.com/windows/win32/api/imm/
+#ifndef VK_DBE_SBCSCHAR
+#define VK_DBE_SBCSCHAR 0xF3  // 全角/半角
+#endif
+#ifndef VK_DBE_DBCSCHAR
+#define VK_DBE_DBCSCHAR 0xF4  // 半角/全角
+#endif
 
 namespace imeindicator::services::hotkey {
 

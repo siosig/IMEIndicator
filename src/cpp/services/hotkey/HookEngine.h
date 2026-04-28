@@ -23,20 +23,19 @@
 #include <thread>
 
 
+#include "../../models/hotkey/HotKeyEntry.h"
+#include "../../models/hotkey/HotkeyGlobalOptions.h"  // HookMode 定義
+
 namespace imeindicator::services::hotkey {
 
 // HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
 using namespace ::imeindicator::models::hotkey;
 
-// フックモード（useHook 設定値）
-enum class HookMode : int {
-    None          = 0,  // フックなし（RegisterHotKey のみ）
-    LowLevel      = 1,  // 常に WH_KEYBOARD_LL / WH_MOUSE_LL
-    SystemHotKey  = 2,  // 常に RegisterHotKey
-    Auto          = 3,  // 自動選択（メディアキー/Win+key → LL、その他 → RegisterHotKey）
-};
+// HookMode は models::hotkey::HookMode を再利用（HotkeyGlobalOptions.h 由来、永続化対象）。
+// services::hotkey 側で独自 enum を持つと models と衝突するため、明示的な型エイリアスで参照する。
+using HookMode = ::imeindicator::models::hotkey::HookMode;
 
-// フック戦略（内部用）
+// フック戦略（内部用、永続化されない）
 enum class HookStrategy {
     None,
     LowLevel,
