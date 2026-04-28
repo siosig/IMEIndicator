@@ -8,6 +8,7 @@
 #include "../services/ProcessPriorityService.h"
 #include "../services/ProcessPriorityMonitor.h"
 #include "../services/ColorHelper.h"
+#include "../services/hotkey/HotkeyService.h"
 #include "../views/MouseCursorIndicatorWindow.h"
 #include "../views/TrayIcon.h"
 #include "../views/SettingsDialog.h"
@@ -194,6 +195,17 @@ bool App::initialize(HINSTANCE hInstance)
 
     startPowerToggleListener();
 
+    // ---- HotkeyService (010-hotkeyp-merge / Phase 2-D) ----
+    // HookEngine + HotkeyManager + CommandExecutor を統合し、AppSettings.hotkeySettings から
+    // ホットキーをロード。failed should never block app startup（失敗時はホットキー無効で続行）。
+    hotkeyService_ = std::make_unique<services::hotkey::HotkeyService>();
+    if (!hotkeyService_->start(messageHwnd_,
+                                settingsManager_.settings().hotkeySettings)) {
+        if (auto log = spdlog::get(std::string(AppConstants::LoggerHotkey))) {
+            log->warn("HotkeyService failed to start, hotkeys will be unavailable");
+        }
+    }
+
     // ---- 初回起動時に設定画面を自動表示 (Phase 4 / US2) ----
     if (settingsManager_.settings().isFirstLaunch) {
         auto s = settingsManager_.settings();
@@ -218,6 +230,10 @@ void App::shutdown()
 
     if (imeMonitor_) imeMonitor_->stop();
     imeMonitor_.reset();
+
+    // HotkeyService 停止（フックスレッド join + メインウィンドウハンドル解除）
+    if (hotkeyService_) hotkeyService_->stop();
+    hotkeyService_.reset();
 
     settingsDialog_.reset();
     trayIcon_.reset();
@@ -273,9 +289,15 @@ LRESULT CALLBACK App::messageWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     return ::DefWindowProcW(hwnd, msg, wp, lp);
 }
 
-LRESULT App::handleMessage(UINT msg, WPARAM /*wp*/, LPARAM /*lp*/)
+LRESULT App::handleMessage(UINT msg, WPARAM wp, LPARAM lp)
 {
     using namespace imeindicator::win32;
+
+    // HotkeyP 由来の WM_HOTKEY_RAW_KBD / WM_HOTKEY_RAW_MOUSE を HotkeyService に転送。
+    // services/hotkey/HookEngine が WH_KEYBOARD_LL / WH_MOUSE_LL から PostMessage する。
+    if (hotkeyService_ && hotkeyService_->handleRawHookMessage(msg, wp, lp)) {
+        return 0;
+    }
 
     if (msg == WM_APP_IME_STATE_CHANGED) {
         models::LanguageInfo info{

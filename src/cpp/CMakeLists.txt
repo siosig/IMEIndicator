@@ -33,6 +33,7 @@ target_sources(IMEIndicator PRIVATE
     services/hotkey/HotkeyManager.cpp
     services/hotkey/InputRouter.cpp
     services/hotkey/CommandExecutor.cpp
+    services/hotkey/HotkeyService.cpp
 
     # サービス: HotkeyP コマンド (010-hotkeyp-merge)
     services/hotkey/commands/DisplayCommands.cpp

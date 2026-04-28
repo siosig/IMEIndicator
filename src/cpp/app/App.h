@@ -19,6 +19,9 @@ class IMEMonitor;
 class ProcessPriorityService;
 class ProcessPriorityMonitor;
 }
+namespace imeindicator::services::hotkey {
+class HotkeyService;
+}
 namespace imeindicator::views {
 class MouseCursorIndicatorWindow;
 class TrayIcon;
@@ -83,6 +86,10 @@ private:
     std::shared_ptr<services::ProcessPriorityService> priorityService_;
     std::unique_ptr<services::ProcessPriorityMonitor> priorityMonitor_;
     std::unique_ptr<views::SettingsDialog> settingsDialog_;
+
+    // HotkeyP マージ (010-hotkeyp-merge): グローバルホットキー機能のオーケストレーション。
+    // initialize() で start、shutdown() で stop、設定変更時に reload を呼ぶ。
+    std::unique_ptr<services::hotkey::HotkeyService> hotkeyService_;
 
     // 直近の IME 状態（メッセージ経由で UI スレッドへ渡す保管領域）
     std::atomic<int> latestLanguage_{0};

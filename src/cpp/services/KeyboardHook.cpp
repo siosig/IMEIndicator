@@ -60,6 +60,14 @@ void KeyboardHook::stop() noexcept
 
 LRESULT CALLBACK KeyboardHook::hookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
+    // 観察モード: IME 切替キーを検出してコールバックを呼ぶだけで、キーは消費しない（CallNextHookEx）。
+    // 010-hotkeyp-merge 統合後は HotkeyP 由来の HookEngine（services/hotkey/HookEngine）も
+    // 同じ WH_KEYBOARD_LL に並行登録される。両者は責務分離されており衝突しない:
+    //   - 本フック (KeyboardHook): IME 切替キー（VK_KANJI/VK_KANA/VK_DBE_DBCSCHAR/...）の観察のみ
+    //   - HookEngine: 上記 IME キーは InputRouter::isImeSwitchKey() でフィルタアウトされ、
+    //                 ホットキー対象から除外される（spec FR-021 / research.md R-003）
+    // フックチェーンは LIFO（後に登録した方が先に呼ばれる）。本フックはどちらの順序でも
+    // 必ず CallNextHookEx で次に渡すため、HookEngine の動作を阻害しない。
     if (nCode >= 0) {
         const auto* kb = reinterpret_cast<const KBDLLHOOKSTRUCT*>(lParam);
         const bool keyDown = (wParam == WM_KEYDOWN) || (wParam == WM_SYSKEYDOWN);
