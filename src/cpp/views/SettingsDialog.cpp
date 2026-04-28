@@ -901,6 +901,120 @@ std::wstring describeHotkey(const models::hotkey::HotKeyEntry& e)
     return shortcut;
 }
 
+// 内部コマンドの選択候補（HotkeyEditDialog の ComboBox + リスト表示で使う）。
+// 機能別にグルーピングし、日本語名で表示。先頭に「-1: 非コマンド」を含める。
+struct HotkeyCommandEntry {
+    int id;
+    const wchar_t* label;
+};
+constexpr HotkeyCommandEntry kHotkeyCommandList[] = {
+    {-1,  L"-- 非コマンド（exe 起動を使う） --"},
+
+    // === 電源 ===
+    {  2, L"電源: シャットダウン"},
+    {  3, L"電源: 再起動"},
+    {  4, L"電源: スリープ"},
+    {  5, L"電源: ログオフ"},
+    { 64, L"電源: 休止状態"},
+    { 63, L"電源: 画面ロック"},
+    { 19, L"電源: モニター電源オフ"},
+    {  6, L"電源: スクリーンセーバー起動"},
+    { 38, L"電源: シャットダウンダイアログ"},
+
+    // === 音量 ===
+    { 13, L"音量: +5%"},
+    { 14, L"音量: -5%"},
+    { 17, L"音量: ミュート切替"},
+    { 78, L"音量: 絶対値設定（引数 V50 など）"},
+
+    // === メディア ===
+    {120, L"メディア: 再生/一時停止（音楽トグル）"},
+    { 39, L"メディア: 再生（CD）"},
+    { 40, L"メディア: 次のトラック"},
+    { 41, L"メディア: 停止"},
+    { 42, L"メディア: 前のトラック"},
+
+    // === ウィンドウ ===
+    {  7, L"ウィンドウ: 最大化"},
+    {  8, L"ウィンドウ: 最小化"},
+    {  9, L"ウィンドウ: 閉じる"},
+    { 10, L"ウィンドウ: 常に手前に表示（トグル）"},
+    { 25, L"ウィンドウ: 非表示"},
+    { 28, L"ウィンドウ: 画面中央に配置"},
+    { 65, L"ウィンドウ: 他のウィンドウを最小化"},
+    {115, L"ウィンドウ: トレイに最小化"},
+    { 81, L"ウィンドウ: デスクトップ表示"},
+    {112, L"ウィンドウ: すべて最大化"},
+    { 77, L"ウィンドウ: 不透明度設定（引数指定）"},
+    {110, L"ウィンドウ: 不透明度 +"},
+    {111, L"ウィンドウ: 不透明度 -"},
+    { 71, L"ウィンドウ: 移動"},
+    { 72, L"ウィンドウ: リサイズ"},
+
+    // === プロセス ===
+    { 11, L"プロセス: フォアグラウンドプロセス強制終了"},
+    { 46, L"プロセス: 優先度 Idle"},
+    { 47, L"プロセス: 優先度 Normal"},
+    { 48, L"プロセス: 優先度 High"},
+    { 49, L"プロセス: 優先度 Realtime"},
+    { 59, L"プロセス: 優先度 BelowNormal"},
+    { 60, L"プロセス: 優先度 AboveNormal"},
+
+    // === テキスト・マクロ ===
+    { 27, L"テキスト: マクロ実行（引数にマクロ文字列）"},
+    { 67, L"テキスト: テキスト貼付け（引数にテキスト）"},
+    { 83, L"テキスト: 前のタスク（Alt+Shift+Tab）"},
+    { 84, L"テキスト: 次のタスク（Alt+Tab）"},
+    { 87, L"テキスト: 全ホットキー無効化（トグル）"},
+
+    // === システム ===
+    { 12, L"システム: コントロールパネル"},
+    { 22, L"システム: ごみ箱を空にする"},
+    { 66, L"システム: ウィンドウ情報表示"},
+    {103, L"システム: 拡大鏡起動"},
+    {104, L"システム: 最近のドキュメントをクリア"},
+    {105, L"システム: 一時ファイル削除"},
+
+    // === ディスプレイ ===
+    { 18, L"ディスプレイ: 解像度切替（引数指定）"},
+    { 68, L"ディスプレイ: 次の壁紙"},
+    { 69, L"ディスプレイ: 前の壁紙"},
+    { 89, L"ディスプレイ: デスクトップスクリーンショット"},
+    { 90, L"ディスプレイ: ウィンドウスクリーンショット"},
+
+    // === 仮想デスクトップ ===
+    {116, L"仮想デスクトップ: 次へ"},
+    {117, L"仮想デスクトップ: 前へ"},
+    {118, L"仮想デスクトップ: 新規"},
+    {119, L"仮想デスクトップ: 閉じる"},
+
+    // === マウス ===
+    { 43, L"マウス: 左クリック"},
+    { 44, L"マウス: 中クリック"},
+    { 45, L"マウス: 右クリック"},
+    { 76, L"マウス: ダブルクリック"},
+    { 75, L"マウス: ホイールスクロール"},
+
+    // === IMEIndicator 拡張 (200-299) ===
+    {200, L"[IMEIndicator] インジケーター表示切替"},
+    {201, L"[IMEIndicator] ピクセル検出 有効/無効"},
+    {202, L"[IMEIndicator] IME 設定リロード"},
+    {210, L"[IMEIndicator] 電源モード切替（バックアップ付き）"},
+    {211, L"[IMEIndicator] 高パフォーマンス電源プラン適用"},
+    {212, L"[IMEIndicator] 電源モードバックアップから復元"},
+    {220, L"[IMEIndicator] プロセス優先度ルール一時停止（引数=プロセス名）"},
+    {221, L"[IMEIndicator] プロセス優先度ルール再開（引数=プロセス名）"},
+    {222, L"[IMEIndicator] 全プロセス優先度ルール一時停止"},
+};
+
+const wchar_t* lookupCommandLabel(int cmdId) noexcept
+{
+    for (const auto& e : kHotkeyCommandList) {
+        if (e.id == cmdId) return e.label;
+    }
+    return nullptr;
+}
+
 std::wstring describeAction(const models::hotkey::HotKeyEntry& e)
 {
     if (!e.exe.empty()) {
@@ -909,6 +1023,9 @@ std::wstring describeAction(const models::hotkey::HotKeyEntry& e)
         return (p == std::wstring::npos) ? e.exe : e.exe.substr(p + 1);
     }
     if (e.cmd >= 0) {
+        if (auto* label = lookupCommandLabel(e.cmd)) {
+            return label;
+        }
         wchar_t b[64];
         ::swprintf_s(b, L"内部コマンド cmd=%d", e.cmd);
         return b;
@@ -1009,8 +1126,15 @@ LRESULT CALLBACK hotkeyEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             const bool useCmd =
                 (::SendMessageW(ctx->hRadioCmd, BM_GETCHECK, 0, 0) == BST_CHECKED);
             if (useCmd) {
-                ::GetWindowTextW(ctx->hCmd, buf, ARRAYSIZE(buf));
-                try { ctx->entry.cmd = std::stoi(buf); } catch (...) { ctx->entry.cmd = -1; }
+                // ComboBox の選択中アイテムから ItemData (cmd ID) を取得
+                LRESULT sel = ::SendMessageW(ctx->hCmd, CB_GETCURSEL, 0, 0);
+                if (sel != CB_ERR) {
+                    LRESULT cmdData = ::SendMessageW(ctx->hCmd,
+                                                      CB_GETITEMDATA, sel, 0);
+                    ctx->entry.cmd = static_cast<int>(cmdData);
+                } else {
+                    ctx->entry.cmd = -1;
+                }
                 ctx->entry.exe.clear();
             } else {
                 ctx->entry.cmd = -1;
@@ -1225,13 +1349,19 @@ bool SettingsDialog::showHotkeyEditDialog(HWND owner, HINSTANCE hInstance,
     ::SetWindowTextW(ctx.hDir, ctx.entry.dir.c_str());
     yy += kRowH;
 
-    addLabel(hwnd, hInstance, kPad, yy, kLblW, L"内部コマンド ID");
-    ctx.hCmd = addEdit(hwnd, hInstance, kCtrlX, yy, 100, 22, HK_EDIT_CMD);
-    {
-        wchar_t b[16]; ::swprintf_s(b, L"%d", ctx.entry.cmd); ::SetWindowTextW(ctx.hCmd, b);
+    addLabel(hwnd, hInstance, kPad, yy, kLblW, L"内部コマンド");
+    ctx.hCmd = addCombo(hwnd, hInstance, kCtrlX, yy, kCtrlW2, HK_EDIT_CMD);
+    // ComboBox に主要コマンド一覧をロード（kHotkeyCommandList、ItemData に cmd ID を保持）
+    int selectIdx = 0;  // デフォルトは最初のエントリ（-1: 非コマンド）
+    for (int i = 0; i < static_cast<int>(std::size(kHotkeyCommandList)); ++i) {
+        const auto& e = kHotkeyCommandList[i];
+        LRESULT idx = ::SendMessageW(ctx.hCmd, CB_ADDSTRING, 0,
+                                     reinterpret_cast<LPARAM>(e.label));
+        ::SendMessageW(ctx.hCmd, CB_SETITEMDATA, idx,
+                       static_cast<LPARAM>(e.id));
+        if (e.id == ctx.entry.cmd) selectIdx = i;
     }
-    addLabel(hwnd, hInstance, kCtrlX + 110, yy, 280,
-             L"-1=非コマンド / 0-120,200-299=有効");
+    ::SendMessageW(ctx.hCmd, CB_SETCURSEL, selectIdx, 0);
     yy += kRowH;
 
     // フラグ群
