@@ -91,10 +91,13 @@ void AppSettings::clamp()
         logLevel = LogLevel::Warn;
     }
 
-    // schemaVersion は 1 / 2 のみ受容、書き出し時には to_json で 2 を強制する
-    if (schemaVersion != 1 && schemaVersion != 2) {
-        schemaVersion = 2;
+    // schemaVersion は 1 / 2 / 3 のみ受容、書き出し時には to_json で 3 を強制する
+    if (schemaVersion != 1 && schemaVersion != 2 && schemaVersion != 3) {
+        schemaVersion = 3;
     }
+
+    // v3 新規セクションのクランプ
+    hotkeySettings.clamp();
 }
 
 void to_json(nlohmann::json& j, const AppSettings& s)
@@ -109,9 +112,12 @@ void to_json(nlohmann::json& j, const AppSettings& s)
     nlohmann::json mci;
     to_json(mci, s.mouseCursorIndicator);
 
-    // 書き出し時は常に schemaVersion: 2（contracts/settings-schema-v2.md §書き出し時の挙動）
+    nlohmann::json hk;
+    to_json(hk, s.hotkeySettings);
+
+    // 書き出し時は常に schemaVersion: 3（contracts/settings-schema-v3.md §書き出し時の挙動）
     j = nlohmann::json{
-        {"schemaVersion",                 2},
+        {"schemaVersion",                 3},
         {"mouseCursorIndicator",          std::move(mci)},
         {"imeOnText",                     win32::wideToUtf8(s.imeOnText)},
         {"imeOffText",                    win32::wideToUtf8(s.imeOffText)},
@@ -119,7 +125,8 @@ void to_json(nlohmann::json& j, const AppSettings& s)
         {"processPriorityRules",          std::move(rules)},
         {"pollingIntervalSeconds",        s.pollingIntervalSeconds},
         {"logLevel",                      logLevelToString(s.logLevel)},
-        {"pixelVerificationIntervalMs",   s.pixelVerificationIntervalMs}
+        {"pixelVerificationIntervalMs",   s.pixelVerificationIntervalMs},
+        {"hotkeySettings",                std::move(hk)}
     };
 }
 
@@ -167,6 +174,12 @@ void from_json(const nlohmann::json& j, AppSettings& s)
     }
 
     s.pixelVerificationIntervalMs = j.value("pixelVerificationIntervalMs", 2000);
+
+    // v3 新規: hotkeySettings（v2 以前は未定義 → 既定値で構築）
+    s.hotkeySettings = hotkey::HotkeySettings{};
+    if (auto it = j.find("hotkeySettings"); it != j.end() && it->is_object()) {
+        from_json(*it, s.hotkeySettings);
+    }
 
     // 読み込み直後にクランプ
     s.clamp();

@@ -8,8 +8,8 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND EXISTS "${CMAKE_SOURCE_DIR}/external/vcp
 endif()
 
 project(IMEIndicator
-    VERSION 1.3.0
-    DESCRIPTION "IME Indicator (C++ port of the original C#/WPF tool)"
+    VERSION 1.4.0
+    DESCRIPTION "IME Indicator with HotkeyP merge (C++ port + global hotkeys)"
     LANGUAGES CXX
 )
 

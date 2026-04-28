@@ -13,8 +13,13 @@
  Windows 11 64-bit 専用
 */
 
+#include <expected>
+#include <nlohmann/json.hpp>
 #include <string>
+#include <system_error>
 #include <windows.h>
+
+namespace imeindicator::models::hotkey {
 
 // 仮想キーコード定数（既存コードと互換）
 inline constexpr UINT vkMouse  = 512;
@@ -190,6 +195,16 @@ enum class WindowShow : int {
     Minimized = 2,
 };
 
+// バリデーションエラー（HotKeyEntry::validate() の失敗種別）
+enum class ValidationError : int {
+    ExeAndCmdConflict   = 1,  // exe 非空かつ cmd >= 0（排他違反）
+    NoTrigger           = 2,  // vkey == 0 かつ cmd < 0（トリガーなし、autoStart も false）
+    InvalidCommandId    = 3,  // cmd が 121〜199 / 300〜（予約 or 未定義）
+    InvalidCategory     = 4,  // category が [0, 39] 範囲外（クランプで補正される想定だが警告用途）
+};
+
+std::error_code make_error_code(ValidationError e) noexcept;
+
 // ホットキーエントリ（C++20 版）
 struct HotKeyEntry {
     // --- 識別・表示 ---
@@ -236,9 +251,13 @@ struct HotKeyEntry {
 
     // --- バリデーション ---
 
+    // 仕様準拠の妥当性検証（contracts/hotkey-entry-schema.md §バリデーション規則）。
+    // 戻り値: 成功 = void、失敗 = ValidationError。HotkeyManager::addHotkey 等の登録時に呼ぶ。
+    [[nodiscard]] std::expected<void, ValidationError> validate() const noexcept;
+
     // exe と cmd は排他: exe が空の場合のみ cmd が有効
     [[nodiscard]] bool isCommand() const noexcept {
-        return exe.empty() && cmd >= 0 && cmd <= 119;
+        return exe.empty() && cmd >= 0 && cmd <= 120;
     }
 
     // 表示名を取得（note が空の場合は exe のファイル名部分）
@@ -268,3 +287,15 @@ struct HotKeyEntry {
         return Category::Documents;
     }
 };
+
+// JSON シリアライザ（contracts/hotkey-entry-schema.md 準拠）
+// 実装は HotKeyEntry.cpp。実行時状態（processId/process/isDown/lock/item）は永続化しない。
+void to_json(nlohmann::json& j, const HotKeyEntry& e);
+void from_json(const nlohmann::json& j, HotKeyEntry& e);
+
+} // namespace imeindicator::models::hotkey
+
+namespace std {
+template <>
+struct is_error_code_enum<imeindicator::models::hotkey::ValidationError> : true_type {};
+}

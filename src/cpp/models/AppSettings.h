@@ -2,6 +2,7 @@
 
 #include "MouseCursorIndicatorSettings.h"
 #include "ProcessPriorityRule.h"
+#include "hotkey/HotkeySettings.h"
 
 #include <string>
 #include <vector>
@@ -24,11 +25,11 @@ const char* logLevelToString(LogLevel level) noexcept;
 bool tryParseLogLevel(std::string_view s, LogLevel& out) noexcept;  // 大小無視
 
 // ルートエンティティ AppSettings（data-model.md §1）
-// settings-schema-v1.md / v2.md に厳密に従う。
+// settings-schema-v1.md / v2.md / v3.md に厳密に従う。
 struct AppSettings {
-    // schemaVersion: 未指定→1（v1 として扱い、書き出し時に 2 へ昇格）。
-    // 永続化済みの値は from_json で復元。
-    int schemaVersion{2};
+    // schemaVersion: 未指定→1（v1 として扱い、書き出し時に v3 へ昇格）。
+    // 1 / 2 / 3 のみ受容。永続化済みの値は from_json で復元。書き出しは常に 3。
+    int schemaVersion{3};
 
     MouseCursorIndicatorSettings mouseCursorIndicator{};
 
@@ -44,6 +45,9 @@ struct AppSettings {
     // v2 新規
     LogLevel logLevel{LogLevel::Warn};
     int pixelVerificationIntervalMs{2000};
+
+    // v3 新規（010-hotkeyp-merge）
+    hotkey::HotkeySettings hotkeySettings{};
 
     // 値域 Clamp（data-model.md §バリデーションサマリ）
     void clamp();

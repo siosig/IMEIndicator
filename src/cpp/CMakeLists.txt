@@ -22,6 +22,12 @@ target_sources(IMEIndicator PRIVATE
     models/ProcessPriorityRule.cpp
     models/AppSettings.cpp
 
+    # モデル: HotkeyP マージ (010-hotkeyp-merge)
+    models/hotkey/HotKeyEntry.cpp
+    models/hotkey/HotkeyCategory.cpp
+    models/hotkey/HotkeyGlobalOptions.cpp
+    models/hotkey/HotkeySettings.cpp
+
     # サービス（Phase 2 範囲）
     services/Logger.cpp
     services/SettingsManager.cpp
@@ -80,7 +86,7 @@ target_compile_definitions(IMEIndicator PRIVATE
     IMEINDICATOR_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
     IMEINDICATOR_VERSION_MINOR=${PROJECT_VERSION_MINOR}
     IMEINDICATOR_VERSION_PATCH=${PROJECT_VERSION_PATCH}
-    IMEINDICATOR_VERSION_BUILD=10
+    IMEINDICATOR_VERSION_BUILD=0
 )
 
 target_link_libraries(IMEIndicator PRIVATE
