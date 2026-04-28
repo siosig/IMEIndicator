@@ -139,12 +139,28 @@ bool App::initialize(HINSTANCE hInstance)
                     priorityMonitor_->updateRules(s.processPriorityRules);
                     priorityMonitor_->updatePollingInterval(s.pollingIntervalSeconds);
                 }
+                // ホットキー設定を反映（追加・削除・キー組合せ変更を即座に有効化する）。
+                // reload() は HookEngine を一旦停止し HotkeyManager を新 settings で
+                // 再ロードしてから HookEngine を再起動する。
+                if (hotkeyService_) hotkeyService_->reload(s.hotkeySettings);
                 // IME 状態に応じた表示再評価
                 if (imeMonitor_) applyWindowVisibility(imeMonitor_->currentState());
             });
         settingsDialog_->setAccessDeniedCountCallback(
             [this]() -> int {
                 return priorityService_ ? priorityService_->accessDeniedCount() : 0;
+            });
+        settingsDialog_->setAccessibilityProbeCallback(
+            [this](const std::vector<models::ProcessPriorityRule>& rules)
+                -> std::vector<bool> {
+                std::vector<bool> blocked(rules.size(), false);
+                if (!priorityService_) return blocked;
+                for (size_t i = 0; i < rules.size(); ++i) {
+                    if (!rules[i].isValid()) continue;
+                    const std::wstring name = rules[i].normalizedProcessName();
+                    blocked[i] = !priorityService_->isAccessibleForControl(name);
+                }
+                return blocked;
             });
         settingsDialog_->show(hInstance_);
         settingsDialog_.reset();
@@ -239,6 +255,9 @@ bool App::initialize(HINSTANCE hInstance)
     services::hotkey::setImeMonitor(imeMonitor_.get());
     services::hotkey::setSettingsManager(&settingsManager_);
     services::hotkey::setProcessPriorityMonitor(priorityMonitor_.get());
+    // cmd 210（電源モード切替）が /toggle と同じ通知付き処理を実行するためのハンドラを注入。
+    services::hotkey::setPowerModeToggleHandler(
+        [this]() { togglePowerModeAndNotify(); });
 
     hotkeyService_ = std::make_unique<services::hotkey::HotkeyService>();
     if (!hotkeyService_->start(messageHwnd_,
@@ -282,6 +301,7 @@ void App::shutdown()
     services::hotkey::setImeMonitor(nullptr);
     services::hotkey::setSettingsManager(nullptr);
     services::hotkey::setProcessPriorityMonitor(nullptr);
+    services::hotkey::setPowerModeToggleHandler(nullptr);
 
     settingsDialog_.reset();
     trayIcon_.reset();
@@ -381,7 +401,25 @@ LRESULT App::handleMessage(UINT msg, WPARAM wp, LPARAM lp)
                         priorityMonitor_->updateRules(s.processPriorityRules);
                         priorityMonitor_->updatePollingInterval(s.pollingIntervalSeconds);
                     }
+                    // ホットキー設定を反映（追加・削除・キー組合せ変更を即時有効化）
+                    if (hotkeyService_) hotkeyService_->reload(s.hotkeySettings);
                     if (imeMonitor_) applyWindowVisibility(imeMonitor_->currentState());
+                });
+            settingsDialog_->setAccessDeniedCountCallback(
+                [this]() -> int {
+                    return priorityService_ ? priorityService_->accessDeniedCount() : 0;
+                });
+            settingsDialog_->setAccessibilityProbeCallback(
+                [this](const std::vector<models::ProcessPriorityRule>& rules)
+                    -> std::vector<bool> {
+                    std::vector<bool> blocked(rules.size(), false);
+                    if (!priorityService_) return blocked;
+                    for (size_t i = 0; i < rules.size(); ++i) {
+                        if (!rules[i].isValid()) continue;
+                        const std::wstring name = rules[i].normalizedProcessName();
+                        blocked[i] = !priorityService_->isAccessibleForControl(name);
+                    }
+                    return blocked;
                 });
             settingsDialog_->show(hInstance_);
             settingsDialog_.reset();

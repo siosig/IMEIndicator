@@ -256,8 +256,13 @@ struct HotKeyEntry {
     [[nodiscard]] std::expected<void, ValidationError> validate() const noexcept;
 
     // exe と cmd は排他: exe が空の場合のみ cmd が有効
+    // 受け入れる cmd 範囲:
+    //   0〜120  : HotkeyP オリジナルコマンド（contracts/internal-command-catalog.md 準拠）
+    //   200〜299: IMEIndicator 拡張コマンド（200=ToggleIndicator, 210=PowerModeToggle 等）
+    // 121〜199 は未定義範囲のため除外（Phase 2-D 時点で予約）。
     [[nodiscard]] bool isCommand() const noexcept {
-        return exe.empty() && cmd >= 0 && cmd <= 120;
+        return exe.empty() && cmd >= 0 &&
+               (cmd <= 120 || (cmd >= 200 && cmd <= 299));
     }
 
     // 表示名を取得（note が空の場合は exe のファイル名部分）

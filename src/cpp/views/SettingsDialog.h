@@ -22,6 +22,10 @@ public:
     using AppliedCallback = std::function<void(const models::AppSettings&)>;
     // 管理者権限不足カウンタを取得（spec T095：常時表示判定材料）
     using AccessDeniedCountCallback = std::function<int()>;
+    // 各ルールが管理者権限不足で制御不能か否かを判定するコールバック。
+    // 戻り値は workingRules_ と同サイズの bool 配列（true = 制御不能 = 薄ピンク表示）。
+    using AccessibilityProbeCallback =
+        std::function<std::vector<bool>(const std::vector<models::ProcessPriorityRule>&)>;
 
     explicit SettingsDialog(services::SettingsManager& mgr);
     ~SettingsDialog();
@@ -33,6 +37,10 @@ public:
     void setAccessDeniedCountCallback(AccessDeniedCountCallback cb)
     {
         accessDeniedCountCallback_ = std::move(cb);
+    }
+    void setAccessibilityProbeCallback(AccessibilityProbeCallback cb)
+    {
+        accessibilityProbeCallback_ = std::move(cb);
     }
 
     void show(HINSTANCE hInstance);
@@ -76,9 +84,12 @@ private:
     services::SettingsManager& mgr_;
     AppliedCallback appliedCallback_;
     AccessDeniedCountCallback accessDeniedCountCallback_;
+    AccessibilityProbeCallback accessibilityProbeCallback_;
 
     // ルール編集の作業コピー（OK/適用で settings へ反映）
     std::vector<models::ProcessPriorityRule> workingRules_;
+    // workingRules_ と同サイズ。true = 管理者権限不足で制御不能（薄ピンク表示）。
+    std::vector<bool> ruleAccessBlocked_;
 
     // ホットキー編集の作業コピー（OK/適用で settings.hotkeySettings へ反映）
     std::vector<models::hotkey::HotKeyEntry> workingHotkeys_;

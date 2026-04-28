@@ -35,6 +35,12 @@ public:
 
     // 指定 PID のアフィニティを設定。成功時 true。
     virtual bool setAffinity(DWORD processId, DWORD_PTR affinityMask) = 0;
+
+    // 名前一致するプロセスのうち、PROCESS_SET_INFORMATION を取得できるものが
+    // 1 つでもあれば true（＝制御可能）。一致プロセスが 0 件の場合も true（判定不能）。
+    // 全て ERROR_ACCESS_DENIED で失敗した場合のみ false（管理者権限が必要）。
+    // 設定ダイアログでの行ハイライト判定に使用。
+    virtual bool isAccessibleForControl(const std::wstring& processNameNoExt) = 0;
 };
 
 } // namespace imeindicator::services

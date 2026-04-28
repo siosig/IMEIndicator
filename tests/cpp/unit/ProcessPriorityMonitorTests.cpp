@@ -39,6 +39,7 @@ public:
         return DWORD_PTR{1};
     }
     bool setAffinity(DWORD /*pid*/, DWORD_PTR) override { return true; }
+    bool isAccessibleForControl(const std::wstring& /*name*/) override { return true; }
 
     std::unordered_map<std::wstring, std::vector<services::ProcessPriorityEntry>> mockProcesses;
     std::atomic<int> getCalls{0};

@@ -643,6 +643,17 @@ void SettingsDialog::loadFromSettings()
 void SettingsDialog::refreshRuleListView()
 {
     ListView_DeleteAllItems(hRulesList_);
+
+    // 管理者権限不足で制御不能なルールを判定（プローブが設定されている場合のみ）。
+    if (accessibilityProbeCallback_) {
+        ruleAccessBlocked_ = accessibilityProbeCallback_(workingRules_);
+    } else {
+        ruleAccessBlocked_.assign(workingRules_.size(), false);
+    }
+    if (ruleAccessBlocked_.size() != workingRules_.size()) {
+        ruleAccessBlocked_.assign(workingRules_.size(), false);
+    }
+
     for (size_t i = 0; i < workingRules_.size(); ++i) {
         const auto& r = workingRules_[i];
 
@@ -829,6 +840,26 @@ LRESULT SettingsDialog::handleMessage(UINT msg, WPARAM wp, LPARAM lp)
             if (nm && nm->hwndFrom == hHotkeyList_ && nm->code == NM_DBLCLK) {
                 onEditHotkey();
                 return 0;
+            }
+            // 管理者権限不足で制御不能なルールの行背景を薄ピンクで描画する。
+            // ListView の NM_CUSTOMDRAW は親（このダイアログ）に届くため、
+            // CDDS_PREPAINT で行ごとの通知を要求し、CDDS_ITEMPREPAINT で背景色を設定する。
+            // 本ダイアログは CreateWindowEx の通常 WndProc（DefWindowProc 使用）なので、
+            // CustomDraw の戻り値は LRESULT を直接返す（DialogProc 用の DWLP_MSGRESULT は不要）。
+            if (nm && nm->hwndFrom == hRulesList_ && nm->code == NM_CUSTOMDRAW) {
+                auto* lpcd = reinterpret_cast<NMLVCUSTOMDRAW*>(lp);
+                switch (lpcd->nmcd.dwDrawStage) {
+                    case CDDS_PREPAINT:
+                        return CDRF_NOTIFYITEMDRAW;
+                    case CDDS_ITEMPREPAINT: {
+                        const size_t i = static_cast<size_t>(lpcd->nmcd.dwItemSpec);
+                        if (i < ruleAccessBlocked_.size() && ruleAccessBlocked_[i]) {
+                            // 薄ピンク（FFE0E8）。LVS_EX_FULLROWSELECT で行全体に適用される。
+                            lpcd->clrTextBk = RGB(255, 224, 232);
+                        }
+                        return CDRF_NEWFONT;
+                    }
+                }
             }
             break;
         }

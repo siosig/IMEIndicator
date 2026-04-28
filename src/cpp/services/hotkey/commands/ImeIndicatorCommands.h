@@ -17,6 +17,7 @@
 */
 
 #include <expected>
+#include <functional>
 #include <string_view>
 #include <system_error>
 #include <windows.h>
@@ -66,6 +67,13 @@ void setIndicatorWindow(views::MouseCursorIndicatorWindow* window) noexcept;
 void setImeMonitor(services::IMEMonitor* monitor) noexcept;
 void setSettingsManager(services::SettingsManager* manager) noexcept;
 void setProcessPriorityMonitor(services::ProcessPriorityMonitor* monitor) noexcept;
+
+// 電源モードトグルハンドラ（cmd 210 用）。
+// 設定された場合、cmd 210 はこのハンドラを呼ぶ（App::togglePowerModeAndNotify と同等の処理：
+// バックアップ → モード切替 → インジケーター色更新 → トレイバルーン通知）。
+// 未設定なら PowerModeService::toggleMode() のフォールバック（通知・色更新なし）。
+using PowerModeToggleHandler = std::function<void()>;
+void setPowerModeToggleHandler(PowerModeToggleHandler handler) noexcept;
 
 } // namespace imeindicator::services::hotkey
 

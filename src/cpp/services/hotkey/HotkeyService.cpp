@@ -140,11 +140,21 @@ void HotkeyService::onHotkeyDetected(UINT vkey, DWORD scanCode, UINT modifiers) 
         return;
     }
 
+    // マッチ成功は info レベルでログ（flush_on(info) で即時 flush され、
+    // 直後の cmd 実行でアプリが強制終了してもログが残る）。
+    if (log) log->info("hotkey matched: vk={:#x} mods={:#x} -> cmd={} exe={}",
+                        vkey, modifiers, entry->cmd,
+                        entry->exe.empty()
+                            ? "(none)"
+                            : reinterpret_cast<const char*>(entry->exe.c_str()));
+
     // 内部コマンド or 起動アクションのいずれかを実行
     if (entry->isCommand()) {
         // 内部コマンド (cmd 0〜120 / 200〜299)
         auto result = executeCommandById(entry->cmd, entry->args, entry);
-        if (!result) {
+        if (result) {
+            if (log) log->info("command executed OK: cmd={}", entry->cmd);
+        } else {
             if (log) log->warn("executeCommandById failed: cmd={} err={}",
                                entry->cmd,
                                make_error_code(result.error()).message());

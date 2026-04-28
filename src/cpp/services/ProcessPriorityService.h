@@ -19,6 +19,7 @@ public:
     bool setPriority(DWORD processId, DWORD priorityClass) override;
     std::optional<DWORD_PTR> getAffinity(DWORD processId) override;
     bool setAffinity(DWORD processId, DWORD_PTR affinityMask) override;
+    bool isAccessibleForControl(const std::wstring& processNameNoExt) override;
 
     // 管理者権限不足での失敗回数（累積）。0 でない場合は管理者権限が必要な可能性あり。
     int accessDeniedCount() const noexcept { return accessDeniedCount_.load(); }

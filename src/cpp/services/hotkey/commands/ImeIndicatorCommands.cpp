@@ -23,6 +23,7 @@
 #include "../../../views/MouseCursorIndicatorWindow.h"
 
 #include <atomic>
+#include <mutex>
 #include <spdlog/spdlog.h>
 
 namespace imeindicator::services::hotkey {
@@ -35,6 +36,12 @@ std::atomic<views::MouseCursorIndicatorWindow*>  g_indicatorWindow{nullptr};
 std::atomic<services::IMEMonitor*>               g_imeMonitor{nullptr};
 std::atomic<services::SettingsManager*>          g_settingsManager{nullptr};
 std::atomic<services::ProcessPriorityMonitor*>   g_priorityMonitor{nullptr};
+
+// 電源モードトグルハンドラ（cmd 210 で App::togglePowerModeAndNotify を実行するため）。
+// std::function は std::atomic に乗らないため mutex で保護。設定はメインスレッド単一回想定、
+// 読み取りはホットキー WM 経由（メインスレッド）。コピーしてからロック外で実行する。
+std::mutex                  g_handlerMutex;
+PowerModeToggleHandler      g_powerModeToggleHandler;
 
 class ImeIndicatorCmdErrorCategory : public std::error_category {
 public:
@@ -133,12 +140,30 @@ std::expected<void, ImeIndicatorCmdError> cmdReloadIMESettings() noexcept {
 }
 
 // cmd 210: 電源モード切替（バックアップ付き）
+//
+// App から togglePowerModeAndNotify ハンドラが注入されている場合、それを呼び出す
+// （バックアップ・モード切替・インジケーター色更新・トレイバルーン通知を含む完全な処理）。
+// 未注入時は PowerModeService::toggleMode() フォールバックで OS 側のみ切替（UI 反映なし）。
 std::expected<void, ImeIndicatorCmdError> cmdTogglePowerMode() noexcept {
+    // ロック外で実行するためコピーを取得
+    PowerModeToggleHandler handler;
+    {
+        std::scoped_lock lk(g_handlerMutex);
+        handler = g_powerModeToggleHandler;
+    }
+    if (handler) {
+        handler();  // App::togglePowerModeAndNotify と等価
+        if (auto log = cmdLog()) {
+            log->info("TogglePowerMode: handler executed (notify+refresh+backup)");
+        }
+        return {};
+    }
+
+    // フォールバック（注入前または明示的に外された場合）
     const auto current = services::PowerModeService::getCurrentMode();
     const auto next    = services::PowerModeService::toggleMode();
-
     if (auto log = cmdLog()) {
-        log->info("TogglePowerMode: {} -> {}",
+        log->warn("TogglePowerMode (fallback, no handler): {} -> {}",
                   models::powerModeToStableString(current),
                   models::powerModeToStableString(next));
     }
@@ -301,6 +326,11 @@ void setSettingsManager(services::SettingsManager* manager) noexcept {
 
 void setProcessPriorityMonitor(services::ProcessPriorityMonitor* monitor) noexcept {
     g_priorityMonitor.store(monitor, std::memory_order_release);
+}
+
+void setPowerModeToggleHandler(PowerModeToggleHandler handler) noexcept {
+    std::scoped_lock lk(g_handlerMutex);
+    g_powerModeToggleHandler = std::move(handler);
 }
 
 } // namespace imeindicator::services::hotkey

@@ -121,4 +121,44 @@ bool ProcessPriorityService::setAffinity(DWORD processId, DWORD_PTR affinityMask
     return ok != FALSE;
 }
 
+bool ProcessPriorityService::isAccessibleForControl(const std::wstring& processNameNoExt)
+{
+    HANDLE snap = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snap == INVALID_HANDLE_VALUE) return true;  // 判定不能 → 警告色を出さない
+
+    PROCESSENTRY32W pe{};
+    pe.dwSize = sizeof(pe);
+    if (!::Process32FirstW(snap, &pe)) {
+        ::CloseHandle(snap);
+        return true;
+    }
+
+    bool sawAny = false;
+    bool anyAccessible = false;
+    do {
+        const std::wstring exeNoExt = stripExeExtension(pe.szExeFile);
+        if (!equalsIgnoreCase(exeNoExt, processNameNoExt)) continue;
+
+        sawAny = true;
+        // 実際の制御権限（PROCESS_SET_INFORMATION）を試す。
+        HANDLE proc = ::OpenProcess(PROCESS_SET_INFORMATION, FALSE, pe.th32ProcessID);
+        if (proc) {
+            ::CloseHandle(proc);
+            anyAccessible = true;
+            break;  // 1 つでも制御可能なら以降の探索は不要
+        }
+        // OpenProcess 失敗時は GetLastError を見て ACCESS_DENIED 以外なら判定不能とする。
+        if (!isAccessDeniedError()) {
+            anyAccessible = true;  // 不明なエラーは保守的に「判定不能」扱い
+            break;
+        }
+    } while (::Process32NextW(snap, &pe));
+
+    ::CloseHandle(snap);
+
+    // 一致プロセスが 0 件なら true（実行されていないので判定不能）
+    if (!sawAny) return true;
+    return anyAccessible;
+}
+
 } // namespace imeindicator::services
