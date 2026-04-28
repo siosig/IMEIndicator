@@ -2,12 +2,13 @@
 
 // FR-009: バージョン末尾をリリースビルドごとにインクリメント。
 // 1.3.0.0 = C++ ポーティング初期版（009-port-to-cpp）。
-// 1.4.0.0 = HotkeyP 機能マージ初期版（010-hotkeyp-merge）。
+// 1.4.0.0 = HotkeyP 機能マージ初期版（010-hotkeyp-merge、設定ファイル手書きで動作）。
+// 1.4.0.1 = ホットキー設定 UI 追加（Phase 3 完成）。
 // 以降は最終要素（BUILD）を 1 ずつ上げる。
 #define IMEINDICATOR_VERSION_MAJOR 1
 #define IMEINDICATOR_VERSION_MINOR 4
 #define IMEINDICATOR_VERSION_PATCH 0
-#define IMEINDICATOR_VERSION_BUILD 0
+#define IMEINDICATOR_VERSION_BUILD 1
 
 #define IMEINDICATOR_VERSION_NUM  IMEINDICATOR_VERSION_MAJOR, \
                                   IMEINDICATOR_VERSION_MINOR, \

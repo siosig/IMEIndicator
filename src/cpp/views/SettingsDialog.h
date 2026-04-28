@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../models/ProcessPriorityRule.h"
+#include "../models/hotkey/HotKeyEntry.h"
 #include "../services/SettingsManager.h"
 
 #include <functional>
@@ -61,12 +62,26 @@ private:
     static bool showRuleEditDialog(HWND owner, HINSTANCE hInstance,
                                    models::ProcessPriorityRule& rule);
 
+    // === ホットキー編集系（Phase 3 / US1 / 010-hotkeyp-merge） ===
+    void refreshHotkeyListView();
+    int  selectedHotkeyIndex() const;
+    void onAddHotkey();
+    void onEditHotkey();
+    void onDeleteHotkey();
+
+    // ホットキー編集サブダイアログ（モーダル）。OK で true。
+    static bool showHotkeyEditDialog(HWND owner, HINSTANCE hInstance,
+                                     models::hotkey::HotKeyEntry& entry);
+
     services::SettingsManager& mgr_;
     AppliedCallback appliedCallback_;
     AccessDeniedCountCallback accessDeniedCountCallback_;
 
     // ルール編集の作業コピー（OK/適用で settings へ反映）
     std::vector<models::ProcessPriorityRule> workingRules_;
+
+    // ホットキー編集の作業コピー（OK/適用で settings.hotkeySettings へ反映）
+    std::vector<models::hotkey::HotKeyEntry> workingHotkeys_;
 
     HWND hwnd_{nullptr};
     HINSTANCE hInstance_{nullptr};
@@ -88,6 +103,12 @@ private:
     HWND hDeleteRule_{nullptr};
     HWND hPollingInterval_{nullptr};
     HWND hAdminStatus_{nullptr};
+
+    // ホットキー（010-hotkeyp-merge / Phase 3）
+    HWND hHotkeyList_{nullptr};
+    HWND hAddHotkey_{nullptr};
+    HWND hEditHotkey_{nullptr};
+    HWND hDeleteHotkey_{nullptr};
 
     // ボタン
     HWND hOk_{nullptr};

@@ -8,6 +8,7 @@
 #endif
 #include <windows.h>
 #include <commctrl.h>
+#include <commdlg.h>  // OPENFILENAMEW / GetOpenFileNameW（参照ボタン用）
 
 #include <algorithm>
 #include <array>
@@ -17,6 +18,7 @@
 
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "comdlg32.lib")
 
 namespace imeindicator::views {
 
@@ -40,9 +42,34 @@ enum CtrlId : int {
     ID_RULE_EDIT,
     ID_RULE_DELETE,
     ID_POLLING,
+    // Phase 3 / US1 (010-hotkeyp-merge): ホットキー編集
+    ID_HOTKEY_LIST   = 1020,
+    ID_HOTKEY_ADD    = 1021,
+    ID_HOTKEY_EDIT   = 1022,
+    ID_HOTKEY_DELETE = 1023,
     ID_OK = 2001,
     ID_CANCEL,
     ID_APPLY,
+};
+
+// ホットキー編集サブダイアログのコントロール ID（4001〜4099）
+enum HotkeyEditId : int {
+    HK_EDIT_NOTE      = 4001,
+    HK_EDIT_SHORTCUT  = 4002,
+    HK_EDIT_USE_EXE   = 4003,  // ラジオ: exe 起動
+    HK_EDIT_USE_CMD   = 4004,  // ラジオ: 内部コマンド
+    HK_EDIT_EXE       = 4005,
+    HK_EDIT_BROWSE    = 4006,
+    HK_EDIT_ARGS      = 4007,
+    HK_EDIT_DIR       = 4008,
+    HK_EDIT_CMD       = 4009,
+    HK_EDIT_DISABLE   = 4010,
+    HK_EDIT_MULTINST  = 4011,
+    HK_EDIT_TRAYMENU  = 4012,
+    HK_EDIT_AUTOSTART = 4013,
+    HK_EDIT_ADMIN     = 4014,
+    HK_EDIT_OK        = 4098,
+    HK_EDIT_CANCEL    = 4099,
 };
 
 // 編集サブダイアログ側コントロール ID
@@ -396,15 +423,20 @@ void SettingsDialog::show(HINSTANCE hInstance)
     ::RegisterClassExW(&wc);
 
     constexpr int kIndicatorRows = 8;
-    constexpr int kRulesH = 200;
+    constexpr int kRulesH = 180;
     constexpr int kRuleButtonsH = 36;
     constexpr int kPollingH = kRowH;
     constexpr int kAdminH = 22;
+    // 010-hotkeyp-merge: ホットキーセクション
+    constexpr int kHotkeysHeaderH = 22;
+    constexpr int kHotkeysListH   = 150;
+    constexpr int kHotkeysBtnH    = 36;
     constexpr int kButtonsH = 40;
 
     constexpr int kWindowW = kPad * 3 + kLabelW + kCtrlW;
     const int kWindowH = kPad * 2 + kIndicatorRows * kRowH + 14
                          + kRulesH + kRuleButtonsH + kPollingH + kAdminH
+                         + kHotkeysHeaderH + kHotkeysListH + kHotkeysBtnH + 14
                          + kButtonsH + 30;
 
     RECT work{};
@@ -535,7 +567,44 @@ void SettingsDialog::createControls(HWND parent, HINSTANCE hInst)
         0, L"STATIC", L"",
         WS_CHILD | WS_VISIBLE | SS_LEFT,
         kPad, y, kLabelW + kCtrlW, 22, parent, nullptr, hInst, nullptr);
-    y += 22 + 6;
+    y += 22 + 14;
+
+    // ===== ホットキー（010-hotkeyp-merge / Phase 3） =====
+    addLabel(parent, hInst, kPad, y, kLabelW + kCtrlW,
+             L"ホットキー（最大 256 件）");
+    y += 22;
+
+    constexpr int kHotkeysListH = 150;
+    constexpr int kHotkeysListW = kLabelW + kCtrlW;
+    hHotkeyList_ = ::CreateWindowExW(
+        WS_EX_CLIENTEDGE, WC_LISTVIEWW, L"",
+        WS_CHILD | WS_VISIBLE | WS_TABSTOP | LVS_REPORT | LVS_SHOWSELALWAYS |
+            LVS_SINGLESEL,
+        kPad, y, kHotkeysListW, kHotkeysListH, parent,
+        reinterpret_cast<HMENU>(static_cast<INT_PTR>(ID_HOTKEY_LIST)),
+        hInst, nullptr);
+    ListView_SetExtendedListViewStyle(hHotkeyList_,
+        LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+
+    LVCOLUMNW hkCol{};
+    hkCol.mask = LVCF_TEXT | LVCF_WIDTH;
+    hkCol.pszText = const_cast<wchar_t*>(L"キー");        hkCol.cx = 130;
+    ListView_InsertColumn(hHotkeyList_, 0, &hkCol);
+    hkCol.pszText = const_cast<wchar_t*>(L"動作");        hkCol.cx = 200;
+    ListView_InsertColumn(hHotkeyList_, 1, &hkCol);
+    hkCol.pszText = const_cast<wchar_t*>(L"コメント");    hkCol.cx = 60;
+    ListView_InsertColumn(hHotkeyList_, 2, &hkCol);
+
+    y += kHotkeysListH + 6;
+
+    // ホットキー操作ボタン
+    int hkBx = kPad;
+    hAddHotkey_    = addButton(parent, hInst, hkBx, y, btnW, ID_HOTKEY_ADD,    L"追加");
+    hkBx += btnW + btnGap;
+    hEditHotkey_   = addButton(parent, hInst, hkBx, y, btnW, ID_HOTKEY_EDIT,   L"編集");
+    hkBx += btnW + btnGap;
+    hDeleteHotkey_ = addButton(parent, hInst, hkBx, y, btnW, ID_HOTKEY_DELETE, L"削除");
+    y += 36;
 
     // OK / キャンセル / 適用
     constexpr int finalBtnW = 90;
@@ -565,6 +634,10 @@ void SettingsDialog::loadFromSettings()
     wchar_t buf[16];
     ::swprintf_s(buf, L"%d", std::clamp(s.pollingIntervalSeconds, 1, 1800));
     ::SetWindowTextW(hPollingInterval_, buf);
+
+    // ホットキー（010-hotkeyp-merge / Phase 3）
+    workingHotkeys_ = s.hotkeySettings.hotkeys;
+    refreshHotkeyListView();
 }
 
 void SettingsDialog::refreshRuleListView()
@@ -682,6 +755,9 @@ bool SettingsDialog::readControlsToSettings(models::AppSettings& out) const
     out.processPriorityRules = workingRules_;
     out.pollingIntervalSeconds = getEditInt(hPollingInterval_, out.pollingIntervalSeconds);
 
+    // ホットキー（010-hotkeyp-merge / Phase 3）
+    out.hotkeySettings.hotkeys = workingHotkeys_;
+
     out.clamp();
     return true;
 }
@@ -693,7 +769,9 @@ void SettingsDialog::onApply()
     mgr_.setSettings(next);
     mgr_.save();
     workingRules_ = mgr_.settings().processPriorityRules;
+    workingHotkeys_ = mgr_.settings().hotkeySettings.hotkeys;
     refreshRuleListView();
+    refreshHotkeyListView();
     updateAdminStatusLabel();
     if (appliedCallback_) appliedCallback_(next);
 }
@@ -730,18 +808,26 @@ LRESULT SettingsDialog::handleMessage(UINT msg, WPARAM wp, LPARAM lp)
     switch (msg) {
         case WM_COMMAND:
             switch (LOWORD(wp)) {
-                case ID_OK:          onOk();         return 0;
-                case ID_CANCEL:      onCancel();     return 0;
-                case ID_APPLY:       onApply();      return 0;
-                case ID_RULE_ADD:    onAddRule();    return 0;
-                case ID_RULE_EDIT:   onEditRule();   return 0;
-                case ID_RULE_DELETE: onDeleteRule(); return 0;
+                case ID_OK:            onOk();          return 0;
+                case ID_CANCEL:        onCancel();      return 0;
+                case ID_APPLY:         onApply();       return 0;
+                case ID_RULE_ADD:      onAddRule();     return 0;
+                case ID_RULE_EDIT:     onEditRule();    return 0;
+                case ID_RULE_DELETE:   onDeleteRule();  return 0;
+                // 010-hotkeyp-merge / Phase 3
+                case ID_HOTKEY_ADD:    onAddHotkey();   return 0;
+                case ID_HOTKEY_EDIT:   onEditHotkey();  return 0;
+                case ID_HOTKEY_DELETE: onDeleteHotkey();return 0;
             }
             break;
         case WM_NOTIFY: {
             auto* nm = reinterpret_cast<NMHDR*>(lp);
             if (nm && nm->hwndFrom == hRulesList_ && nm->code == NM_DBLCLK) {
                 onEditRule();
+                return 0;
+            }
+            if (nm && nm->hwndFrom == hHotkeyList_ && nm->code == NM_DBLCLK) {
+                onEditHotkey();
                 return 0;
             }
             break;
@@ -751,6 +837,452 @@ LRESULT SettingsDialog::handleMessage(UINT msg, WPARAM wp, LPARAM lp)
             return 0;
     }
     return ::DefWindowProcW(hwnd_, msg, wp, lp);
+}
+
+// ============================================================================
+// 010-hotkeyp-merge / Phase 3 (US1): ホットキー編集 UI
+// ============================================================================
+
+namespace {
+
+// 修飾キーのビット → 表示プレフィックス（contracts/hotkey-entry-schema.md §modifiers ビットマスク詳細）
+std::wstring modifiersToString(UINT mods)
+{
+    std::wstring s;
+    if (mods & MOD_CONTROL) s += L"Ctrl+";
+    if (mods & MOD_ALT)     s += L"Alt+";
+    if (mods & MOD_SHIFT)   s += L"Shift+";
+    if (mods & MOD_WIN)     s += L"Win+";
+    return s;
+}
+
+// vkey → 人間に読みやすい名前（不明な場合は "VK_<hex>"）
+std::wstring vkeyToString(UINT vkey)
+{
+    if (vkey == 0) return L"(未設定)";
+    if (vkey >= 'A' && vkey <= 'Z') return std::wstring(1, static_cast<wchar_t>(vkey));
+    if (vkey >= '0' && vkey <= '9') return std::wstring(1, static_cast<wchar_t>(vkey));
+    if (vkey >= VK_F1 && vkey <= VK_F24) {
+        wchar_t b[8]; ::swprintf_s(b, L"F%u", vkey - VK_F1 + 1); return b;
+    }
+    switch (vkey) {
+        case VK_RETURN:   return L"Enter";
+        case VK_ESCAPE:   return L"Esc";
+        case VK_TAB:      return L"Tab";
+        case VK_BACK:     return L"Backspace";
+        case VK_DELETE:   return L"Delete";
+        case VK_INSERT:   return L"Insert";
+        case VK_HOME:     return L"Home";
+        case VK_END:      return L"End";
+        case VK_PRIOR:    return L"PgUp";
+        case VK_NEXT:     return L"PgDn";
+        case VK_UP:       return L"↑";
+        case VK_DOWN:     return L"↓";
+        case VK_LEFT:     return L"←";
+        case VK_RIGHT:    return L"→";
+        case VK_SPACE:    return L"Space";
+        case VK_SNAPSHOT: return L"PrintScreen";
+        case VK_PAUSE:    return L"Pause";
+        case VK_CAPITAL:  return L"CapsLock";
+        case VK_NUMLOCK:  return L"NumLock";
+        case VK_SCROLL:   return L"ScrollLock";
+        case 0x200:       return L"(マウス)";
+        default: {
+            wchar_t b[16]; ::swprintf_s(b, L"VK_0x%X", vkey); return b;
+        }
+    }
+}
+
+// 表示用: "Ctrl+Alt+N (cmd=-1, exe=notepad.exe)" のような形式
+std::wstring describeHotkey(const models::hotkey::HotKeyEntry& e)
+{
+    std::wstring shortcut = modifiersToString(e.modifiers) + vkeyToString(e.vkey);
+    if (shortcut.empty() && e.autoStart) return L"(autoStart のみ)";
+    return shortcut;
+}
+
+std::wstring describeAction(const models::hotkey::HotKeyEntry& e)
+{
+    if (!e.exe.empty()) {
+        // ファイル名のみ抽出
+        size_t p = e.exe.find_last_of(L"\\/");
+        return (p == std::wstring::npos) ? e.exe : e.exe.substr(p + 1);
+    }
+    if (e.cmd >= 0) {
+        wchar_t b[64];
+        ::swprintf_s(b, L"内部コマンド cmd=%d", e.cmd);
+        return b;
+    }
+    return L"(未設定)";
+}
+
+// ShortcutKeyEdit: EDIT を SUBCLASS して WM_KEYDOWN を捕捉する。
+// 編集中の vkey/modifiers をプロパティとして HWND に持たせる。
+struct ShortcutData { UINT vkey; UINT modifiers; };
+
+LRESULT CALLBACK shortcutKeyEditProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
+                                     UINT_PTR uIdSubclass, DWORD_PTR /*dwRefData*/)
+{
+    if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
+        UINT vkey = static_cast<UINT>(wp);
+        // 修飾キー単独は無視
+        if (vkey == VK_CONTROL || vkey == VK_LCONTROL || vkey == VK_RCONTROL ||
+            vkey == VK_SHIFT   || vkey == VK_LSHIFT   || vkey == VK_RSHIFT   ||
+            vkey == VK_MENU    || vkey == VK_LMENU    || vkey == VK_RMENU    ||
+            vkey == VK_LWIN    || vkey == VK_RWIN) {
+            return 0;
+        }
+        UINT mods = 0;
+        if (::GetKeyState(VK_CONTROL) & 0x8000) mods |= MOD_CONTROL;
+        if (::GetKeyState(VK_SHIFT)   & 0x8000) mods |= MOD_SHIFT;
+        if (::GetKeyState(VK_MENU)    & 0x8000) mods |= MOD_ALT;
+        if ((::GetKeyState(VK_LWIN) | ::GetKeyState(VK_RWIN)) & 0x8000) mods |= MOD_WIN;
+
+        auto* data = reinterpret_cast<ShortcutData*>(::GetPropW(hwnd, L"ShortcutData"));
+        if (data) {
+            data->vkey = vkey;
+            data->modifiers = mods;
+            std::wstring s = modifiersToString(mods) + vkeyToString(vkey);
+            ::SetWindowTextW(hwnd, s.c_str());
+        }
+        return 0;
+    }
+    if (msg == WM_KEYUP || msg == WM_SYSKEYUP || msg == WM_CHAR) {
+        return 0;  // 通常入力をブロック
+    }
+    if (msg == WM_NCDESTROY) {
+        ::RemovePropW(hwnd, L"ShortcutData");
+        ::RemoveWindowSubclass(hwnd, shortcutKeyEditProc, uIdSubclass);
+    }
+    return ::DefSubclassProc(hwnd, msg, wp, lp);
+}
+
+void attachShortcutKeyEdit(HWND hEdit, ShortcutData* data)
+{
+    ::SetPropW(hEdit, L"ShortcutData", reinterpret_cast<HANDLE>(data));
+    ::SetWindowSubclass(hEdit, shortcutKeyEditProc, 1, 0);
+}
+
+// ホットキー編集ダイアログのコンテキスト
+struct HotkeyEditContext {
+    models::hotkey::HotKeyEntry entry;
+    ShortcutData shortcut{};
+    HWND hShortcut{}, hNote{}, hRadioExe{}, hRadioCmd{};
+    HWND hExe{}, hBrowse{}, hArgs{}, hDir{}, hCmd{};
+    HWND hDisable{}, hMultInst{}, hTrayMenu{}, hAutoStart{}, hAdmin{};
+    HWND hOk{}, hCancel{};
+    bool ok{false};
+    bool closed{false};
+};
+
+constexpr wchar_t kHotkeyEditClassName[] = L"IMEIndicator_HotkeyEditDialog";
+
+LRESULT CALLBACK hotkeyEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (msg == WM_NCCREATE) {
+        auto* cs = reinterpret_cast<CREATESTRUCTW*>(lp);
+        ::SetWindowLongPtrW(hwnd, GWLP_USERDATA,
+                            reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
+        return ::DefWindowProcW(hwnd, msg, wp, lp);
+    }
+    auto* ctx = reinterpret_cast<HotkeyEditContext*>(
+        ::GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+
+    if (msg == WM_COMMAND && ctx) {
+        const int id = LOWORD(wp);
+        if (id == HK_EDIT_OK) {
+            // 入力を ctx.entry に反映
+            wchar_t buf[1024];
+            ::GetWindowTextW(ctx->hNote, buf, ARRAYSIZE(buf));
+            ctx->entry.note = buf;
+            ::GetWindowTextW(ctx->hExe, buf, ARRAYSIZE(buf));
+            ctx->entry.exe = buf;
+            ::GetWindowTextW(ctx->hArgs, buf, ARRAYSIZE(buf));
+            ctx->entry.args = buf;
+            ::GetWindowTextW(ctx->hDir, buf, ARRAYSIZE(buf));
+            ctx->entry.dir = buf;
+
+            ctx->entry.vkey = ctx->shortcut.vkey;
+            ctx->entry.modifiers = ctx->shortcut.modifiers;
+
+            // ラジオ判定
+            const bool useCmd =
+                (::SendMessageW(ctx->hRadioCmd, BM_GETCHECK, 0, 0) == BST_CHECKED);
+            if (useCmd) {
+                ::GetWindowTextW(ctx->hCmd, buf, ARRAYSIZE(buf));
+                try { ctx->entry.cmd = std::stoi(buf); } catch (...) { ctx->entry.cmd = -1; }
+                ctx->entry.exe.clear();
+            } else {
+                ctx->entry.cmd = -1;
+            }
+
+            ctx->entry.disable   = (::SendMessageW(ctx->hDisable,   BM_GETCHECK, 0, 0) == BST_CHECKED);
+            ctx->entry.multInst  = (::SendMessageW(ctx->hMultInst,  BM_GETCHECK, 0, 0) == BST_CHECKED);
+            ctx->entry.trayMenu  = (::SendMessageW(ctx->hTrayMenu,  BM_GETCHECK, 0, 0) == BST_CHECKED);
+            ctx->entry.autoStart = (::SendMessageW(ctx->hAutoStart, BM_GETCHECK, 0, 0) == BST_CHECKED);
+            ctx->entry.admin     = (::SendMessageW(ctx->hAdmin,     BM_GETCHECK, 0, 0) == BST_CHECKED);
+
+            // バリデーション
+            if (auto v = ctx->entry.validate(); !v) {
+                ::MessageBoxW(hwnd,
+                    L"入力に不備があります。\nショートカットキーまたは内部コマンドを設定し、"
+                    L"exe と cmd を同時に指定しないでください。",
+                    L"IME Indicator", MB_OK | MB_ICONWARNING);
+                return 0;
+            }
+
+            ctx->ok = true;
+            ctx->closed = true;
+            return 0;
+        }
+        if (id == HK_EDIT_CANCEL) {
+            ctx->closed = true;
+            return 0;
+        }
+        if (id == HK_EDIT_BROWSE) {
+            wchar_t file[MAX_PATH] = L"";
+            OPENFILENAMEW ofn{};
+            ofn.lStructSize = sizeof(ofn);
+            ofn.hwndOwner = hwnd;
+            ofn.lpstrFilter = L"実行ファイル (*.exe;*.com;*.bat)\0*.exe;*.com;*.bat\0"
+                              L"すべてのファイル (*.*)\0*.*\0";
+            ofn.lpstrFile = file;
+            ofn.nMaxFile = MAX_PATH;
+            ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+            if (::GetOpenFileNameW(&ofn)) {
+                ::SetWindowTextW(ctx->hExe, file);
+            }
+            return 0;
+        }
+    }
+    if (msg == WM_CLOSE && ctx) {
+        ctx->closed = true;
+        return 0;
+    }
+    return ::DefWindowProcW(hwnd, msg, wp, lp);
+}
+
+} // namespace
+
+// ============================================================================
+// SettingsDialog のホットキー編集メソッド実装
+// ============================================================================
+
+void SettingsDialog::refreshHotkeyListView()
+{
+    if (!hHotkeyList_) return;
+    ListView_DeleteAllItems(hHotkeyList_);
+    for (size_t i = 0; i < workingHotkeys_.size(); ++i) {
+        const auto& e = workingHotkeys_[i];
+
+        std::wstring shortcut = describeHotkey(e);
+        std::wstring action   = describeAction(e);
+        std::wstring note     = e.note;
+
+        LVITEMW item{};
+        item.mask = LVIF_TEXT;
+        item.iItem = static_cast<int>(i);
+        item.iSubItem = 0;
+        item.pszText = shortcut.empty() ? const_cast<wchar_t*>(L"-")
+                                        : shortcut.data();
+        ListView_InsertItem(hHotkeyList_, &item);
+        ListView_SetItemText(hHotkeyList_, static_cast<int>(i), 1, action.data());
+        ListView_SetItemText(hHotkeyList_, static_cast<int>(i), 2,
+            note.empty() ? const_cast<wchar_t*>(L"") : note.data());
+    }
+}
+
+int SettingsDialog::selectedHotkeyIndex() const
+{
+    if (!hHotkeyList_) return -1;
+    return ListView_GetNextItem(hHotkeyList_, -1, LVNI_SELECTED);
+}
+
+void SettingsDialog::onAddHotkey()
+{
+    if (workingHotkeys_.size() >= 256) {
+        ::MessageBoxW(hwnd_,
+            L"ホットキーは最大 256 件までです。",
+            L"IME Indicator", MB_OK | MB_ICONINFORMATION);
+        return;
+    }
+    models::hotkey::HotKeyEntry entry{};
+    entry.cmdShow = models::hotkey::WindowShow::Normal;
+    entry.priority = models::hotkey::ProcessPriorityLevel::Normal;
+    if (showHotkeyEditDialog(hwnd_, hInstance_, entry)) {
+        workingHotkeys_.push_back(std::move(entry));
+        refreshHotkeyListView();
+        ListView_SetItemState(hHotkeyList_,
+            static_cast<int>(workingHotkeys_.size() - 1),
+            LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+    }
+}
+
+void SettingsDialog::onEditHotkey()
+{
+    int idx = selectedHotkeyIndex();
+    if (idx < 0 || static_cast<size_t>(idx) >= workingHotkeys_.size()) return;
+    auto entry = workingHotkeys_[idx];
+    if (showHotkeyEditDialog(hwnd_, hInstance_, entry)) {
+        workingHotkeys_[idx] = std::move(entry);
+        refreshHotkeyListView();
+        ListView_SetItemState(hHotkeyList_, idx,
+            LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+    }
+}
+
+void SettingsDialog::onDeleteHotkey()
+{
+    int idx = selectedHotkeyIndex();
+    if (idx < 0 || static_cast<size_t>(idx) >= workingHotkeys_.size()) return;
+    workingHotkeys_.erase(workingHotkeys_.begin() + idx);
+    refreshHotkeyListView();
+}
+
+bool SettingsDialog::showHotkeyEditDialog(HWND owner, HINSTANCE hInstance,
+                                          models::hotkey::HotKeyEntry& entry)
+{
+    static bool s_classRegistered = false;
+    if (!s_classRegistered) {
+        WNDCLASSEXW wc{};
+        wc.cbSize = sizeof(wc);
+        wc.lpfnWndProc = &hotkeyEditWndProc;
+        wc.hInstance = hInstance;
+        wc.hCursor = ::LoadCursorW(nullptr, IDC_ARROW);
+        wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1);
+        wc.lpszClassName = kHotkeyEditClassName;
+        ::RegisterClassExW(&wc);
+        s_classRegistered = true;
+    }
+
+    HotkeyEditContext ctx{};
+    ctx.entry = entry;
+    ctx.shortcut.vkey = entry.vkey;
+    ctx.shortcut.modifiers = entry.modifiers;
+
+    constexpr int kW = 480;
+    constexpr int kH = 480;
+    RECT rcOwner{};
+    if (owner) ::GetWindowRect(owner, &rcOwner);
+    int x = (rcOwner.left + rcOwner.right - kW) / 2;
+    int y = (rcOwner.top + rcOwner.bottom - kH) / 2;
+    if (x < 0) x = 100;
+    if (y < 0) y = 100;
+
+    HWND hwnd = ::CreateWindowExW(
+        WS_EX_DLGMODALFRAME, kHotkeyEditClassName, L"ホットキー編集",
+        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+        x, y, kW, kH, owner, nullptr, hInstance, &ctx);
+    if (!hwnd) return false;
+
+    int yy = kPad;
+    constexpr int kLblW = 110;
+    constexpr int kCtrlX = kPad + kLblW;
+    constexpr int kCtrlW2 = kW - kCtrlX - kPad - 16;
+
+    addLabel(hwnd, hInstance, kPad, yy, kLblW, L"ショートカット");
+    ctx.hShortcut = addEdit(hwnd, hInstance, kCtrlX, yy, kCtrlW2, 22, HK_EDIT_SHORTCUT);
+    {
+        std::wstring s = modifiersToString(ctx.shortcut.modifiers) + vkeyToString(ctx.shortcut.vkey);
+        ::SetWindowTextW(ctx.hShortcut, s.c_str());
+    }
+    attachShortcutKeyEdit(ctx.hShortcut, &ctx.shortcut);
+    yy += kRowH;
+
+    addLabel(hwnd, hInstance, kPad, yy, kLblW, L"コメント");
+    ctx.hNote = addEdit(hwnd, hInstance, kCtrlX, yy, kCtrlW2, 22, HK_EDIT_NOTE);
+    ::SetWindowTextW(ctx.hNote, ctx.entry.note.c_str());
+    yy += kRowH;
+
+    // ラジオボタン: exe / cmd
+    ctx.hRadioExe = ::CreateWindowExW(0, L"BUTTON", L"アプリ・URL・フォルダ起動",
+        WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_GROUP | BS_AUTORADIOBUTTON,
+        kPad, yy, 220, 22, hwnd,
+        reinterpret_cast<HMENU>(static_cast<INT_PTR>(HK_EDIT_USE_EXE)), hInstance, nullptr);
+    ctx.hRadioCmd = ::CreateWindowExW(0, L"BUTTON", L"内部コマンド",
+        WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTORADIOBUTTON,
+        kPad + 230, yy, 200, 22, hwnd,
+        reinterpret_cast<HMENU>(static_cast<INT_PTR>(HK_EDIT_USE_CMD)), hInstance, nullptr);
+    const bool isCmd = ctx.entry.cmd >= 0;
+    ::SendMessageW(isCmd ? ctx.hRadioCmd : ctx.hRadioExe, BM_SETCHECK, BST_CHECKED, 0);
+    yy += kRowH;
+
+    addLabel(hwnd, hInstance, kPad, yy, kLblW, L"exe / URL / パス");
+    constexpr int kBrowseW = 60;
+    ctx.hExe = addEdit(hwnd, hInstance, kCtrlX, yy, kCtrlW2 - kBrowseW - 4, 22, HK_EDIT_EXE);
+    ::SetWindowTextW(ctx.hExe, ctx.entry.exe.c_str());
+    ctx.hBrowse = addButton(hwnd, hInstance, kCtrlX + kCtrlW2 - kBrowseW, yy, kBrowseW,
+                            HK_EDIT_BROWSE, L"参照...");
+    yy += kRowH;
+
+    addLabel(hwnd, hInstance, kPad, yy, kLblW, L"引数");
+    ctx.hArgs = addEdit(hwnd, hInstance, kCtrlX, yy, kCtrlW2, 22, HK_EDIT_ARGS);
+    ::SetWindowTextW(ctx.hArgs, ctx.entry.args.c_str());
+    yy += kRowH;
+
+    addLabel(hwnd, hInstance, kPad, yy, kLblW, L"作業ディレクトリ");
+    ctx.hDir = addEdit(hwnd, hInstance, kCtrlX, yy, kCtrlW2, 22, HK_EDIT_DIR);
+    ::SetWindowTextW(ctx.hDir, ctx.entry.dir.c_str());
+    yy += kRowH;
+
+    addLabel(hwnd, hInstance, kPad, yy, kLblW, L"内部コマンド ID");
+    ctx.hCmd = addEdit(hwnd, hInstance, kCtrlX, yy, 100, 22, HK_EDIT_CMD);
+    {
+        wchar_t b[16]; ::swprintf_s(b, L"%d", ctx.entry.cmd); ::SetWindowTextW(ctx.hCmd, b);
+    }
+    addLabel(hwnd, hInstance, kCtrlX + 110, yy, 280,
+             L"-1=非コマンド / 0-120,200-299=有効");
+    yy += kRowH;
+
+    // フラグ群
+    ctx.hDisable   = addCheck(hwnd, hInstance, kPad,        yy, 100, HK_EDIT_DISABLE,   L"無効化");
+    ctx.hMultInst  = addCheck(hwnd, hInstance, kPad + 110,  yy, 130, HK_EDIT_MULTINST,  L"複数起動許可");
+    ctx.hTrayMenu  = addCheck(hwnd, hInstance, kPad + 250,  yy, 200, HK_EDIT_TRAYMENU,  L"トレイメニュー表示");
+    yy += 24;
+    ctx.hAutoStart = addCheck(hwnd, hInstance, kPad,        yy, 130, HK_EDIT_AUTOSTART, L"起動時に自動実行");
+    ctx.hAdmin     = addCheck(hwnd, hInstance, kPad + 140,  yy, 200, HK_EDIT_ADMIN,     L"管理者として実行");
+    ::SendMessageW(ctx.hDisable,   BM_SETCHECK, ctx.entry.disable   ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendMessageW(ctx.hMultInst,  BM_SETCHECK, ctx.entry.multInst  ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendMessageW(ctx.hTrayMenu,  BM_SETCHECK, ctx.entry.trayMenu  ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendMessageW(ctx.hAutoStart, BM_SETCHECK, ctx.entry.autoStart ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendMessageW(ctx.hAdmin,     BM_SETCHECK, ctx.entry.admin     ? BST_CHECKED : BST_UNCHECKED, 0);
+    yy += 30;
+
+    // OK / キャンセル
+    constexpr int kBtnW = 100;
+    constexpr int kBtnGap = 10;
+    int bx = kW - 30 - kBtnW * 2 - kBtnGap;
+    ctx.hOk     = addButton(hwnd, hInstance, bx, yy, kBtnW, HK_EDIT_OK,     L"OK", true);
+    bx += kBtnW + kBtnGap;
+    ctx.hCancel = addButton(hwnd, hInstance, bx, yy, kBtnW, HK_EDIT_CANCEL, L"キャンセル");
+
+    HFONT font = createUiFont();
+    applyFontRecursive(hwnd, font);
+
+    ::ShowWindow(hwnd, SW_SHOWNORMAL);
+    if (owner) ::EnableWindow(owner, FALSE);
+    ::SetFocus(ctx.hShortcut);
+
+    MSG msg{};
+    while (!ctx.closed && ::GetMessageW(&msg, nullptr, 0, 0) > 0) {
+        if (!::IsDialogMessageW(hwnd, &msg)) {
+            ::TranslateMessage(&msg);
+            ::DispatchMessageW(&msg);
+        }
+    }
+    if (msg.message == WM_QUIT) {
+        ::PostQuitMessage(static_cast<int>(msg.wParam));
+    }
+
+    if (owner) ::EnableWindow(owner, TRUE);
+    ::DestroyWindow(hwnd);
+    ::DeleteObject(font);
+
+    if (ctx.ok) {
+        entry = std::move(ctx.entry);
+        return true;
+    }
+    return false;
 }
 
 } // namespace imeindicator::views

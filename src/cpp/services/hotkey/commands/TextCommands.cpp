@@ -14,6 +14,7 @@
 #include "TextCommands.h"
 #include <cwctype>
 #include <map>
+#include <string_view>
 
 
 #include "../../../models/hotkey/HotKeyEntry.h"
@@ -255,18 +256,127 @@ std::vector<INPUT> parseMacroToInputs(std::wstring_view macro) {
     return inputs;
 }
 
+namespace {
+
+// マクロ実行終了時に押下中の修飾キーを強制リリース（spec Edge Case「マクロのキーリリース漏れ」対策）
+void forceReleaseModifiers() noexcept {
+    constexpr UINT modifierVks[] = {
+        VK_CONTROL, VK_LCONTROL, VK_RCONTROL,
+        VK_SHIFT,   VK_LSHIFT,   VK_RSHIFT,
+        VK_MENU,    VK_LMENU,    VK_RMENU,
+        VK_LWIN,    VK_RWIN
+    };
+    std::vector<INPUT> releases;
+    for (UINT vk : modifierVks) {
+        if (::GetAsyncKeyState(static_cast<int>(vk)) & 0x8000) {
+            INPUT inp{};
+            inp.type = INPUT_KEYBOARD;
+            inp.ki.wVk = static_cast<WORD>(vk);
+            inp.ki.dwFlags = KEYEVENTF_KEYUP;
+            releases.push_back(inp);
+        }
+    }
+    if (!releases.empty()) {
+        ::SendInput(static_cast<UINT>(releases.size()),
+                    releases.data(), sizeof(INPUT));
+    }
+}
+
+} // namespace
+
 std::expected<void, TextError> executeMacro(std::wstring_view macro) noexcept {
     if (macro.empty()) return std::unexpected(TextError::EmptyText);
 
-    auto inputs = parseMacroToInputs(macro);
-    if (inputs.empty()) return {};
+    // T021 (Phase 4 / US2): \rep <count> および \sleep <ms> をサポート
+    //
+    // 戦略:
+    //   1) 文字列冒頭の \rep <count> を検出（あれば最大 100 回まで全体を繰り返し）
+    //   2) 文字列を \sleep <ms> で分割し、各セグメントを SendInput → Sleep の順で実行
+    //   3) 終了時に修飾キーを強制リリース
 
-    const UINT sent = SendInput(
-        static_cast<UINT>(inputs.size()),
-        inputs.data(),
-        sizeof(INPUT)
-    );
-    if (sent == 0) return std::unexpected(TextError::ApiCallFailed);
+    std::wstring src(macro);
+
+    // \rep <count> パース（冒頭のみ）
+    int repeatCount = 1;
+    {
+        constexpr std::wstring_view kRepTag = L"\\rep ";
+        if (src.starts_with(kRepTag)) {
+            const size_t cmdStart = kRepTag.size();
+            size_t cmdEnd = cmdStart;
+            while (cmdEnd < src.size() && iswdigit(src[cmdEnd])) ++cmdEnd;
+            if (cmdEnd > cmdStart) {
+                try {
+                    repeatCount = std::clamp(
+                        std::stoi(src.substr(cmdStart, cmdEnd - cmdStart)),
+                        1, 100);
+                    // 後続の空白を 1 つだけスキップ
+                    if (cmdEnd < src.size() && src[cmdEnd] == L' ') ++cmdEnd;
+                    src.erase(0, cmdEnd);
+                } catch (...) {
+                    // パース失敗は無視（\rep をリテラルとして扱う）
+                }
+            }
+        }
+    }
+
+    // \sleep <ms> でセグメント分割（[(macro_text, sleep_ms_after), ...]）
+    struct Segment { std::wstring text; int sleepMs; };
+    std::vector<Segment> segments;
+    {
+        size_t pos = 0;
+        while (pos < src.size()) {
+            const size_t sleepPos = src.find(L"\\sleep ", pos);
+            if (sleepPos == std::wstring::npos) {
+                segments.push_back({src.substr(pos), 0});
+                break;
+            }
+            // sleep の前までを 1 セグメントに
+            const size_t numStart = sleepPos + 7;  // "\sleep " の後
+            size_t numEnd = numStart;
+            while (numEnd < src.size() && iswdigit(src[numEnd])) ++numEnd;
+            int ms = 0;
+            if (numEnd > numStart) {
+                try {
+                    ms = std::clamp(
+                        std::stoi(src.substr(numStart, numEnd - numStart)),
+                        0, 60000);
+                } catch (...) { ms = 0; }
+            }
+            segments.push_back({src.substr(pos, sleepPos - pos), ms});
+            // 末尾の空白を 1 つだけスキップ
+            if (numEnd < src.size() && src[numEnd] == L' ') ++numEnd;
+            pos = numEnd;
+        }
+    }
+
+    if (segments.empty()) {
+        // \rep だけだった or 空文字列
+        return {};
+    }
+
+    // 実行ループ: 各セグメントの INPUT を送出 → Sleep
+    for (int rep = 0; rep < repeatCount; ++rep) {
+        for (const auto& seg : segments) {
+            if (!seg.text.empty()) {
+                auto inputs = parseMacroToInputs(seg.text);
+                if (!inputs.empty()) {
+                    const UINT sent = ::SendInput(
+                        static_cast<UINT>(inputs.size()),
+                        inputs.data(),
+                        sizeof(INPUT));
+                    if (sent == 0) {
+                        forceReleaseModifiers();
+                        return std::unexpected(TextError::ApiCallFailed);
+                    }
+                }
+            }
+            if (seg.sleepMs > 0) {
+                ::Sleep(static_cast<DWORD>(seg.sleepMs));
+            }
+        }
+    }
+
+    forceReleaseModifiers();
     return {};
 }
 
