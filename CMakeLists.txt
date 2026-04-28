@@ -35,6 +35,15 @@ add_compile_definitions(
 )
 
 # ---- 共通コンパイラ/リンカフラグ ----
+# Release 最適化方針:
+#   /O2 /Oi /Gy   : 標準的な速度優先最適化と関数 COMDAT。
+#   /Ob3          : /O2 既定（Ob2）を超える積極的インライン展開（VS 2019 16.4+）。
+#   /Gw           : グローバル const データを COMDAT 化し、未参照削除と ICF を効かせる。
+#   /GL → /LTCG   : リンク時コード生成（プログラム全体最適化）。
+#   /arch:AVX2    : 配布対象 CPU（Intel 13600k / Ryzen 7840U / 8845HS）が全て AVX2
+#                   対応のため、SIMD 自動ベクトル化を最大化する。
+#                   AVX2 非対応 CPU では起動時に Illegal instruction でクラッシュする。
+#   /OPT:REF /OPT:ICF /INCREMENTAL:NO : 未参照シンボル削除・同一 COMDAT 折りたたみ。
 if(MSVC)
     add_compile_options(
         /utf-8
@@ -44,9 +53,12 @@ if(MSVC)
         /Zc:preprocessor
         /MP                    # 並列ビルド
         $<$<CONFIG:Release>:/O2>
+        $<$<CONFIG:Release>:/Ob3>           # 積極的インライン展開（Ob2 を上書き）
         $<$<CONFIG:Release>:/Oi>
-        $<$<CONFIG:Release>:/GL>     # LTCG
-        $<$<CONFIG:Release>:/Gy>     # 関数COMDATで /OPT:REF を効かせる
+        $<$<CONFIG:Release>:/GL>            # LTCG
+        $<$<CONFIG:Release>:/Gy>            # 関数COMDATで /OPT:REF を効かせる
+        $<$<CONFIG:Release>:/Gw>            # グローバルデータCOMDATで /OPT:ICF を効かせる
+        $<$<CONFIG:Release>:/arch:AVX2>     # AVX2 命令セット (要 CPU 対応)
         $<$<CONFIG:Debug>:/Od>
         $<$<CONFIG:Debug>:/Zi>
     )
