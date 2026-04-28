@@ -9,13 +9,20 @@
  */
 /*
  HotkeyP モダン再設計 - コマンドエグゼキュータ インターフェース
- 内部コマンド ID 0〜119 のディスパッチ
+ 内部コマンド ID 0〜120（HotkeyP 由来）と 200〜299（IMEIndicator 拡張）のディスパッチ。
+ 121〜199 は予約レンジ（HotkeyP 側で将来拡張があった場合の移植余地）。
 */
 
 #include <string_view>
 #include <expected>
 #include <system_error>
-#include "HotKeyEntry.h"
+#include "../../models/hotkey/HotKeyEntry.h"
+
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
 
 // コマンド実行エラー
 enum class ExecuteError {
@@ -38,9 +45,10 @@ executeCommand(Command cmd, std::wstring_view param, const HotKeyEntry* hk);
 [[nodiscard]] std::expected<void, ExecuteError>
 executeCommandById(int cmdId, std::wstring_view param, const HotKeyEntry* hk);
 
-// コマンド ID の有効性チェック
+// コマンド ID の有効性チェック（HotkeyP 由来 [0, 120] + IMEIndicator 拡張 [200, 299]）。
+// 121〜199 は予約レンジで無効扱い。300〜 は未定義。
 [[nodiscard]] constexpr bool isValidCommandId(int id) noexcept {
-    return id >= 0 && id <= 119;
+    return (id >= 0 && id <= 120) || (id >= 200 && id <= 299);
 }
 
 // コマンドの表示名を取得
@@ -49,3 +57,5 @@ executeCommandById(int cmdId, std::wstring_view param, const HotKeyEntry* hk);
 
 // メインウィンドウハンドルを設定（UI 層から呼び出す）
 void setMainWindowHandle(HWND hwnd) noexcept;
+
+} // namespace imeindicator::services::hotkey

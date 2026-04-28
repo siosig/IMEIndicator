@@ -22,6 +22,12 @@
 #include <stop_token>
 #include <thread>
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 // フックモード（useHook 設定値）
 enum class HookMode : int {
     None          = 0,  // フックなし（RegisterHotKey のみ）
@@ -109,3 +115,5 @@ private:
     // スレッド間共有（静的: フックプロシージャからアクセスするため）
     static HookEngine* s_instance;
 };
+
+} // namespace imeindicator::services::hotkey

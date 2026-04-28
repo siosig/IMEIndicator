@@ -14,8 +14,14 @@
 
 #include <windows.h>
 #include <functional>
-#include "HotKeyEntry.h"
+#include "../../models/hotkey/HotKeyEntry.h"
 #include "HookEngine.h"
+
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
 
 // 入力ソースの種別
 enum class InputSource {
@@ -40,7 +46,13 @@ public:
     // 特殊キー（CapsLock, NumLock など）かどうか
     [[nodiscard]] static bool isSpecialKey(UINT vkey) noexcept;
 
-    // WH_KEYBOARD_LL が必要かどうか（RegisterHotKey では処理できないキー）
+    // IME 切替キー（VK_KANJI / VK_DBE_DBCSCHAR / VK_DBE_SBCSCHAR / VK_KANA / VK_PROCESSKEY 等）かどうか。
+    // これらは IMEIndicator の既存 KeyboardHook が観察するキーで、HookEngine はホットキーとして
+    // 処理しない（spec FR-021 / research.md R-003）。
+    [[nodiscard]] static bool isImeSwitchKey(UINT vkey) noexcept;
+
+    // WH_KEYBOARD_LL が必要かどうか（RegisterHotKey では処理できないキー）。
+    // IME 切替キーは常に false を返す（HotkeyP 機能の対象外）。
     [[nodiscard]] static bool requiresLowLevelHook(UINT vkey, UINT modifiers) noexcept;
 
     // LL フックからのキーボードイベントをルーティング
@@ -58,3 +70,5 @@ public:
         UINT msg, WPARAM wParam, LPARAM lParam,
         const std::function<void(UINT vkey, DWORD scanCode, UINT modifiers)>& handler) noexcept;
 };
+
+} // namespace imeindicator::services::hotkey

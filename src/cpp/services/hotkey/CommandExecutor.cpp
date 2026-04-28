@@ -25,6 +25,12 @@
 #include "../commands/WindowCommands.h"
 #include "../platform/VirtualDesktop.h"
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 // メインウィンドウハンドル（UI 層から設定される）
 static HWND s_mainHwnd = nullptr;
 
@@ -574,3 +580,5 @@ executeCommand(Command cmd, std::wstring_view param, const HotKeyEntry* hk) {
     }
     return executeCommandById(static_cast<int>(cmd), param, hk);
 }
+
+} // namespace imeindicator::services::hotkey

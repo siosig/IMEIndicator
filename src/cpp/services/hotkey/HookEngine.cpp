@@ -14,6 +14,12 @@
 
 #include "HookEngine.h"
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 // --- エラーカテゴリ ---
 
 namespace {
@@ -191,3 +197,5 @@ void HookEngine::stop() noexcept {
     if (m_thread.joinable()) m_thread.join();
     m_running = false;
 }
+
+} // namespace imeindicator::services::hotkey

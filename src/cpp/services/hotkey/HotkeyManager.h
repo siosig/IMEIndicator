@@ -14,7 +14,13 @@
 
 #include <vector>
 #include <span>
-#include "HotKeyEntry.h"
+#include "../../models/hotkey/HotKeyEntry.h"
+
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
 
 // ホットキー配列管理クラス
 class HotkeyManager {
@@ -67,6 +73,13 @@ public:
     // ホットキーを HTK データからロード（既存エントリを置き換え）
     void loadFromHtkData(std::vector<HotKeyEntry> hotkeys);
 
+    // AppSettings.hotkeySettings 経由でのロード（IMEIndicator 統合用）。
+    // 既存エントリを置き換え、addHotkey の重複チェックは行わない（信頼された永続化データから）。
+    // 上限 256 件を超える分は無視される（FR-001 / FR-022）。
+    void loadFromHotkeySettings(std::span<const HotKeyEntry> hotkeys);
+
 private:
     std::vector<HotKeyEntry> m_hotkeys;
 };
+
+} // namespace imeindicator::services::hotkey

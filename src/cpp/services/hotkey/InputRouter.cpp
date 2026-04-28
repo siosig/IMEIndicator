@@ -12,6 +12,13 @@
 
 #include "InputRouter.h"
 
+#include <imm.h>  // VK_DBE_DBCSCHAR / VK_DBE_SBCSCHAR の定義
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 InputSource InputRouter::classifyInput(UINT vkey, DWORD /*scanCode*/) noexcept
 {
     if (vkey == vkMouse)  return InputSource::Mouse;
@@ -55,8 +62,29 @@ bool InputRouter::isSpecialKey(UINT vkey) noexcept
     }
 }
 
+bool InputRouter::isImeSwitchKey(UINT vkey) noexcept
+{
+    // IMEIndicator の既存 KeyboardHook が IME 状態検出のために観察するキー。
+    // HotkeyP の HookEngine はこれらをホットキーとして横取りせず、IME 動作を尊重する。
+    switch (vkey) {
+        case VK_KANJI:           // 0x19  漢字キー
+        case VK_KANA:            // 0x15  かな (= VK_HANGUL)
+        case VK_DBE_DBCSCHAR:    // 0xF3  全角/半角
+        case VK_DBE_SBCSCHAR:    // 0xF4  半角/全角
+        case VK_PROCESSKEY:      // 0xE5  IME 処理中
+        case VK_CONVERT:         // 0x1C  変換
+        case VK_NONCONVERT:      // 0x1D  無変換
+            return true;
+        default:
+            return false;
+    }
+}
+
 bool InputRouter::requiresLowLevelHook(UINT vkey, UINT modifiers) noexcept
 {
+    // IME 切替キーは IMEIndicator KeyboardHook の責務 → HookEngine は観察対象外（spec FR-021）
+    if (isImeSwitchKey(vkey)) return false;
+
     // Win キーを含む → システムが先に処理するため LL フック必要
     if (modifiers & MOD_WIN) return true;
 
@@ -124,3 +152,5 @@ bool InputRouter::handleRawHookMessage(
     }
     return false;
 }
+
+} // namespace imeindicator::services::hotkey

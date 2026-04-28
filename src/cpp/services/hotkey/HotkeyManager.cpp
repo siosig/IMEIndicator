@@ -12,6 +12,13 @@
 
 #include "HotkeyManager.h"
 #include <algorithm>
+#include <span>
+
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
 
 int HotkeyManager::addHotkey(const HotKeyEntry& hk)
 {
@@ -90,3 +97,16 @@ void HotkeyManager::loadFromHtkData(std::vector<HotKeyEntry> hotkeys)
 {
     m_hotkeys = std::move(hotkeys);
 }
+
+void HotkeyManager::loadFromHotkeySettings(std::span<const HotKeyEntry> hotkeys)
+{
+    constexpr size_t MaxHotkeys = 256;  // FR-001 / FR-022
+    m_hotkeys.clear();
+    m_hotkeys.reserve(std::min(hotkeys.size(), MaxHotkeys));
+    for (const auto& hk : hotkeys) {
+        if (m_hotkeys.size() >= MaxHotkeys) break;
+        m_hotkeys.push_back(hk);
+    }
+}
+
+} // namespace imeindicator::services::hotkey
