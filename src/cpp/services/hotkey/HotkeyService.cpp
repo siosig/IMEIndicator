@@ -189,14 +189,29 @@ void HotkeyService::executeAutoStartEntries() {
     int executed = 0;
     for (const auto& hk : manager_.hotkeys()) {
         if (!hk.autoStart || hk.disable) continue;
+
         if (hk.isCommand()) {
             auto result = executeCommandById(hk.cmd, hk.args, &hk);
             if (!result && log) {
                 log->warn("autoStart command failed: cmd={} err={}",
                           hk.cmd, make_error_code(result.error()).message());
             }
+        } else if (!hk.exe.empty()) {
+            // exe 起動の autoStart（Phase 5 / US3）。複数インスタンス制御は autoStart では
+            // 適用しない（起動時の自動実行は常に新規プロセス）。
+            int nShow = 1;  // SW_SHOWNORMAL
+            switch (hk.cmdShow) {
+                case WindowShow::Normal:    nShow = 1; break;
+                case WindowShow::Maximized: nShow = 3; break;
+                case WindowShow::Minimized: nShow = 2; break;
+            }
+            auto result = launchApp(hk.exe, hk.args, hk.dir, hk.admin, nShow);
+            if (!result && log) {
+                log->warn("autoStart launch failed: exe={} err={}",
+                          reinterpret_cast<const char*>(hk.exe.c_str()),
+                          make_error_code(result.error()).message());
+            }
         }
-        // exe 起動の autoStart は Phase 3 / US1 で対応
         ++executed;
     }
     if (log && executed > 0) log->info("executed {} autoStart entries", executed);

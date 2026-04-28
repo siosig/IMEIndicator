@@ -1,8 +1,10 @@
 #pragma once
 
 #include "../models/PowerMode.h"
+#include "../models/hotkey/HotKeyEntry.h"
 
 #include <functional>
+#include <span>
 #include <string>
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -41,7 +43,17 @@ public:
         IDM_POWER_BEST_PERFORMANCE      = 1012,
         IDM_OPEN_SETTINGS               = 1020,
         IDM_EXIT                        = 1099,
+        // Phase 5 / US3: ホットキーサブメニュー（5000〜5255）
+        IDM_HOTKEY_BASE                 = 5000,
+        IDM_HOTKEY_MAX                  = 5255,
     };
+
+    // Phase 5 / US3: ホットキーエントリのコールバック
+    // メニュー表示時に trayMenu=true のエントリを取得
+    using GetTrayHotkeysCallback =
+        std::function<std::span<const models::hotkey::HotKeyEntry>()>;
+    // メニュー項目クリックでホットキー実行（インデックスは hotkeys() 配列内の位置）
+    using ExecuteHotkeyCallback = std::function<void(int hotkeyIndex)>;
 
     TrayIcon();
     ~TrayIcon();
@@ -61,6 +73,10 @@ public:
     void setSetPowerModeCallback(SetPowerModeCallback cb) { setPowerModeCb_ = std::move(cb); }
     void setGetCurrentPowerModeCallback(GetCurrentPowerModeCallback cb) { getCurrentPowerModeCb_ = std::move(cb); }
     void setGetIsVisibleCallback(GetIsVisibleCallback cb) { getIsVisibleCb_ = std::move(cb); }
+
+    // Phase 5 / US3: ホットキーサブメニュー用コールバック
+    void setGetTrayHotkeysCallback(GetTrayHotkeysCallback cb) { getTrayHotkeysCb_ = std::move(cb); }
+    void setExecuteHotkeyCallback(ExecuteHotkeyCallback cb) { executeHotkeyCb_ = std::move(cb); }
 
     HWND messageHwnd() const noexcept { return messageHwnd_; }
 
@@ -85,6 +101,9 @@ private:
     SetPowerModeCallback setPowerModeCb_;
     GetCurrentPowerModeCallback getCurrentPowerModeCb_;
     GetIsVisibleCallback getIsVisibleCb_;
+    // Phase 5 / US3
+    GetTrayHotkeysCallback getTrayHotkeysCb_;
+    ExecuteHotkeyCallback executeHotkeyCb_;
 };
 
 } // namespace imeindicator::views

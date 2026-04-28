@@ -21,6 +21,16 @@
 #include <system_error>
 #include <windows.h>
 
+// 前方宣言（IMEIndicator 既存サービスへのポインタを保持するため）
+namespace imeindicator::services {
+class IMEMonitor;
+class SettingsManager;
+class ProcessPriorityMonitor;
+}
+namespace imeindicator::views {
+class MouseCursorIndicatorWindow;
+}
+
 namespace imeindicator::services::hotkey {
 
 // IMEIndicator 拡張コマンドのエラー
@@ -46,6 +56,16 @@ executeImeIndicatorCommand(int cmdId, std::wstring_view param) noexcept;
 
 // 表示名取得（UI / ログ用）
 [[nodiscard]] const wchar_t* getImeIndicatorCommandName(int cmdId) noexcept;
+
+// === サービス注入 ===
+// App::initialize() からこれらの setter を呼ぶことで、ImeIndicatorCommands が
+// IMEIndicator 既存サービスを操作可能になる（cmd 200〜299 の本実装）。
+// nullptr 注入はサービスを切り離す（テスト用途）。
+
+void setIndicatorWindow(views::MouseCursorIndicatorWindow* window) noexcept;
+void setImeMonitor(services::IMEMonitor* monitor) noexcept;
+void setSettingsManager(services::SettingsManager* manager) noexcept;
+void setProcessPriorityMonitor(services::ProcessPriorityMonitor* monitor) noexcept;
 
 } // namespace imeindicator::services::hotkey
 

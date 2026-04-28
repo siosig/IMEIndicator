@@ -9,11 +9,16 @@
 #include "../services/ProcessPriorityMonitor.h"
 #include "../services/ColorHelper.h"
 #include "../services/hotkey/HotkeyService.h"
+#include "../services/hotkey/CommandExecutor.h"
+#include "../services/hotkey/commands/ImeIndicatorCommands.h"
+#include "../services/hotkey/commands/ProcessCommands.h"
 #include "../views/MouseCursorIndicatorWindow.h"
 #include "../views/TrayIcon.h"
 #include "../views/SettingsDialog.h"
 #include "../win32/NativeConstants.h"
 #include "../win32/UnicodeUtil.h"
+
+#include <span>
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -170,6 +175,34 @@ bool App::initialize(HINSTANCE hInstance)
     trayIcon_->setGetIsVisibleCallback([this]() {
         return settingsManager_.settings().mouseCursorIndicator.isVisible;
     });
+    // Phase 5 / US3: ホットキーサブメニュー連携
+    trayIcon_->setGetTrayHotkeysCallback([this]() {
+        return std::span<const models::hotkey::HotKeyEntry>{
+            settingsManager_.settings().hotkeySettings.hotkeys
+        };
+    });
+    trayIcon_->setExecuteHotkeyCallback([this](int hotkeyIndex) {
+        if (!hotkeyService_) return;
+        const auto& hotkeys = settingsManager_.settings().hotkeySettings.hotkeys;
+        if (hotkeyIndex < 0 || static_cast<size_t>(hotkeyIndex) >= hotkeys.size()) return;
+        const auto& hk = hotkeys[hotkeyIndex];
+        // 内部コマンド or exe 起動を直接 dispatch（ホットキー押下と同じロジックを再利用したいが、
+        // HotkeyService::onHotkeyDetected は private なので、ここでは executeCommandById /
+        // launchApp を直接呼ぶ）
+        if (hk.disable) return;
+        if (hk.isCommand()) {
+            (void)services::hotkey::executeCommandById(hk.cmd, hk.args, &hk);
+        } else if (!hk.exe.empty()) {
+            int nShow = 1;
+            switch (hk.cmdShow) {
+                case models::hotkey::WindowShow::Normal:    nShow = 1; break;
+                case models::hotkey::WindowShow::Maximized: nShow = 3; break;
+                case models::hotkey::WindowShow::Minimized: nShow = 2; break;
+            }
+            (void)services::hotkey::launchApp(hk.exe, hk.args, hk.dir,
+                                              hk.admin, nShow);
+        }
+    });
 
     // ---- IMEMonitor ----
     imeMonitor_ = std::make_unique<services::IMEMonitor>();
@@ -195,9 +228,18 @@ bool App::initialize(HINSTANCE hInstance)
 
     startPowerToggleListener();
 
-    // ---- HotkeyService (010-hotkeyp-merge / Phase 2-D) ----
+    // ---- HotkeyService (010-hotkeyp-merge / Phase 2-D + Phase 6 / US4) ----
     // HookEngine + HotkeyManager + CommandExecutor を統合し、AppSettings.hotkeySettings から
     // ホットキーをロード。failed should never block app startup（失敗時はホットキー無効で続行）。
+    //
+    // Phase 6 / US4: ImeIndicatorCommands に IMEIndicator 既存サービスのポインタを注入。
+    // これにより cmd 200〜222（インジケーター切替・電源モード切替・優先度ルール制御）が
+    // ホットキー経由で動作する。ポインタは shutdown() で nullptr に戻す。
+    services::hotkey::setIndicatorWindow(indicatorWindow_.get());
+    services::hotkey::setImeMonitor(imeMonitor_.get());
+    services::hotkey::setSettingsManager(&settingsManager_);
+    services::hotkey::setProcessPriorityMonitor(priorityMonitor_.get());
+
     hotkeyService_ = std::make_unique<services::hotkey::HotkeyService>();
     if (!hotkeyService_->start(messageHwnd_,
                                 settingsManager_.settings().hotkeySettings)) {
@@ -234,6 +276,12 @@ void App::shutdown()
     // HotkeyService 停止（フックスレッド join + メインウィンドウハンドル解除）
     if (hotkeyService_) hotkeyService_->stop();
     hotkeyService_.reset();
+
+    // Phase 6 / US4: ImeIndicatorCommands のサービス参照を解除（ダングリングポインタ回避）
+    services::hotkey::setIndicatorWindow(nullptr);
+    services::hotkey::setImeMonitor(nullptr);
+    services::hotkey::setSettingsManager(nullptr);
+    services::hotkey::setProcessPriorityMonitor(nullptr);
 
     settingsDialog_.reset();
     trayIcon_.reset();

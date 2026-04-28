@@ -3,6 +3,8 @@
 #include "../app/AppConstants.h"
 #include "../win32/NativeConstants.h"
 
+#include <vector>
+
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -143,6 +145,13 @@ LRESULT TrayIcon::handleMessage(UINT msg, WPARAM wp, LPARAM lp)
                 else ::PostQuitMessage(0);
                 return 0;
             default:
+                // Phase 5 / US3: ホットキーサブメニュー（5000〜5255）
+                if (id >= IDM_HOTKEY_BASE && id <= IDM_HOTKEY_MAX) {
+                    if (executeHotkeyCb_) {
+                        executeHotkeyCb_(id - IDM_HOTKEY_BASE);
+                    }
+                    return 0;
+                }
                 break;
         }
     }
@@ -195,6 +204,37 @@ HMENU TrayIcon::buildContextMenu()
                IDM_POWER_BEST_PERFORMANCE, L"最適なパフォーマンス");
         ::AppendMenuW(menu, MF_POPUP | MF_STRING,
                       reinterpret_cast<UINT_PTR>(powerMenu), L"電源モード");
+    }
+
+    // Phase 5 / US3: ホットキーサブメニュー（trayMenu=true のエントリのみ）
+    if (getTrayHotkeysCb_) {
+        const auto hotkeys = getTrayHotkeysCb_();
+        // trayMenu=true のエントリ + そのインデックスを集計
+        struct TrayItem { int index; const models::hotkey::HotKeyEntry* entry; };
+        std::vector<TrayItem> items;
+        items.reserve(16);
+        int idx = 0;
+        for (const auto& hk : hotkeys) {
+            if (hk.trayMenu && !hk.disable) {
+                items.push_back({idx, &hk});
+            }
+            ++idx;
+        }
+        if (!items.empty()) {
+            ::AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+            HMENU hkMenu = ::CreatePopupMenu();
+            if (hkMenu) {
+                for (const auto& it : items) {
+                    if (it.index < 0 || it.index > (IDM_HOTKEY_MAX - IDM_HOTKEY_BASE)) continue;
+                    const auto& dn = it.entry->displayName();
+                    ::AppendMenuW(hkMenu, MF_STRING,
+                                  static_cast<UINT_PTR>(IDM_HOTKEY_BASE + it.index),
+                                  dn.empty() ? L"(無題)" : dn.c_str());
+                }
+                ::AppendMenuW(menu, MF_POPUP | MF_STRING,
+                              reinterpret_cast<UINT_PTR>(hkMenu), L"ホットキー");
+            }
+        }
     }
 
     ::AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);

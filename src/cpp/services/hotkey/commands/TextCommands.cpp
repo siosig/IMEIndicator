@@ -12,6 +12,7 @@
 */
 
 #include "TextCommands.h"
+#include <cwctype>
 #include <map>
 
 
@@ -71,6 +72,26 @@ const std::map<std::wstring, WORD>& controlKeyMap() {
         {L"WIN",       VK_LWIN},
         {L"SPACE",     VK_SPACE},
         {L"APPS",      VK_APPS},
+        // Phase 4 / US2 (T021) で追加された特殊キー
+        {L"NUMLOCK",   VK_NUMLOCK},
+        {L"CAPSLOCK",  VK_CAPITAL},
+        {L"SCROLLLOCK",VK_SCROLL},
+        {L"PRINTSCREEN", VK_SNAPSHOT},
+        {L"PRTSC",     VK_SNAPSHOT},
+        {L"PAUSE",     VK_PAUSE},
+        {L"BREAK",     VK_PAUSE},
+        // メディアキー（{KEYNAME} 形式での記述もサポート）
+        {L"MEDIA_PLAY_PAUSE", VK_MEDIA_PLAY_PAUSE},
+        {L"MEDIA_NEXT",       VK_MEDIA_NEXT_TRACK},
+        {L"MEDIA_PREV",       VK_MEDIA_PREV_TRACK},
+        {L"MEDIA_STOP",       VK_MEDIA_STOP},
+        {L"VOL_UP",           VK_VOLUME_UP},
+        {L"VOL_DOWN",         VK_VOLUME_DOWN},
+        {L"VOL_MUTE",         VK_VOLUME_MUTE},
+        {L"LAUNCH_MAIL",      VK_LAUNCH_MAIL},
+        {L"LAUNCH_APP1",      VK_LAUNCH_APP1},
+        {L"LAUNCH_APP2",      VK_LAUNCH_APP2},
+        {L"LAUNCH_MEDIA",     VK_LAUNCH_MEDIA_SELECT},
     };
     return m;
 }
@@ -124,9 +145,51 @@ std::vector<INPUT> parseMacroToInputs(std::wstring_view macro) {
     bool ctrl  = false;
     bool alt   = false;
     bool shift = false;
+    bool win   = false;  // Phase 4 / US2 で追加
 
     size_t i = 0;
     while (i < macro.size()) {
+        // Phase 4 / US2 (T021): エスケープシーケンス \\ \{ \} \n \t \media_*
+        if (macro[i] == L'\\' && i + 1 < macro.size()) {
+            const wchar_t next = macro[i + 1];
+            if (next == L'\\' || next == L'{' || next == L'}') {
+                addUnicodeChar(inputs, next);
+                i += 2;
+                continue;
+            }
+            if (next == L'n') { addKeyDownUp(inputs, VK_RETURN); i += 2; continue; }
+            if (next == L't') { addKeyDownUp(inputs, VK_TAB);    i += 2; continue; }
+
+            // \media_play_pause / \media_next / \media_prev / \media_stop
+            // \launch_app1 / \launch_app2 / \launch_mail / \launch_media
+            // 末尾までスキャンして識別子を抽出
+            size_t cmdStart = i + 1;
+            size_t cmdEnd   = cmdStart;
+            while (cmdEnd < macro.size() &&
+                   (iswalnum(macro[cmdEnd]) || macro[cmdEnd] == L'_')) {
+                ++cmdEnd;
+            }
+            const std::wstring cmdName(macro.substr(cmdStart, cmdEnd - cmdStart));
+            WORD vk = 0;
+            if      (cmdName == L"media_play_pause") vk = VK_MEDIA_PLAY_PAUSE;
+            else if (cmdName == L"media_next")       vk = VK_MEDIA_NEXT_TRACK;
+            else if (cmdName == L"media_prev")       vk = VK_MEDIA_PREV_TRACK;
+            else if (cmdName == L"media_stop")       vk = VK_MEDIA_STOP;
+            else if (cmdName == L"launch_mail")      vk = VK_LAUNCH_MAIL;
+            else if (cmdName == L"launch_app1")      vk = VK_LAUNCH_APP1;
+            else if (cmdName == L"launch_app2")      vk = VK_LAUNCH_APP2;
+            else if (cmdName == L"launch_media")     vk = VK_LAUNCH_MEDIA_SELECT;
+            if (vk) {
+                addKeyDownUp(inputs, vk);
+                i = cmdEnd;
+                continue;
+            }
+            // 認識できないエスケープ: バックスラッシュ自身として出力
+            addUnicodeChar(inputs, L'\\');
+            ++i;
+            continue;
+        }
+
         if (macro[i] == L'{') {
             // 閉じ括弧を探す
             size_t end = macro.find(L'}', i + 1);
@@ -148,6 +211,10 @@ std::vector<INPUT> parseMacroToInputs(std::wstring_view macro) {
             if (token == L"SHIFT") {
                 shift = true; i = end + 1; continue;
             }
+            // Phase 4 / US2 (T021): {WIN} 修飾子サポート
+            if (token == L"WIN+" || token == L"LWIN+") {
+                win = true; i = end + 1; continue;
+            }
 
             // 通常の制御キー
             const auto& km = controlKeyMap();
@@ -156,13 +223,15 @@ std::vector<INPUT> parseMacroToInputs(std::wstring_view macro) {
                 if (ctrl)  addKeyDown(inputs, VK_CONTROL);
                 if (alt)   addKeyDown(inputs, VK_MENU);
                 if (shift) addKeyDown(inputs, VK_SHIFT);
+                if (win)   addKeyDown(inputs, VK_LWIN);
 
                 addKeyDownUp(inputs, it->second);
 
+                if (win)   addKeyUp(inputs, VK_LWIN);
                 if (shift) addKeyUp(inputs, VK_SHIFT);
                 if (alt)   addKeyUp(inputs, VK_MENU);
                 if (ctrl)  addKeyUp(inputs, VK_CONTROL);
-                ctrl = alt = shift = false;
+                ctrl = alt = shift = win = false;
             }
             i = end + 1;
         } else {
@@ -171,13 +240,15 @@ std::vector<INPUT> parseMacroToInputs(std::wstring_view macro) {
             if (ctrl)  addKeyDown(inputs, VK_CONTROL);
             if (alt)   addKeyDown(inputs, VK_MENU);
             if (shift) addKeyDown(inputs, VK_SHIFT);
+            if (win)   addKeyDown(inputs, VK_LWIN);
 
             addUnicodeChar(inputs, ch);
 
+            if (win)   addKeyUp(inputs, VK_LWIN);
             if (shift) addKeyUp(inputs, VK_SHIFT);
             if (alt)   addKeyUp(inputs, VK_MENU);
             if (ctrl)  addKeyUp(inputs, VK_CONTROL);
-            ctrl = alt = shift = false;
+            ctrl = alt = shift = win = false;
             ++i;
         }
     }
