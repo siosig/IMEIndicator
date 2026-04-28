@@ -110,10 +110,15 @@ executeMediaCommand(int cmdId, std::wstring_view param) noexcept {
     case 0:  return ejectCD(param);
     case 1:  return closeCD(param);
     case 39: return sendMediaKey(VK_MEDIA_PLAY_PAUSE);
-    case 40: return sendMediaKey(VK_MEDIA_STOP);
-    case 41: return sendMediaKey(VK_MEDIA_NEXT_TRACK);
-    case 42: return sendMediaKey(VK_MEDIA_PREV_TRACK);
+    case 40: return sendMediaKey(VK_MEDIA_NEXT_TRACK);  // HotKeyEntry.h: CDNextTrack
+    case 41: return sendMediaKey(VK_MEDIA_STOP);        // HotKeyEntry.h: CDStop
+    case 42: return sendMediaKey(VK_MEDIA_PREV_TRACK);  // HotKeyEntry.h: CDPrevTrack
     case 100:return ejectCD(param);
+    // HotKeyEntry.h の Command::MediaPlayPause(120): メディアキー送出による音楽トグル。
+    // case 39 と同じ VK_MEDIA_PLAY_PAUSE を送出するが、HotkeyP のオリジナル ID 体系では
+    // 39 は CD 専用、120 は汎用メディアプレイヤー向けとして区別されていた経緯があるため
+    // 両方サポートする。
+    case 120:return sendMediaKey(VK_MEDIA_PLAY_PAUSE);
     default:
         return std::unexpected(MediaError::ApiCallFailed);
     }

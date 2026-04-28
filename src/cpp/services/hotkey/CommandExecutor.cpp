@@ -500,7 +500,7 @@ executeCommandById(int cmdId, std::wstring_view param, const HotKeyEntry* /*hk*/
     // メディアコマンド
     switch (cmdId) {
     case 0: case 1:
-    case 39: case 40: case 41: case 42:
+    case 39: case 40: case 41: case 42: case 120:
     case 62: case 100: {
         auto r = executeMediaCommand(cmdId, param);
         if (!r) return std::unexpected(fromMediaError(r.error()));
