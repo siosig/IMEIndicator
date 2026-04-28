@@ -210,3 +210,13 @@ GoogleTest による単体テスト 69 件が実行されます。
 dotnet build IMEIndicator.sln
 dotnet test IMEIndicator.sln
 ```
+
+## ライセンス
+
+本プロジェクトは **GNU General Public License v2 (or later)** で配布されます。完全なライセンス本文は [COPYING](COPYING) を参照してください。
+
+> **注**: 本リポジトリは現在、作者個人による私的利用を目的としており、OSS としての公開・再配布は予定していません。GPL は HotkeyP（後述）由来コードを取り込んだ結果としての必然的な選択です。将来公開・再配布する場合は、依存ライブラリのライセンス互換性を再確認する必要があります。
+
+## 謝辞 (Acknowledgments)
+
+- **HotkeyP** by Petr Lastovicka — グローバルホットキー機能のコア実装は HotkeyP 4.11（GPL v2）から派生しています。原典: <https://hotkeyp.sourceforge.net/> / <https://github.com/plastovicka/HotkeyP>。HotkeyP 由来のソースは `src/cpp/services/hotkey/` および `src/cpp/models/hotkey/HotKeyEntry.h` に配置されており、各ファイル先頭に著作権表記とライセンスヘッダを保持しています。
