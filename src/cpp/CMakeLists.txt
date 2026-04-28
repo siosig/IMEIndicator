@@ -44,6 +44,7 @@ target_sources(IMEIndicator PRIVATE
     services/hotkey/commands/TextCommands.cpp
     services/hotkey/commands/VolumeCommands.cpp
     services/hotkey/commands/WindowCommands.cpp
+    services/hotkey/commands/ImeIndicatorCommands.cpp
 
     # サービス: HotkeyP プラットフォーム (010-hotkeyp-merge)
     services/hotkey/platform/Accessibility.cpp

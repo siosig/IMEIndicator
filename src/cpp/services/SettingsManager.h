@@ -44,6 +44,10 @@ private:
     // v1（schemaVersion 欠落）として読み込んだ場合は、書き込む前に v1 バックアップを作成する
     void createV1Backup() noexcept;
 
+    // v2（schemaVersion == 2）として読み込んだ場合に、v3 へ昇格する前に v2 バックアップを作成する
+    // （010-hotkeyp-merge / FR-013 のスキーマアップグレード時の互換性維持）
+    void createV2Backup() noexcept;
+
     // 破損ファイルをタイムスタンプ付きでリネーム
     void renameBroken() noexcept;
 
@@ -52,6 +56,7 @@ private:
     std::string lastError_;
     models::AppSettings settings_{};
     bool loadedAsV1_{false};
+    bool loadedAsV2_{false};
 };
 
 } // namespace imeindicator::services

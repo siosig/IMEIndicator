@@ -35,6 +35,7 @@ struct AppConstants {
 
     // バックアップ・破損ファイルのサフィックス
     static constexpr std::wstring_view V1BackupSuffix = L".v1.bak";
+    static constexpr std::wstring_view V2BackupSuffix = L".v2.bak";
     static constexpr std::wstring_view BrokenSuffixPrefix = L".broken-";
     static constexpr std::wstring_view TempSuffix = L".tmp";
 
@@ -54,6 +55,24 @@ struct AppConstants {
     static constexpr std::string_view LoggerDisplay = "display";
     static constexpr std::string_view LoggerTray = "tray";
     static constexpr std::string_view LoggerSettings = "settings";
+
+    // ロガーカテゴリ（HotkeyP マージ追加 / 010-hotkeyp-merge）
+    static constexpr std::string_view LoggerHotkey  = "hotkey";   // HotkeyService 全般
+    static constexpr std::string_view LoggerHook    = "hook";     // HookEngine
+    static constexpr std::string_view LoggerCommand = "command";  // CommandExecutor / commands/
+    static constexpr std::string_view LoggerMacro   = "macro";    // マクロ実行
+
+    // トレイメニュー項目 ID 範囲（contracts/hotkey-tray-menu-contract.md）
+    static constexpr int TrayToggleIndicator    = 1001;
+    static constexpr int TrayTogglePixel        = 1002;
+    static constexpr int TrayOpenSettings       = 1003;
+    static constexpr int TrayExit               = 1004;
+    static constexpr int TrayOpenHotkeySettings = 1010;  // 新規（ホットキー設定タブを開く）
+    static constexpr int TrayHotkeyBase         = 5000;  // 5000 + N で N 番目のホットキーを実行
+    static constexpr int TrayHotkeyMax          = 5255;  // 256 件上限（FR-001）
+
+    // Win32 メッセージ ID（HookEngine から PostMessage で配信）
+    // WM_HOTKEY_RAW_KBD/WM_HOTKEY_RAW_MOUSE は services/hotkey/HookEngine.h で定義（重複定義回避）
 };
 
 } // namespace imeindicator::app
