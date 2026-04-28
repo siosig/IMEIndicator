@@ -68,6 +68,11 @@ auto cmdLog() {
 // === 個別コマンド実装 ===
 
 // cmd 200: IME インジケーター表示切替
+//
+// 注意: App::setMouseIndicatorVisible と同じ「IME 状態を尊重した表示制御」を再現する必要がある。
+// 単純に iw->show() を呼ぶと IME がオフでも表示されてしまい「常に表示」のバグになる。
+// → false にする時は即座に hide、true にする時は次の applyWindowVisibility（IMEMonitor の
+//   状態変化）で自然に表示される。Ctrl+Alt+I 直後でも IME ON なら 30〜200ms 以内に表示される。
 std::expected<void, ImeIndicatorCmdError> cmdToggleIndicator() noexcept {
     auto* sm = g_settingsManager.load(std::memory_order_acquire);
     auto* iw = g_indicatorWindow.load(std::memory_order_acquire);
@@ -77,13 +82,15 @@ std::expected<void, ImeIndicatorCmdError> cmdToggleIndicator() noexcept {
     settings.mouseCursorIndicator.isVisible = !settings.mouseCursorIndicator.isVisible;
     sm->save();
 
-    if (iw) {
-        if (settings.mouseCursorIndicator.isVisible) iw->show();
-        else                                          iw->hide();
+    // 即時非表示のみ。表示は IMEMonitor 経由の applyWindowVisibility に任せる
+    // （次の IME 状態変化、または PixelIMEDetector の周期検証時に自動適用される）。
+    if (iw && !settings.mouseCursorIndicator.isVisible) {
+        iw->hide();
     }
 
     if (auto log = cmdLog()) {
-        log->info("ToggleIndicator: isVisible={}", settings.mouseCursorIndicator.isVisible);
+        log->info("ToggleIndicator: isVisible={} (show は IME 状態変化時に自動反映)",
+                  settings.mouseCursorIndicator.isVisible);
     }
     return {};
 }
