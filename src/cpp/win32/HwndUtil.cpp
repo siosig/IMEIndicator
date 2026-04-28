@@ -3,8 +3,10 @@
 #include <psapi.h>
 #include <wil/resource.h>
 
+#include <cwctype>
 #include <chrono>
 #include <mutex>
+#include <string_view>
 #include <unordered_map>
 
 #pragma comment(lib, "psapi.lib")
@@ -113,6 +115,98 @@ bool isJapaneseHkl(HKL hkl)
     // HKL の下位 16 bit が言語 ID。0x0411 = 日本語(ja-JP)。
     constexpr WORD kJapaneseLangId = 0x0411;
     return LOWORD(reinterpret_cast<uintptr_t>(hkl)) == kJapaneseLangId;
+}
+
+// ===== HotkeyP マージ (010-hotkeyp-merge) で追加されたヘルパー =====
+
+std::wstring getForegroundExeName()
+{
+    HWND hw = GetForegroundWindow();
+    if (!hw) return {};
+    return getProcessNameByHwnd(hw);
+}
+
+namespace {
+
+struct FindWindowContext {
+    std::wstring targetExe;  // 比較対象（ファイル名のみ、小文字化済み）
+    HWND found = nullptr;
+};
+
+std::wstring toLowerCopy(std::wstring_view s) {
+    std::wstring r(s);
+    for (auto& c : r) c = static_cast<wchar_t>(::towlower(c));
+    return r;
+}
+
+BOOL CALLBACK enumWindowsForExe(HWND hwnd, LPARAM lParam)
+{
+    auto* ctx = reinterpret_cast<FindWindowContext*>(lParam);
+
+    // 表示可能なトップレベルウィンドウのみ対象（HotkeyP 元 findWindow 相当）
+    if (!IsWindowVisible(hwnd)) return TRUE;
+    if (GetWindow(hwnd, GW_OWNER) != nullptr) return TRUE;  // 所有者ありはサブウィンドウ
+    if (GetWindowTextLengthW(hwnd) == 0) return TRUE;        // タイトル空はダイアログ等
+
+    auto name = getProcessNameByHwnd(hwnd);
+    if (name.empty()) return TRUE;
+
+    if (toLowerCopy(name) == ctx->targetExe) {
+        ctx->found = hwnd;
+        return FALSE;  // 列挙終了
+    }
+    return TRUE;
+}
+
+} // namespace
+
+HWND findWindowByExeName(std::wstring_view exeFullPathOrName)
+{
+    if (exeFullPathOrName.empty()) return nullptr;
+
+    // 末尾のファイル名部分のみ抽出
+    auto fileName = extractFileNameFromPath(exeFullPathOrName);
+
+    FindWindowContext ctx;
+    ctx.targetExe = toLowerCopy(fileName);
+
+    EnumWindows(enumWindowsForExe, reinterpret_cast<LPARAM>(&ctx));
+    return ctx.found;
+}
+
+bool bringWindowToFront(HWND hwnd) noexcept
+{
+    if (!hwnd || !IsWindow(hwnd)) return false;
+
+    // 最小化状態なら復元
+    if (IsIconic(hwnd)) {
+        ShowWindow(hwnd, SW_RESTORE);
+    }
+
+    // SetForegroundWindow は通常、フォアグラウンドロックの制約があり呼び出し失敗するケースあり
+    // AttachThreadInput で一時的にスレッド入力をアタッチして強制前面化（HotkeyP 互換）
+    DWORD foreThread = GetWindowThreadProcessId(GetForegroundWindow(), nullptr);
+    DWORD targetThread = GetWindowThreadProcessId(hwnd, nullptr);
+    DWORD currentThread = GetCurrentThreadId();
+
+    if (foreThread != currentThread) {
+        AttachThreadInput(currentThread, foreThread, TRUE);
+    }
+    if (targetThread != currentThread) {
+        AttachThreadInput(currentThread, targetThread, TRUE);
+    }
+
+    BringWindowToTop(hwnd);
+    BOOL result = SetForegroundWindow(hwnd);
+
+    if (foreThread != currentThread) {
+        AttachThreadInput(currentThread, foreThread, FALSE);
+    }
+    if (targetThread != currentThread) {
+        AttachThreadInput(currentThread, targetThread, FALSE);
+    }
+
+    return result != FALSE;
 }
 
 } // namespace imeindicator::win32

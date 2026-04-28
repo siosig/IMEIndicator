@@ -34,10 +34,13 @@ enum class ProcessError {
 
 std::error_code make_error_code(ProcessError e);
 
-// アプリケーションを起動（ShellExecuteExW）
+// アプリケーションを起動（ShellExecuteExW）。
+// nShow は SW_SHOWNORMAL(1) / SW_SHOWMAXIMIZED(3) / SW_SHOWMINIMIZED(2) 等を渡す
+// （HotKeyEntry.cmdShow を変換した値を想定）。デフォルトは 1 = SW_SHOWNORMAL。
 [[nodiscard]] std::expected<void, ProcessError>
 launchApp(std::wstring_view exe, std::wstring_view args,
-          std::wstring_view workDir, bool asAdmin = false) noexcept;
+          std::wstring_view workDir, bool asAdmin = false,
+          int nShow = 1 /* SW_SHOWNORMAL */) noexcept;
 
 // フォアグラウンドウィンドウのプロセスを終了
 [[nodiscard]] std::expected<void, ProcessError>

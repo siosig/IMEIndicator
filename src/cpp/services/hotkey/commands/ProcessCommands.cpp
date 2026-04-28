@@ -51,7 +51,7 @@ std::error_code make_error_code(ProcessError e) {
 
 std::expected<void, ProcessError>
 launchApp(std::wstring_view exe, std::wstring_view args,
-          std::wstring_view workDir, bool asAdmin) noexcept {
+          std::wstring_view workDir, bool asAdmin, int nShow) noexcept {
     if (exe.empty()) return std::unexpected(ProcessError::InvalidParam);
 
     const std::wstring exeStr(exe);
@@ -65,7 +65,7 @@ launchApp(std::wstring_view exe, std::wstring_view args,
     sei.lpFile       = exeStr.c_str();
     sei.lpParameters = argsStr.empty() ? nullptr : argsStr.c_str();
     sei.lpDirectory  = dirStr.empty()  ? nullptr : dirStr.c_str();
-    sei.nShow        = SW_SHOWNORMAL;
+    sei.nShow        = nShow;
 
     if (!ShellExecuteExW(&sei)) {
         const DWORD err = GetLastError();

@@ -9,7 +9,9 @@
 
 #include "CommandExecutor.h"
 #include "InputRouter.h"
+#include "commands/ProcessCommands.h"
 #include "../../app/AppConstants.h"
+#include "../../win32/HwndUtil.h"
 
 #include <spdlog/spdlog.h>
 
@@ -134,8 +136,7 @@ void HotkeyService::onHotkeyDetected(UINT vkey, DWORD scanCode, UINT modifiers) 
     }
 
     if (entry->disable) {
-        if (log) log->debug("hotkey is disabled, skipping: note={}",
-                            reinterpret_cast<const char*>(entry->displayName().c_str()));
+        if (log) log->debug("hotkey is disabled, skipping");
         return;
     }
 
@@ -149,12 +150,37 @@ void HotkeyService::onHotkeyDetected(UINT vkey, DWORD scanCode, UINT modifiers) 
                                make_error_code(result.error()).message());
         }
     } else if (!entry->exe.empty()) {
-        // exe / URL / フォルダ起動 → ProcessCommands::launchApp（Phase 3 で本実装、ここでは
-        // CommandExecutor 経由で内部的に分岐するため、cmdId として擬似値を使う方式は採らず、
-        // 直接 launchApp 相当を呼ぶ。Phase 2-D 範囲では最小限のログ出力に留める）。
-        if (log) log->info("launch action requested: exe={} (full launch impl in Phase 3 / US1)",
-                           reinterpret_cast<const char*>(entry->exe.c_str()));
-        // TODO(Phase 3 / US1): ProcessCommands::launchApp を呼び出す配線
+        // exe / URL / フォルダ起動（Phase 3 / US1 本実装）。
+        // multInst=false の場合は起動済みウィンドウを前面化、なければ launchApp を呼ぶ。
+        // multInst=true の場合は常に launchApp（複数インスタンス許可）。
+        if (!entry->multInst) {
+            HWND existing = ::imeindicator::win32::findWindowByExeName(entry->exe);
+            if (existing) {
+                if (::imeindicator::win32::bringWindowToFront(existing)) {
+                    if (log) log->debug("brought existing window to front for exe={}",
+                                        reinterpret_cast<const char*>(entry->exe.c_str()));
+                    return;
+                }
+                // 前面化に失敗した場合は新規起動にフォールバック
+                if (log) log->debug("bringWindowToFront failed, falling back to launch");
+            }
+        }
+
+        // cmdShow（HotKeyEntry::WindowShow → Win32 SW_*）
+        int nShow = 1;  // SW_SHOWNORMAL
+        switch (entry->cmdShow) {
+            case WindowShow::Normal:    nShow = 1; break;  // SW_SHOWNORMAL
+            case WindowShow::Maximized: nShow = 3; break;  // SW_SHOWMAXIMIZED
+            case WindowShow::Minimized: nShow = 2; break;  // SW_SHOWMINIMIZED
+        }
+
+        auto result = launchApp(entry->exe, entry->args, entry->dir,
+                                entry->admin, nShow);
+        if (!result) {
+            if (log) log->warn("launchApp failed: exe={} err={}",
+                               reinterpret_cast<const char*>(entry->exe.c_str()),
+                               make_error_code(result.error()).message());
+        }
     }
 }
 
