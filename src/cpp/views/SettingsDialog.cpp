@@ -1034,33 +1034,47 @@ std::wstring describeAction(const models::hotkey::HotKeyEntry& e)
 }
 
 // ShortcutKeyEdit: EDIT を SUBCLASS して WM_KEYDOWN を捕捉する。
-// 編集中の vkey/modifiers をプロパティとして HWND に持たせる。
-struct ShortcutData { UINT vkey; UINT modifiers; };
+// 通常キー (vkey) のみ記録・表示。修飾キーは別途チェックボックスで指定。
+// ただし、ユーザーがキー押下時の修飾キー状態も検出してチェックボックスに反映する
+// （= WM_KEYDOWN 時の Ctrl/Alt/Shift/Win 押下状態をホストダイアログに通知）。
+struct ShortcutData {
+    UINT vkey;
+    UINT modifiers;
+    HWND hCtrl, hAlt, hShift, hWin;  // 修飾キー反映先のチェックボックス
+};
 
 LRESULT CALLBACK shortcutKeyEditProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                      UINT_PTR uIdSubclass, DWORD_PTR /*dwRefData*/)
 {
     if (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) {
         UINT vkey = static_cast<UINT>(wp);
-        // 修飾キー単独は無視
+        // 修飾キー単独は無視（チェックボックスで設定される）
         if (vkey == VK_CONTROL || vkey == VK_LCONTROL || vkey == VK_RCONTROL ||
             vkey == VK_SHIFT   || vkey == VK_LSHIFT   || vkey == VK_RSHIFT   ||
             vkey == VK_MENU    || vkey == VK_LMENU    || vkey == VK_RMENU    ||
             vkey == VK_LWIN    || vkey == VK_RWIN) {
             return 0;
         }
-        UINT mods = 0;
-        if (::GetKeyState(VK_CONTROL) & 0x8000) mods |= MOD_CONTROL;
-        if (::GetKeyState(VK_SHIFT)   & 0x8000) mods |= MOD_SHIFT;
-        if (::GetKeyState(VK_MENU)    & 0x8000) mods |= MOD_ALT;
-        if ((::GetKeyState(VK_LWIN) | ::GetKeyState(VK_RWIN)) & 0x8000) mods |= MOD_WIN;
 
         auto* data = reinterpret_cast<ShortcutData*>(::GetPropW(hwnd, L"ShortcutData"));
         if (data) {
             data->vkey = vkey;
-            data->modifiers = mods;
-            std::wstring s = modifiersToString(mods) + vkeyToString(vkey);
-            ::SetWindowTextW(hwnd, s.c_str());
+            // 押下時点の修飾キー状態をチェックボックスに反映（補助機能）
+            if (data->hCtrl)
+                ::SendMessageW(data->hCtrl, BM_SETCHECK,
+                               (::GetKeyState(VK_CONTROL) & 0x8000) ? BST_CHECKED : BST_UNCHECKED, 0);
+            if (data->hAlt)
+                ::SendMessageW(data->hAlt, BM_SETCHECK,
+                               (::GetKeyState(VK_MENU) & 0x8000) ? BST_CHECKED : BST_UNCHECKED, 0);
+            if (data->hShift)
+                ::SendMessageW(data->hShift, BM_SETCHECK,
+                               (::GetKeyState(VK_SHIFT) & 0x8000) ? BST_CHECKED : BST_UNCHECKED, 0);
+            if (data->hWin)
+                ::SendMessageW(data->hWin, BM_SETCHECK,
+                               ((::GetKeyState(VK_LWIN) | ::GetKeyState(VK_RWIN)) & 0x8000)
+                                   ? BST_CHECKED : BST_UNCHECKED, 0);
+            // 通常キーのみ EDIT に表示
+            ::SetWindowTextW(hwnd, vkeyToString(vkey).c_str());
         }
         return 0;
     }
@@ -1085,6 +1099,7 @@ struct HotkeyEditContext {
     models::hotkey::HotKeyEntry entry;
     ShortcutData shortcut{};
     HWND hShortcut{}, hNote{}, hRadioExe{}, hRadioCmd{};
+    HWND hCtrl{}, hAlt{}, hShift{}, hWin{};  // 修飾キーチェックボックス
     HWND hExe{}, hBrowse{}, hArgs{}, hDir{}, hCmd{};
     HWND hDisable{}, hMultInst{}, hTrayMenu{}, hAutoStart{}, hAdmin{};
     HWND hOk{}, hCancel{};
@@ -1120,7 +1135,13 @@ LRESULT CALLBACK hotkeyEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             ctx->entry.dir = buf;
 
             ctx->entry.vkey = ctx->shortcut.vkey;
-            ctx->entry.modifiers = ctx->shortcut.modifiers;
+            // modifiers はチェックボックスから合成（ShortcutKeyEdit の押下時補助とは独立）
+            UINT mods = 0;
+            if (::SendMessageW(ctx->hCtrl,  BM_GETCHECK, 0, 0) == BST_CHECKED) mods |= MOD_CONTROL;
+            if (::SendMessageW(ctx->hAlt,   BM_GETCHECK, 0, 0) == BST_CHECKED) mods |= MOD_ALT;
+            if (::SendMessageW(ctx->hShift, BM_GETCHECK, 0, 0) == BST_CHECKED) mods |= MOD_SHIFT;
+            if (::SendMessageW(ctx->hWin,   BM_GETCHECK, 0, 0) == BST_CHECKED) mods |= MOD_WIN;
+            ctx->entry.modifiers = mods;
 
             // ラジオ判定
             const bool useCmd =
@@ -1285,7 +1306,7 @@ bool SettingsDialog::showHotkeyEditDialog(HWND owner, HINSTANCE hInstance,
     ctx.shortcut.modifiers = entry.modifiers;
 
     constexpr int kW = 480;
-    constexpr int kH = 480;
+    constexpr int kH = 510;  // 修飾キーチェックボックス行の追加分
     RECT rcOwner{};
     if (owner) ::GetWindowRect(owner, &rcOwner);
     int x = (rcOwner.left + rcOwner.right - kW) / 2;
@@ -1304,12 +1325,31 @@ bool SettingsDialog::showHotkeyEditDialog(HWND owner, HINSTANCE hInstance,
     constexpr int kCtrlX = kPad + kLblW;
     constexpr int kCtrlW2 = kW - kCtrlX - kPad - 16;
 
-    addLabel(hwnd, hInstance, kPad, yy, kLblW, L"ショートカット");
+    // 修飾キーチェックボックス（修飾キーは ON/OFF をチェックボックスで選択）
+    addLabel(hwnd, hInstance, kPad, yy, kLblW, L"修飾キー");
+    constexpr int kModW = 70;
+    constexpr int kModGap = 4;
+    int mx = kCtrlX;
+    ctx.hCtrl  = addCheck(hwnd, hInstance, mx, yy, kModW, 0, L"Ctrl");   mx += kModW + kModGap;
+    ctx.hAlt   = addCheck(hwnd, hInstance, mx, yy, kModW, 0, L"Alt");    mx += kModW + kModGap;
+    ctx.hShift = addCheck(hwnd, hInstance, mx, yy, kModW, 0, L"Shift");  mx += kModW + kModGap;
+    ctx.hWin   = addCheck(hwnd, hInstance, mx, yy, kModW, 0, L"Win");
+    ::SendMessageW(ctx.hCtrl,  BM_SETCHECK, (ctx.entry.modifiers & MOD_CONTROL) ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendMessageW(ctx.hAlt,   BM_SETCHECK, (ctx.entry.modifiers & MOD_ALT)     ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendMessageW(ctx.hShift, BM_SETCHECK, (ctx.entry.modifiers & MOD_SHIFT)   ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendMessageW(ctx.hWin,   BM_SETCHECK, (ctx.entry.modifiers & MOD_WIN)     ? BST_CHECKED : BST_UNCHECKED, 0);
+    yy += kRowH;
+
+    // 通常キー（vkey）入力 EDIT。SUBCLASS で WM_KEYDOWN を捕捉、押下したキーを記録。
+    // 同時に修飾キーが押されていればチェックボックスにも反映（補助）。
+    addLabel(hwnd, hInstance, kPad, yy, kLblW, L"通常キー");
     ctx.hShortcut = addEdit(hwnd, hInstance, kCtrlX, yy, kCtrlW2, 22, HK_EDIT_SHORTCUT);
-    {
-        std::wstring s = modifiersToString(ctx.shortcut.modifiers) + vkeyToString(ctx.shortcut.vkey);
-        ::SetWindowTextW(ctx.hShortcut, s.c_str());
-    }
+    ::SetWindowTextW(ctx.hShortcut, vkeyToString(ctx.shortcut.vkey).c_str());
+    // ShortcutData に修飾キーチェックボックスのハンドルを設定（押下時の自動反映用）
+    ctx.shortcut.hCtrl  = ctx.hCtrl;
+    ctx.shortcut.hAlt   = ctx.hAlt;
+    ctx.shortcut.hShift = ctx.hShift;
+    ctx.shortcut.hWin   = ctx.hWin;
     attachShortcutKeyEdit(ctx.hShortcut, &ctx.shortcut);
     yy += kRowH;
 
