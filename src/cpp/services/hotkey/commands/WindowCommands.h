@@ -17,6 +17,12 @@
 #include <string_view>
 #include <system_error>
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 enum class WindowError {
     NoWindow,        // 対象ウィンドウが存在しない
     ApiCallFailed,   // Win32 API 呼び出し失敗
@@ -64,3 +70,5 @@ switchToNextWindow() noexcept;
 // param 形式: コマンドIDに対応する文字列
 [[nodiscard]] std::expected<void, WindowError>
 executeWindowCommand(int cmdId, std::wstring_view param, HWND mainHwnd) noexcept;
+
+} // namespace imeindicator::services::hotkey

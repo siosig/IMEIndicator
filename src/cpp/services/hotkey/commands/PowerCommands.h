@@ -16,6 +16,12 @@
 #include <expected>
 #include <system_error>
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 // 電源操作エラー
 enum class PowerError {
     PrivilegeNotHeld,  // SeShutdownPrivilege を取得できなかった
@@ -55,3 +61,5 @@ turnOffMonitor() noexcept;
 // スクリーンセーバーを起動
 [[nodiscard]] std::expected<void, PowerError>
 startScreenSaver() noexcept;
+
+} // namespace imeindicator::services::hotkey

@@ -13,6 +13,12 @@
 
 #include "MouseCommands.h"
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 namespace {
 
 struct MouseErrorCategory : std::error_category {
@@ -115,3 +121,5 @@ std::expected<void, MouseError> executeMouseCommand(int cmdId) noexcept {
         return std::unexpected(MouseError::InvalidParam);
     }
 }
+
+} // namespace imeindicator::services::hotkey

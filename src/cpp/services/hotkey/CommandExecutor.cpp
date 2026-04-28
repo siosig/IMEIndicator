@@ -14,16 +14,16 @@
 
 #define NOMINMAX
 #include "CommandExecutor.h"
-#include "../commands/DisplayCommands.h"
-#include "../commands/MediaCommands.h"
-#include "../commands/MouseCommands.h"
-#include "../commands/PowerCommands.h"
-#include "../commands/ProcessCommands.h"
-#include "../commands/SystemCommands.h"
-#include "../commands/TextCommands.h"
-#include "../commands/VolumeCommands.h"
-#include "../commands/WindowCommands.h"
-#include "../platform/VirtualDesktop.h"
+#include "commands/DisplayCommands.h"
+#include "commands/MediaCommands.h"
+#include "commands/MouseCommands.h"
+#include "commands/PowerCommands.h"
+#include "commands/ProcessCommands.h"
+#include "commands/SystemCommands.h"
+#include "commands/TextCommands.h"
+#include "commands/VolumeCommands.h"
+#include "commands/WindowCommands.h"
+#include "platform/VirtualDesktop.h"
 
 
 namespace imeindicator::services::hotkey {

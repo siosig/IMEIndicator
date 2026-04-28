@@ -16,6 +16,12 @@
 #include <expected>
 #include <system_error>
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 enum class DisplayError {
     ApiCallFailed,
     NoDisplay,
@@ -34,3 +40,5 @@ flipDisplayHorizontal() noexcept;
 // ディスプレイコマンドを実行
 [[nodiscard]] std::expected<void, DisplayError>
 executeDisplayCommand(int cmdId) noexcept;
+
+} // namespace imeindicator::services::hotkey

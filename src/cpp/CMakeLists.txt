@@ -28,6 +28,27 @@ target_sources(IMEIndicator PRIVATE
     models/hotkey/HotkeyGlobalOptions.cpp
     models/hotkey/HotkeySettings.cpp
 
+    # サービス: HotkeyP コア (010-hotkeyp-merge)
+    services/hotkey/HookEngine.cpp
+    services/hotkey/HotkeyManager.cpp
+    services/hotkey/InputRouter.cpp
+    services/hotkey/CommandExecutor.cpp
+
+    # サービス: HotkeyP コマンド (010-hotkeyp-merge)
+    services/hotkey/commands/DisplayCommands.cpp
+    services/hotkey/commands/MediaCommands.cpp
+    services/hotkey/commands/MouseCommands.cpp
+    services/hotkey/commands/PowerCommands.cpp
+    services/hotkey/commands/ProcessCommands.cpp
+    services/hotkey/commands/SystemCommands.cpp
+    services/hotkey/commands/TextCommands.cpp
+    services/hotkey/commands/VolumeCommands.cpp
+    services/hotkey/commands/WindowCommands.cpp
+
+    # サービス: HotkeyP プラットフォーム (010-hotkeyp-merge)
+    services/hotkey/platform/Accessibility.cpp
+    services/hotkey/platform/VirtualDesktop.cpp
+
     # サービス（Phase 2 範囲）
     services/Logger.cpp
     services/SettingsManager.cpp
@@ -93,6 +114,14 @@ target_link_libraries(IMEIndicator PRIVATE
     nlohmann_json::nlohmann_json
     spdlog::spdlog
     WIL::WIL
+)
+
+# HotkeyP マージ (010-hotkeyp-merge) で追加される Win32 ライブラリ
+# - propsys: PROPVARIANT（Core Audio エンドポイント名取得）
+# - avrt: AvSetMmThreadCharacteristics（メディアスレッド優先度、HotkeyP 由来）
+target_link_libraries(IMEIndicator PRIVATE
+    propsys
+    avrt
 )
 
 # MSBuild 既定の <GenerateManifest>true</GenerateManifest> による自動マニフェスト生成は

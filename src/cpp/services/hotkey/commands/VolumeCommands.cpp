@@ -19,6 +19,12 @@
 #include <cwchar>
 #include <string>
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 // --- エラーカテゴリ ---
 
 namespace {
@@ -213,3 +219,5 @@ executeVolumeCommand(std::wstring_view param) noexcept {
         }
     }
 }
+
+} // namespace imeindicator::services::hotkey

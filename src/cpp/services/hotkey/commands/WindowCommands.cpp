@@ -13,6 +13,12 @@
 #include "WindowCommands.h"
 #include <algorithm>
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 namespace {
 
 struct WindowErrorCategory : std::error_category {
@@ -177,3 +183,5 @@ executeWindowCommand(int cmdId, std::wstring_view /*param*/, HWND mainHwnd) noex
         return std::unexpected(WindowError::ApiCallFailed);
     }
 }
+
+} // namespace imeindicator::services::hotkey

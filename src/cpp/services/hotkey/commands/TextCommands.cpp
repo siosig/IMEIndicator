@@ -14,6 +14,12 @@
 #include "TextCommands.h"
 #include <map>
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 namespace {
 
 struct TextErrorCategory : std::error_category {
@@ -256,3 +262,5 @@ executeTextCommand(int cmdId, std::wstring_view param) noexcept {
         return std::unexpected(TextError::ApiCallFailed);
     }
 }
+
+} // namespace imeindicator::services::hotkey

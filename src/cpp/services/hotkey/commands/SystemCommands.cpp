@@ -15,6 +15,12 @@
 #include <mmsystem.h>
 #include <string>
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 #pragma comment(lib, "winmm.lib")
 
 namespace {
@@ -137,3 +143,5 @@ executeSystemCommand(int cmdId, std::wstring_view param) noexcept {
         return std::unexpected(SystemCmdError::InvalidParam);
     }
 }
+
+} // namespace imeindicator::services::hotkey

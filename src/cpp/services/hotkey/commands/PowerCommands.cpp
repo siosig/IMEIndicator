@@ -16,6 +16,12 @@
 #include <powrprof.h>
 #include <wil/resource.h>
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 #pragma comment(lib, "PowrProf.lib")
 
 // --- エラーカテゴリ ---
@@ -133,3 +139,5 @@ std::expected<void, PowerError> startScreenSaver() noexcept {
     SendMessageW(HWND_BROADCAST, WM_SYSCOMMAND, SC_SCREENSAVE, 0);
     return {};
 }
+
+} // namespace imeindicator::services::hotkey

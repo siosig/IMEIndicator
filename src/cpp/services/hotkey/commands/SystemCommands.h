@@ -17,6 +17,12 @@
 #include <string_view>
 #include <system_error>
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 enum class SystemCmdError {
     ApiCallFailed,
     InvalidParam,
@@ -55,3 +61,5 @@ captureScreen() noexcept;
 // システムコマンドを実行
 [[nodiscard]] std::expected<void, SystemCmdError>
 executeSystemCommand(int cmdId, std::wstring_view param) noexcept;
+
+} // namespace imeindicator::services::hotkey

@@ -20,6 +20,12 @@
 #include <string_view>
 #include <system_error>
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 // 音量制御エラー
 enum class VolumeError {
     ComNotInitialized,
@@ -57,3 +63,5 @@ getMute() noexcept;
 // param 形式: "V" + delta (例: "V+5", "V-3", "V50")
 [[nodiscard]] std::expected<void, VolumeError>
 executeVolumeCommand(std::wstring_view param) noexcept;
+
+} // namespace imeindicator::services::hotkey

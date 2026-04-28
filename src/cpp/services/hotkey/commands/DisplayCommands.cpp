@@ -13,6 +13,12 @@
 
 #include "DisplayCommands.h"
 
+
+namespace imeindicator::services::hotkey {
+
+// HotkeyP コア由来の型を短く参照するための using ディレクティブ（HotKeyEntry / Command / Category 等）
+using namespace ::imeindicator::models::hotkey;
+
 namespace {
 
 struct DisplayErrorCategory : std::error_category {
@@ -95,3 +101,5 @@ std::expected<void, DisplayError> executeDisplayCommand(int cmdId) noexcept {
         return std::unexpected(DisplayError::ApiCallFailed);
     }
 }
+
+} // namespace imeindicator::services::hotkey
