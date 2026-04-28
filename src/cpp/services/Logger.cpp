@@ -27,7 +27,7 @@ std::atomic_bool g_initialized{false};
 std::mutex g_initMutex;
 
 // 全カテゴリ名（contracts/log-file-contract.md §ロガー）
-constexpr std::array<std::string_view, 8> kLoggerNames = {
+constexpr std::array<std::string_view, 12> kLoggerNames = {
     app::AppConstants::LoggerApp,
     app::AppConstants::LoggerIme,
     app::AppConstants::LoggerPixel,
@@ -36,6 +36,11 @@ constexpr std::array<std::string_view, 8> kLoggerNames = {
     app::AppConstants::LoggerDisplay,
     app::AppConstants::LoggerTray,
     app::AppConstants::LoggerSettings,
+    // 010-hotkeyp-merge で追加されたカテゴリ
+    app::AppConstants::LoggerHotkey,
+    app::AppConstants::LoggerHook,
+    app::AppConstants::LoggerCommand,
+    app::AppConstants::LoggerMacro,
 };
 
 constexpr const char* kLogPattern = "[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%t] [%n] %v";
