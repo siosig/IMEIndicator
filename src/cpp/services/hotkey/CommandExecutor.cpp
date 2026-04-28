@@ -24,6 +24,7 @@
 #include "commands/VolumeCommands.h"
 #include "commands/WindowCommands.h"
 #include "platform/VirtualDesktop.h"
+#include "commands/ImeIndicatorCommands.h"
 
 
 namespace imeindicator::services::hotkey {
@@ -287,6 +288,26 @@ static constexpr const wchar_t* kCommandNames[120] = {
 executeCommandById(int cmdId, std::wstring_view param, const HotKeyEntry* /*hk*/) {
     if (!isValidCommandId(cmdId)) {
         return std::unexpected(ExecuteError::InvalidCommand);
+    }
+
+    // IMEIndicator 拡張コマンド（200〜299）は ImeIndicatorCommands に dispatch。
+    // contracts/internal-command-catalog.md §IMEIndicator 拡張コマンド (200〜299) 準拠。
+    // Phase 2-D 時点ではスタブ実装（NotImplemented）が返るが、Phase 6 (US4) で本実装に差し替え。
+    if (cmdId >= 200 && cmdId <= 299) {
+        auto result = executeImeIndicatorCommand(cmdId, param);
+        if (!result) {
+            switch (result.error()) {
+                case ImeIndicatorCmdError::InvalidCommand:
+                    return std::unexpected(ExecuteError::InvalidCommand);
+                case ImeIndicatorCmdError::ServiceNotInjected:
+                case ImeIndicatorCmdError::ApiCallFailed:
+                    return std::unexpected(ExecuteError::ApiCallFailed);
+                case ImeIndicatorCmdError::NotImplemented:
+                    return std::unexpected(ExecuteError::PlatformNotSupported);
+            }
+            return std::unexpected(ExecuteError::ApiCallFailed);
+        }
+        return {};
     }
 
     // ウィンドウスナップ（29〜36）: 共通処理
