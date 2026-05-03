@@ -249,6 +249,19 @@ struct HotKeyEntry {
     DWORD  processId = 0;       // 実行中プロセス PID（0=未実行）
     HANDLE process   = nullptr; // 実行中プロセスハンドル（nullptr=未実行）
 
+    // --- 等値比較（設定の永続化フィールドのみ。実行時状態 processId/process/isDown/lock/item は除外）---
+    [[nodiscard]] bool operator==(const HotKeyEntry& o) const noexcept {
+        return note == o.note && icon == o.icon && category == o.category
+            && exe == o.exe && args == o.args && dir == o.dir
+            && sound == o.sound && lirc == o.lirc
+            && modifiers == o.modifiers && vkey == o.vkey && scanCode == o.scanCode
+            && cmd == o.cmd && cmdShow == o.cmdShow && opacity == o.opacity
+            && priority == o.priority
+            && disable == o.disable && multInst == o.multInst && trayMenu == o.trayMenu
+            && autoStart == o.autoStart && ask == o.ask && delay == o.delay
+            && admin == o.admin;
+    }
+
     // --- バリデーション ---
 
     // 仕様準拠の妥当性検証（contracts/hotkey-entry-schema.md §バリデーション規則）。

@@ -74,8 +74,8 @@ TEST(JsonSchemaCompatTests, V2WriteHasCamelCaseKeysAndIndent)
     EXPECT_TRUE(j.contains("logLevel"));
     EXPECT_TRUE(j.contains("pixelVerificationIntervalMs"));
 
-    // 書き出しは常に schemaVersion: 2
-    EXPECT_EQ(j["schemaVersion"], 2);
+    // 書き出しは常に schemaVersion: 3
+    EXPECT_EQ(j["schemaVersion"], 3);
 
     // dump(2) は 2 スペースインデント・LF 改行
     auto dumped = j.dump(2);

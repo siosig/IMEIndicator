@@ -35,6 +35,10 @@ target_sources(IMEIndicatorTests PRIVATE
     ${CMAKE_SOURCE_DIR}/src/cpp/models/PowerMode.cpp
     ${CMAKE_SOURCE_DIR}/src/cpp/models/ProcessPriorityRule.cpp
     ${CMAKE_SOURCE_DIR}/src/cpp/models/AppSettings.cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/models/hotkey/HotKeyEntry.cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/models/hotkey/HotkeyCategory.cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/models/hotkey/HotkeyGlobalOptions.cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/models/hotkey/HotkeySettings.cpp
     ${CMAKE_SOURCE_DIR}/src/cpp/services/Logger.cpp
     ${CMAKE_SOURCE_DIR}/src/cpp/services/SettingsManager.cpp
     ${CMAKE_SOURCE_DIR}/src/cpp/services/PowerModeBackup.cpp

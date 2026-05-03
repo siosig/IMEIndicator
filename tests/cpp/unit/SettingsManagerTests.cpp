@@ -79,14 +79,14 @@ TEST_F(SettingsFixture, LoadV1SampleAndMigrateOnSave)
     ASSERT_EQ(mgr.settings().processPriorityRules.size(), 1u);
     EXPECT_EQ(mgr.settings().processPriorityRules[0].targetPriority,
               models::PriorityLevel::BelowNormal);
-    // v1 として読まれたあと内部で v2 に昇格しているはず
-    EXPECT_EQ(mgr.settings().schemaVersion, 2);
+    // v1 として読まれたあと内部で v3 に昇格しているはず
+    EXPECT_EQ(mgr.settings().schemaVersion, 3);
 
-    // Save すれば v2 で書き出される
+    // Save すれば v3 で書き出される
     EXPECT_TRUE(mgr.save());
     std::ifstream ifs(mgr.settingsFilePath());
     nlohmann::json j; ifs >> j;
-    EXPECT_EQ(j.value("schemaVersion", 0), 2);
+    EXPECT_EQ(j.value("schemaVersion", 0), 3);
     EXPECT_TRUE(j.contains("logLevel"));
     EXPECT_TRUE(j.contains("pixelVerificationIntervalMs"));
 }
@@ -100,7 +100,7 @@ TEST_F(SettingsFixture, LoadV2SampleRoundTrip)
     copyFixtureTo(fxV2, mgr.settingsFilePath());
 
     EXPECT_TRUE(mgr.load());
-    EXPECT_EQ(mgr.settings().schemaVersion, 2);
+    EXPECT_EQ(mgr.settings().schemaVersion, 3);
     EXPECT_EQ(mgr.settings().processPriorityRules.size(), 2u);
     EXPECT_EQ(mgr.settings().logLevel, models::LogLevel::Warn);
     EXPECT_EQ(mgr.settings().pixelVerificationIntervalMs, 2000);
