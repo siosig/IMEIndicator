@@ -26,6 +26,9 @@ target_sources(IMEIndicatorTests PRIVATE
     unit/RuleRuntimeStateTests.cpp
     unit/ProcessPriorityMonitorTests.cpp
 
+    # 012-process-name-autocomplete: enumerateDistinctProcessNames テスト
+    unit/ProcessPriorityServiceTests.cpp
+
     # 被テストコード（IMEIndicator 本体と同じソースを直接組み込む。
     # 静的ライブラリにせずに重複ビルドする方針：MSVC の WIN32 アプリと
     # コンソール TEST EXE で /SUBSYSTEM が異なるため、本体ライブラリ化はせず）

@@ -1,6 +1,7 @@
 #include "SettingsDialog.h"
 
 #include "../app/AppConstants.h"
+#include "../services/ProcessPriorityService.h"
 #include "../win32/UnicodeUtil.h"
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -145,6 +146,17 @@ HWND addCombo(HWND parent, HINSTANCE hInst, int x, int y, int w, int id)
                               hInst, nullptr);
 }
 
+// CBS_DROPDOWN: テキスト入力可能 + ドロップダウンリスト選択可能。プロセス名オートコンプリート用。
+HWND addComboDropdown(HWND parent, HINSTANCE hInst, int x, int y, int w, int id)
+{
+    return ::CreateWindowExW(WS_EX_CLIENTEDGE, L"COMBOBOX", L"",
+                              WS_CHILD | WS_VISIBLE | WS_TABSTOP |
+                              CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL,
+                              x, y, w, 300, parent,
+                              reinterpret_cast<HMENU>(static_cast<INT_PTR>(id)),
+                              hInst, nullptr);
+}
+
 HWND addButton(HWND parent, HINSTANCE hInst, int x, int y, int w,
                int id, const wchar_t* text, bool def = false)
 {
@@ -264,6 +276,41 @@ LRESULT CALLBACK ruleEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
     switch (msg) {
         case WM_COMMAND:
+            if (LOWORD(wp) == EDIT_NAME && HIWORD(wp) == CBN_EDITCHANGE) {
+                // プロセス名入力時に前方一致候補をドロップダウンに表示（最大 20 件）
+                // NOTE: CB_RESETCONTENT は CBS_DROPDOWN の編集テキストも消すため、
+                //       CB_DELETESTRING で1件ずつ削除してテキストを保持する。
+                std::wstring prefix = getEditText(ctx->hName);
+                LRESULT itemCount = ::SendMessageW(ctx->hName, CB_GETCOUNT, 0, 0);
+                for (LRESULT i = itemCount - 1; i >= 0; --i) {
+                    ::SendMessageW(ctx->hName, CB_DELETESTRING, static_cast<WPARAM>(i), 0);
+                }
+                if (!prefix.empty()) {
+                    auto names =
+                        services::ProcessPriorityService::enumerateDistinctProcessNames();
+                    int count = 0;
+                    for (const auto& name : names) {
+                        if (count >= 20) break;
+                        if (::_wcsnicmp(name.c_str(), prefix.c_str(), prefix.size()) == 0) {
+                            ::SendMessageW(ctx->hName, CB_ADDSTRING, 0,
+                                           reinterpret_cast<LPARAM>(name.c_str()));
+                            ++count;
+                        }
+                    }
+                    if (count > 0) {
+                        ::SendMessageW(ctx->hName, CB_SHOWDROPDOWN, TRUE, 0);
+                        // CB_SHOWDROPDOWN が組み込みオートコンプリートでテキストを
+                        // 上書きする場合があるため、ユーザーが入力したプレフィックスを
+                        // 再セットしてカーソルを末尾に戻す。
+                        // SetWindowTextW は CBN_EDITCHANGE を発火しない（ユーザー操作
+                        // でないため）ので再帰呼び出しにはならない。
+                        ::SetWindowTextW(ctx->hName, prefix.c_str());
+                        const auto len = static_cast<WORD>(prefix.size());
+                        ::SendMessageW(ctx->hName, CB_SETEDITSEL, 0, MAKELPARAM(len, len));
+                    }
+                }
+                return 0;
+            }
             switch (LOWORD(wp)) {
                 case EDIT_OK:     closeWith(true);  return 0;
                 case EDIT_CANCEL: closeWith(false); return 0;
@@ -314,7 +361,7 @@ bool SettingsDialog::showRuleEditDialog(HWND owner, HINSTANCE hInstance,
 
     int yy = kPad;
     addLabel(hwnd, hInstance, kPad, yy, 100, L"プロセス名");
-    ctx.hName = addEdit(hwnd, hInstance, kPad + 110, yy, 220, 22, EDIT_NAME);
+    ctx.hName = addComboDropdown(hwnd, hInstance, kPad + 110, yy, 220, EDIT_NAME);
     ::SetWindowTextW(ctx.hName, ctx.rule.processName.c_str());
     yy += kRowH;
 

@@ -24,6 +24,10 @@ public:
     // 管理者権限不足での失敗回数（累積）。0 でない場合は管理者権限が必要な可能性あり。
     int accessDeniedCount() const noexcept { return accessDeniedCount_.load(); }
 
+    // 現在実行中のプロセス名を重複排除・昇順ソートして返す（.exe 拡張子付き）。
+    // 権限不足で取得できないプロセスは無視する。失敗時は空ベクターを返す。
+    static std::vector<std::wstring> enumerateDistinctProcessNames();
+
 private:
     std::atomic<int> accessDeniedCount_{0};
 };

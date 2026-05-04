@@ -21,11 +21,14 @@
 //           COMDAT) /arch:AVX2 を追加。配布対象 CPU が全て AVX2 対応であることが
 //           前提（AVX2 非対応 CPU では起動不可）。
 // 1.4.0.8 = リリースビルド。
+// 1.4.0.9 = プロセス優先度ルール編集ダイアログのプロセス名フィールドに
+//           前方一致オートコンプリートを追加（012-process-name-autocomplete）。
+//           CBS_DROPDOWN ComboBox + CBN_EDITCHANGE で最大 20 件の候補表示。
 // 以降は最終要素（BUILD）を 1 ずつ上げる。
 #define IMEINDICATOR_VERSION_MAJOR 1
 #define IMEINDICATOR_VERSION_MINOR 4
 #define IMEINDICATOR_VERSION_PATCH 0
-#define IMEINDICATOR_VERSION_BUILD 8
+#define IMEINDICATOR_VERSION_BUILD 9
 
 #define IMEINDICATOR_VERSION_NUM  IMEINDICATOR_VERSION_MAJOR, \
                                   IMEINDICATOR_VERSION_MINOR, \

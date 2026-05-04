@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cwctype>
+#include <set>
 
 #pragma comment(lib, "kernel32.lib")
 #pragma comment(lib, "psapi.lib")
@@ -159,6 +160,33 @@ bool ProcessPriorityService::isAccessibleForControl(const std::wstring& processN
     // 一致プロセスが 0 件なら true（実行されていないので判定不能）
     if (!sawAny) return true;
     return anyAccessible;
+}
+
+std::vector<std::wstring> ProcessPriorityService::enumerateDistinctProcessNames()
+{
+    // 大文字小文字を区別しない比較で重複排除するための set コンパレータ
+    struct IcmpLess {
+        bool operator()(const std::wstring& a, const std::wstring& b) const noexcept
+        {
+            return ::_wcsicmp(a.c_str(), b.c_str()) < 0;
+        }
+    };
+    std::set<std::wstring, IcmpLess> seen;
+
+    HANDLE snap = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snap == INVALID_HANDLE_VALUE) return {};
+
+    PROCESSENTRY32W pe{};
+    pe.dwSize = sizeof(pe);
+    if (::Process32FirstW(snap, &pe)) {
+        do {
+            seen.emplace(pe.szExeFile);
+        } while (::Process32NextW(snap, &pe));
+    }
+    ::CloseHandle(snap);
+
+    // set は IcmpLess 順なのでそのまま vector に変換
+    return std::vector<std::wstring>(seen.begin(), seen.end());
 }
 
 } // namespace imeindicator::services
