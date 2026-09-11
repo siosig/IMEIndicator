@@ -17,7 +17,7 @@
       4 番目（ビルド番号）が無視されて常に .0 になる（実機で `dotnet build -getProperty:FileVersion`
       にて確認済み）。実行ファイルのプロパティに実際のビルド番号を反映させるため明示指定する。
     -->
-    <Version>1.5.0.1</Version>
+    <Version>1.5.0.2</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
   </PropertyGroup>
