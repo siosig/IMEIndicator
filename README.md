@@ -29,7 +29,7 @@ IMEIndicator は、Windows 11 上で日本語 IME の ON 状態をマウスカ�
 配布物は GitHub Actions が本リポジトリからビルドしたものです（[.github/workflows/build.yml](.github/workflows/build.yml)）。
 
 > [!WARNING]
-> 実行ファイルは現在コード署名されていません。Windows の Smart App Control が有効な環境では起動がブロックされることがあります。原因と対処は [docs/code-signing.md](docs/code-signing.md) を参照してください。
+> 実行ファイルは現在コード署名されていません。Windows の Smart App Control が有効な環境では起動がブロックされることがあります。その場合は、ダウンロードした `IMEIndicator.exe` のプロパティで「セキュリティ: 許可する」にチェックを入れてから起動してください。
 
 ## クイックスタート
 
