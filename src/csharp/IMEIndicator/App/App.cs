@@ -43,6 +43,11 @@ public sealed class App : ApplicationContext
     private SettingsForm? _settingsForm;
     private bool _disposed;
 
+    // UI スレッド（ウィンドウを所有するスレッド）へのマーシャリング先。Initialize() で一度だけ
+    // 捕捉する。コールバック実行時の SynchronizationContext.Current を使ってはならない
+    // （発火元スレッドのコンテキストになるため。OnImeStateChanged のコメント参照）。
+    private SynchronizationContext? _uiContext;
+
     public App()
     {
         _priorityMonitor = new ProcessPriorityMonitor(_priorityService);
@@ -59,6 +64,11 @@ public sealed class App : ApplicationContext
     {
         // 常駐中は GC 一時停止を短く保つ（フックコールバックの遅延を避ける。research.md R-6）。
         GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+
+        // UI スレッドのコンテキストを最初に確保する。Initialize() は Program.Main から
+        // Application.Run の直前（＝UI スレッド）に呼ばれる前提。以降 ThreadPool 等から
+        // 発火するイベントは、すべてこのコンテキスト経由で UI スレッドへ戻す。
+        _uiContext = SynchronizationContext.Current ?? new WindowsFormsSynchronizationContext();
 
         _settingsManager.Load();
         Log.Initialize(_settingsManager.Settings.LogLevel);
@@ -131,7 +141,7 @@ public sealed class App : ApplicationContext
         }
 
         // ---- /powertoggle IPC 受信 ----
-        _powerToggleListener = new PowerToggleIpc.Listener(SynchronizationContext.Current);
+        _powerToggleListener = new PowerToggleIpc.Listener(_uiContext);
         _powerToggleListener.Signaled += TogglePowerModeAndNotify;
 
         // ---- 初回起動時に設定画面を自動表示 ----
@@ -408,21 +418,20 @@ public sealed class App : ApplicationContext
     // 内部イベントハンドラ
     // ============================================================
 
-    // ImeMonitor.ImeStateChanged は ThreadPool スレッド（デバウンスタイマー経由）または
-    // フックスレッド（≒UI スレッド）のいずれからも発火し得るため、常に UI スレッドへ Post して
-    // 一貫させる（移植元の PostMessageW によるマーシャリングと同じ意図）。
+    // ImeMonitor.ImeStateChanged は ThreadPool スレッド（デバウンスタイマー = System.Threading.Timer
+    // 経由）とフックスレッド（≒UI スレッド）のどちらからも発火するため、常に UI スレッドへ Post する
+    // （移植元の PostMessageW によるマーシャリングと同じ意図）。
+    //
+    // ここで SynchronizationContext.Current を読んではならない。それは「発火元スレッド」の
+    // コンテキストであり、ThreadPool スレッドでは null になる。null を理由に ApplyWindowVisibility を
+    // その場で呼ぶと、UI スレッドが所有する HWND に対して別スレッドから ShowWindow /
+    // SetWindowPos を発行することになり、UI スレッド側の同種呼び出しと相互に待ち合って
+    // ハングする（実測: UI スレッドが BackgroundImageWindow.PinToBottom の SetWindowPos、
+    // プールスレッドが LayeredWindow.Hide の ShowWindow で停止し、設定画面が白いまま固まった）。
     private void OnImeStateChanged(LanguageInfo info)
     {
         Log.App.Debug("OnImeStateChanged: lang={Lang} ime={ImeOn}", info.Language, info.IsImeOn);
-        SynchronizationContext? ctx = SynchronizationContext.Current;
-        if (ctx is not null)
-        {
-            ctx.Post(state => ApplyWindowVisibility((LanguageInfo)state!), info);
-        }
-        else
-        {
-            ApplyWindowVisibility(info);
-        }
+        _uiContext?.Post(state => ApplyWindowVisibility((LanguageInfo)state!), info);
     }
 
     // MouseTracker は Forms.Timer（UI スレッド）ベースのため、直接更新可能（移植元と同じ）。
