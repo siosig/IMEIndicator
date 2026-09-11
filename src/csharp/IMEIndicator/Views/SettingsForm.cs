@@ -108,15 +108,33 @@ public sealed class SettingsForm : Form
         MaximizeBox = false;
         MinimizeBox = false;
         AutoScroll = true;
-        ClientSize = new Size(480, 900);
         Padding = new Padding(10);
 
-        BuildLayout();
+        TableLayoutPanel root = BuildLayout();
         WireEvents();
         LoadFrom(_settingsManager.Settings);
 
         AcceptButton = _okButton;
         CancelButton = _cancelButton;
+
+        ApplyContentHeight(root);
+    }
+
+    // 幅は 480 固定のまま、ルール・ホットキー件数等で変動する内容に必要な高さを実測して
+    // ClientSize に反映する。以前は ClientSize を 900px 固定にしていたため、内容がそれを
+    // 超えると root（Dock = Fill）が超過分を内部でクリップし、OK/キャンセル/適用ボタンが
+    // 画面上どこにも表示・到達できなくなる不具合があった。画面の作業領域より高くなる場合は
+    // 上限でクランプし、AutoScroll（コンストラクタで設定済み）で残りを閲覧できるようにする。
+    private void ApplyContentHeight(Control root)
+    {
+        const int width = 480;
+        int availableWidth = width - Padding.Horizontal;
+        int contentHeight = root.GetPreferredSize(new Size(availableWidth, 0)).Height + Padding.Vertical;
+
+        Rectangle work = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1920, 1080);
+        int maxHeight = Math.Max(300, work.Height - 40);
+
+        ClientSize = new Size(width, Math.Min(contentHeight, maxHeight));
     }
 
     protected override void OnLoad(EventArgs e)
@@ -139,13 +157,16 @@ public sealed class SettingsForm : Form
     // レイアウト構築
     // ------------------------------------------------------------------
 
-    private void BuildLayout()
+    private TableLayoutPanel BuildLayout()
     {
+        // Dock = Top + AutoSize（Fill ではない）にすることで、内容の実際の高さが
+        // ApplyContentHeight から GetPreferredSize 経由で正しく測定できるようにする。
         var root = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
             ColumnCount = 1,
-            AutoScroll = false,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
         };
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -158,6 +179,7 @@ public sealed class SettingsForm : Form
         root.Controls.Add(BuildButtonRow(), 0, 3);
 
         Controls.Add(root);
+        return root;
     }
 
     private GroupBox BuildIndicatorGroup()

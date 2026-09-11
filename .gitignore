@@ -84,3 +84,4 @@ CMakeUserPresets.json
 /external/
 /tmp/
 /CLAUDE.md
+/.playwright-mcp/
