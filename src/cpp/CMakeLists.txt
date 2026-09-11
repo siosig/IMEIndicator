@@ -171,3 +171,91 @@ set_target_properties(IMEIndicator PROPERTIES
     OUTPUT_NAME "IMEIndicator"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+# ---- コード署名（任意・既定オフ） ----
+#
+# Windows 11 の Smart App Control (SAC) は、署名が無いか信頼できない実行ファイルを
+# ブロックする。ローカルビルドはリビルドのたびにハッシュが変わるため、クラウドの
+# 評価が付かず繰り返しブロックされる。
+#
+# 重要（調査結果）:
+#   - 自己署名証明書では SAC は解除されない。証明書は Microsoft Trusted Root Program に
+#     含まれる CA が発行したものか、Microsoft Trusted Signing である必要がある。
+#   - SAC の署名検証は RSA のみ。ECC 証明書は現時点で非対応。
+#   参考: https://learn.microsoft.com/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control
+#
+# 使い方（証明書を用意したあと、構成時に指定する）:
+#   証明書ストアの拇印を使う場合:
+#     cmake --preset windows-x64-release -DIMEINDICATOR_SIGN=ON \
+#           -DIMEINDICATOR_SIGN_THUMBPRINT=<40桁の拇印>
+#   PFX ファイルを使う場合:
+#     cmake --preset windows-x64-release -DIMEINDICATOR_SIGN=ON \
+#           -DIMEINDICATOR_SIGN_PFX=C:/path/to/cert.pfx -DIMEINDICATOR_SIGN_PFX_PASSWORD=<pw>
+#   Microsoft Trusted Signing（署名代行 dlib）を使う場合:
+#     cmake --preset windows-x64-release -DIMEINDICATOR_SIGN=ON \
+#           -DIMEINDICATOR_SIGN_DLIB=<Azure.CodeSigning.Dlib.dll> \
+#           -DIMEINDICATOR_SIGN_DLIB_METADATA=<metadata.json>
+#
+# 既定（OFF）では何も追加しないため、証明書が無い環境でもビルドはそのまま通る。
+option(IMEINDICATOR_SIGN "ビルド後に signtool で実行ファイルを署名する" OFF)
+set(IMEINDICATOR_SIGN_THUMBPRINT ""  CACHE STRING "署名に使う証明書の拇印（証明書ストア内）")
+set(IMEINDICATOR_SIGN_PFX ""         CACHE FILEPATH "署名に使う PFX ファイル")
+set(IMEINDICATOR_SIGN_PFX_PASSWORD ""CACHE STRING "PFX のパスワード")
+set(IMEINDICATOR_SIGN_DLIB ""        CACHE FILEPATH "Trusted Signing の署名代行 DLL")
+set(IMEINDICATOR_SIGN_DLIB_METADATA ""CACHE FILEPATH "Trusted Signing のメタデータ JSON")
+# タイムスタンプは必須。付けないと証明書の有効期限切れと同時に署名も無効になる。
+set(IMEINDICATOR_SIGN_TIMESTAMP_URL "http://timestamp.digicert.com"
+    CACHE STRING "RFC3161 タイムスタンプサーバー")
+
+if(IMEINDICATOR_SIGN)
+    # signtool.exe を Windows SDK から探す（最新バージョンを採用）。
+    if(NOT IMEINDICATOR_SIGNTOOL)
+        file(GLOB _imeindicator_signtool_candidates
+             "$ENV{ProgramFiles\(x86\)}/Windows Kits/10/bin/*/x64/signtool.exe")
+        if(_imeindicator_signtool_candidates)
+            list(SORT _imeindicator_signtool_candidates)
+            list(REVERSE _imeindicator_signtool_candidates)
+            list(GET _imeindicator_signtool_candidates 0 _imeindicator_signtool)
+            set(IMEINDICATOR_SIGNTOOL "${_imeindicator_signtool}"
+                CACHE FILEPATH "signtool.exe のパス")
+        endif()
+    endif()
+    if(NOT IMEINDICATOR_SIGNTOOL)
+        message(FATAL_ERROR
+            "IMEINDICATOR_SIGN=ON ですが signtool.exe が見つかりません。"
+            " Windows SDK を入れるか -DIMEINDICATOR_SIGNTOOL=<path> で指定してください。")
+    endif()
+
+    # 署名方式を 1 つに決める（拇印 / PFX / Trusted Signing dlib）。
+    if(IMEINDICATOR_SIGN_DLIB)
+        if(NOT IMEINDICATOR_SIGN_DLIB_METADATA)
+            message(FATAL_ERROR "IMEINDICATOR_SIGN_DLIB には IMEINDICATOR_SIGN_DLIB_METADATA が必要です。")
+        endif()
+        set(_imeindicator_sign_cred
+            /dlib "${IMEINDICATOR_SIGN_DLIB}" /dmdf "${IMEINDICATOR_SIGN_DLIB_METADATA}")
+    elseif(IMEINDICATOR_SIGN_PFX)
+        set(_imeindicator_sign_cred /f "${IMEINDICATOR_SIGN_PFX}")
+        if(IMEINDICATOR_SIGN_PFX_PASSWORD)
+            list(APPEND _imeindicator_sign_cred /p "${IMEINDICATOR_SIGN_PFX_PASSWORD}")
+        endif()
+    elseif(IMEINDICATOR_SIGN_THUMBPRINT)
+        set(_imeindicator_sign_cred /sha1 "${IMEINDICATOR_SIGN_THUMBPRINT}")
+    else()
+        message(FATAL_ERROR
+            "IMEINDICATOR_SIGN=ON ですが証明書が指定されていません。"
+            " IMEINDICATOR_SIGN_THUMBPRINT / IMEINDICATOR_SIGN_PFX /"
+            " IMEINDICATOR_SIGN_DLIB のいずれかを指定してください。")
+    endif()
+
+    # /fd sha256 /td sha256: SAC が要求するダイジェスト。/tr: RFC3161 タイムスタンプ。
+    add_custom_command(TARGET IMEIndicator POST_BUILD
+        COMMAND "${IMEINDICATOR_SIGNTOOL}" sign
+                ${_imeindicator_sign_cred}
+                /fd sha256
+                /tr "${IMEINDICATOR_SIGN_TIMESTAMP_URL}" /td sha256
+                "$<TARGET_FILE:IMEIndicator>"
+        COMMAND "${IMEINDICATOR_SIGNTOOL}" verify /pa "$<TARGET_FILE:IMEIndicator>"
+        COMMENT "IMEIndicator.exe を署名・検証しています"
+        VERBATIM)
+    message(STATUS "コード署名: 有効（signtool = ${IMEINDICATOR_SIGNTOOL}）")
+endif()
