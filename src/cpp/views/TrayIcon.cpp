@@ -128,6 +128,12 @@ LRESULT TrayIcon::handleMessage(UINT msg, WPARAM wp, LPARAM lp)
                     toggleVisibleCb_(!getIsVisibleCb_());
                 }
                 return 0;
+            // 013-ime-corner-image: 背景画像表示切替（FR-016）
+            case IDM_TOGGLE_BACKGROUND_IMAGE:
+                if (toggleBackgroundImageCb_ && getIsBackgroundImageVisibleCb_) {
+                    toggleBackgroundImageCb_(!getIsBackgroundImageVisibleCb_());
+                }
+                return 0;
             case IDM_POWER_BEST_POWER_EFFICIENCY:
                 if (setPowerModeCb_) setPowerModeCb_(models::PowerMode::BestPowerEfficiency);
                 return 0;
@@ -183,6 +189,12 @@ HMENU TrayIcon::buildContextMenu()
     UINT toggleFlags = MF_STRING;
     if (getIsVisibleCb_ && getIsVisibleCb_()) toggleFlags |= MF_CHECKED;
     ::AppendMenuW(menu, toggleFlags, IDM_TOGGLE_VISIBLE, L"表示切替");
+
+    // 013-ime-corner-image: 背景画像表示切替（カーソル追従インジケーターとは独立、FR-016）
+    UINT bgFlags = MF_STRING;
+    if (getIsBackgroundImageVisibleCb_ && getIsBackgroundImageVisibleCb_()) bgFlags |= MF_CHECKED;
+    ::AppendMenuW(menu, bgFlags, IDM_TOGGLE_BACKGROUND_IMAGE, L"背景画像表示切替");
+
     ::AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
 
     // 電源モードサブメニュー

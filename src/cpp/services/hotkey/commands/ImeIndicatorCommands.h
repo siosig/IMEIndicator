@@ -75,6 +75,10 @@ void setProcessPriorityMonitor(services::ProcessPriorityMonitor* monitor) noexce
 using PowerModeToggleHandler = std::function<void()>;
 void setPowerModeToggleHandler(PowerModeToggleHandler handler) noexcept;
 
+// 013-ime-corner-image: 背景画像表示切替ハンドラ（App::toggleBackgroundImageVisible を注入）
+using BackgroundImageToggleHandler = std::function<void()>;
+void setBackgroundImageToggleHandler(BackgroundImageToggleHandler handler) noexcept;
+
 } // namespace imeindicator::services::hotkey
 
 namespace std {

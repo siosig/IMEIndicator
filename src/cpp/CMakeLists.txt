@@ -61,6 +61,10 @@ target_sources(IMEIndicator PRIVATE
     services/PowerModeService.cpp
     services/DisplayHelper.cpp
 
+    # サービス（013-ime-corner-image 背景画像: 幾何計算・WIC デコード）
+    services/BackgroundImageLayout.cpp
+    services/WicImageLoader.cpp
+
     # サービス（Phase 3 / US1 入力監視）
     services/MouseTracker.cpp
     services/KeyboardHook.cpp
@@ -86,6 +90,9 @@ target_sources(IMEIndicator PRIVATE
     # ビュー（Phase 4 / US2 設定ダイアログ）
     views/SettingsDialog.cpp
 
+    # ビュー（013-ime-corner-image: 画面右上 IME ON 背景画像ウィンドウ）
+    views/BackgroundImageWindow.cpp
+
     # リソース
     resources/app.rc
 )
@@ -95,22 +102,26 @@ target_include_directories(IMEIndicator PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/resources
 )
 
-# Visual Studio Generator のリソースコンパイラ (rc.exe) に
-# version.h を見つけさせる。
-# CMake 4.x + VS Generator では COMPILE_FLAGS の文字列パースが不安定なため、
-# COMPILE_OPTIONS のリスト形式で渡し、また target_compile_definitions で
-# rc.exe にバージョンマクロを直接注入する二重対策を採る。
+# Visual Studio Generator のリソースコンパイラ (rc.exe) の設定。
+#
+# /I  : version.h / resource_ids.h を見つけさせる。
+#       CMake 4.x + VS Generator では COMPILE_FLAGS の文字列パースが不安定なため、
+#       COMPILE_OPTIONS のリスト形式で渡す。
+# /c65001 : **必須**。rc.exe は既定でシステム ANSI コードページ（日本語環境では CP932）で
+#       ソースを読むため、UTF-8 の日本語コメントを含むヘッダ（version.h / resource_ids.h）が
+#       文字化けする。CP932 では 2 バイト文字のリードバイトが直後の改行を飲み込むため、
+#       コメント行の次の行にあるプリプロセッサ指令が失われ、
+#       `fatal error RC1020: unexpected '#endif'` や #define の取りこぼしが発生する。
+#       コードページを UTF-8 (65001) に指定することで正しく解釈される。
+#       参考: https://learn.microsoft.com/windows/win32/menurc/using-rc-the-rc-command-line
 set_source_files_properties(resources/app.rc PROPERTIES
-    COMPILE_OPTIONS "/I${CMAKE_CURRENT_SOURCE_DIR}/resources")
+    COMPILE_OPTIONS "/I${CMAKE_CURRENT_SOURCE_DIR}/resources;/c65001")
 
-# rc.exe が version.h の解決に失敗しても動くよう、CMake の project(VERSION) を
-# 直接マクロ定義として渡す。version.h と一致するように維持すること（FR-009）。
-target_compile_definitions(IMEIndicator PRIVATE
-    IMEINDICATOR_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
-    IMEINDICATOR_VERSION_MINOR=${PROJECT_VERSION_MINOR}
-    IMEINDICATOR_VERSION_PATCH=${PROJECT_VERSION_PATCH}
-    IMEINDICATOR_VERSION_BUILD=7
-)
+# 旧来ここで IMEINDICATOR_VERSION_* を target_compile_definitions で二重定義していたが、
+# 上記 /c65001 により rc.exe が version.h を正しく解釈できるようになったため撤去した
+# （013-ime-corner-image）。二重定義は version.h の値と乖離しやすく、実際に
+# version.h が 1.4.0.9 の時点でも BUILD=7 が埋め込まれる不整合を招いていた。
+# バージョンの正は src/cpp/resources/version.h のみとする（FR-009）。
 
 target_link_libraries(IMEIndicator PRIVATE
     nlohmann_json::nlohmann_json
@@ -146,6 +157,8 @@ target_link_libraries(IMEIndicator PRIVATE
     powrprof
     gdi32
     psapi
+    # WIC（Windows Imaging Component）: 背景画像 PNG のデコード・縮小（013-ime-corner-image）
+    windowscodecs
     # Direct2D 系（Phase 3 で実装が乗る）
     d2d1
     dwrite

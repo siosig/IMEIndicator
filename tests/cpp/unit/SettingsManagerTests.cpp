@@ -1,6 +1,7 @@
 #include "services/SettingsManager.h"
 #include "services/Logger.h"
 #include "models/AppSettings.h"
+#include "app/AppConstants.h"
 
 #include <filesystem>
 #include <fstream>
@@ -79,14 +80,14 @@ TEST_F(SettingsFixture, LoadV1SampleAndMigrateOnSave)
     ASSERT_EQ(mgr.settings().processPriorityRules.size(), 1u);
     EXPECT_EQ(mgr.settings().processPriorityRules[0].targetPriority,
               models::PriorityLevel::BelowNormal);
-    // v1 として読まれたあと内部で v3 に昇格しているはず
-    EXPECT_EQ(mgr.settings().schemaVersion, 3);
+    // v1 として読まれたあと内部で v4 に昇格しているはず（013-ime-corner-image）
+    EXPECT_EQ(mgr.settings().schemaVersion, 4);
 
-    // Save すれば v3 で書き出される
+    // Save すれば v4 で書き出される
     EXPECT_TRUE(mgr.save());
     std::ifstream ifs(mgr.settingsFilePath());
     nlohmann::json j; ifs >> j;
-    EXPECT_EQ(j.value("schemaVersion", 0), 3);
+    EXPECT_EQ(j.value("schemaVersion", 0), 4);
     EXPECT_TRUE(j.contains("logLevel"));
     EXPECT_TRUE(j.contains("pixelVerificationIntervalMs"));
 }
@@ -100,7 +101,7 @@ TEST_F(SettingsFixture, LoadV2SampleRoundTrip)
     copyFixtureTo(fxV2, mgr.settingsFilePath());
 
     EXPECT_TRUE(mgr.load());
-    EXPECT_EQ(mgr.settings().schemaVersion, 3);
+    EXPECT_EQ(mgr.settings().schemaVersion, 4);
     EXPECT_EQ(mgr.settings().processPriorityRules.size(), 2u);
     EXPECT_EQ(mgr.settings().logLevel, models::LogLevel::Warn);
     EXPECT_EQ(mgr.settings().pixelVerificationIntervalMs, 2000);
@@ -111,6 +112,71 @@ TEST_F(SettingsFixture, LoadV2SampleRoundTrip)
     services::SettingsManager mgr2(tmp_.path());
     ASSERT_TRUE(mgr2.load());
     EXPECT_EQ(mgr2.settings(), original);
+}
+
+// v3 → v4 互換（013-ime-corner-image / contracts/settings-schema-v4.md）:
+// backgroundImage 欠落の v3 サンプルを読み、既定値（無効）で補完・v4 へ昇格・.v3.bak 生成を検証。
+TEST_F(SettingsFixture, LoadV3SampleMigratesToV4AndCreatesBackup)
+{
+    auto fxV3 = fixturesDir() / L"settings-v3-sample.json";
+    if (!fs::exists(fxV3)) GTEST_SKIP() << "fixture not found: " << fxV3;
+
+    services::SettingsManager mgr(tmp_.path());
+    copyFixtureTo(fxV3, mgr.settingsFilePath());
+
+    EXPECT_TRUE(mgr.load());
+    // v3 には backgroundImage が無い → 既定値（無効）
+    EXPECT_FALSE(mgr.settings().backgroundImage.isVisible);
+    // v3 として読まれたあと内部で v4 に昇格
+    EXPECT_EQ(mgr.settings().schemaVersion, 4);
+    EXPECT_EQ(mgr.settings().processPriorityRules.size(), 2u);
+    EXPECT_EQ(mgr.settings().hotkeySettings.hotkeys.size(), 0u);
+
+    // v3 バックアップが作られる
+    auto bak = mgr.settingsFilePath();
+    bak += std::wstring(app::AppConstants::V3BackupSuffix);
+    ASSERT_TRUE(fs::exists(bak));
+
+    // 最古を保持: 既存の .v3.bak は 2 回目の load で上書きされない
+    {
+        std::ofstream ofs(bak, std::ios::binary | std::ios::app);
+        ofs << "\n// marker";
+    }
+    services::SettingsManager again(tmp_.path());
+    EXPECT_TRUE(again.load());
+    {
+        std::ifstream ifs(bak, std::ios::binary);
+        std::string content((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+        EXPECT_NE(content.find("// marker"), std::string::npos);
+    }
+
+    // Save すれば v4 で書き出され、backgroundImage が含まれる
+    EXPECT_TRUE(mgr.save());
+    std::ifstream ifs(mgr.settingsFilePath());
+    nlohmann::json j; ifs >> j;
+    EXPECT_EQ(j.value("schemaVersion", 0), 4);
+    ASSERT_TRUE(j.contains("backgroundImage"));
+    EXPECT_FALSE(j["backgroundImage"].value("isVisible", true));
+}
+
+// backgroundImage.isVisible の永続化往復（spec FR-007）
+TEST_F(SettingsFixture, BackgroundImageVisibleRoundTrip)
+{
+    services::SettingsManager mgr(tmp_.path());
+    mgr.load();  // ファイル無し → 既定値
+    EXPECT_FALSE(mgr.settings().backgroundImage.isVisible);
+
+    auto s = mgr.settings();
+    s.backgroundImage.isVisible = true;
+    mgr.setSettings(std::move(s));
+    ASSERT_TRUE(mgr.save());
+
+    services::SettingsManager mgr2(tmp_.path());
+    ASSERT_TRUE(mgr2.load());
+    EXPECT_TRUE(mgr2.settings().backgroundImage.isVisible);
+    EXPECT_EQ(mgr2.settings().schemaVersion, 4);
+    // mouseCursorIndicator.isVisible とは独立（spec FR-009）
+    EXPECT_TRUE(mgr2.settings().mouseCursorIndicator.isVisible);
 }
 
 TEST_F(SettingsFixture, BrokenFileFallsBackToDefaultsAndRenames)

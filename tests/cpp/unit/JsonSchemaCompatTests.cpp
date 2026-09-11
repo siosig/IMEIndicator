@@ -74,8 +74,11 @@ TEST(JsonSchemaCompatTests, V2WriteHasCamelCaseKeysAndIndent)
     EXPECT_TRUE(j.contains("logLevel"));
     EXPECT_TRUE(j.contains("pixelVerificationIntervalMs"));
 
-    // 書き出しは常に schemaVersion: 3
-    EXPECT_EQ(j["schemaVersion"], 3);
+    // 書き出しは常に schemaVersion: 4（013-ime-corner-image / contracts/settings-schema-v4.md）
+    EXPECT_EQ(j["schemaVersion"], 4);
+    // v4 新規: backgroundImage は末尾に必ず書き出される
+    ASSERT_TRUE(j.contains("backgroundImage"));
+    EXPECT_FALSE(j["backgroundImage"].value("isVisible", true));
 
     // dump(2) は 2 スペースインデント・LF 改行
     auto dumped = j.dump(2);

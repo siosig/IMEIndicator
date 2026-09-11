@@ -43,6 +43,11 @@ std::atomic<services::ProcessPriorityMonitor*>   g_priorityMonitor{nullptr};
 std::mutex                  g_handlerMutex;
 PowerModeToggleHandler      g_powerModeToggleHandler;
 
+// 背景画像表示切替ハンドラ（cmd 203 で App::toggleBackgroundImageVisible を実行するため）。
+// g_powerModeToggleHandler と同じ g_handlerMutex で保護する（同じライフサイクル・同じ
+// アクセスパターンのため mutex を分ける必要がない）。
+BackgroundImageToggleHandler g_backgroundImageToggleHandler;
+
 class ImeIndicatorCmdErrorCategory : public std::error_category {
 public:
     const char* name() const noexcept override {
@@ -98,6 +103,40 @@ std::expected<void, ImeIndicatorCmdError> cmdToggleIndicator() noexcept {
     if (auto log = cmdLog()) {
         log->info("ToggleIndicator: isVisible={} (show は IME 状態変化時に自動反映)",
                   settings.mouseCursorIndicator.isVisible);
+    }
+    return {};
+}
+
+// cmd 203: 背景画像表示切替（013-ime-corner-image）
+//
+// App から注入されたハンドラ（App::toggleBackgroundImageVisible）を呼ぶ。ハンドラ側で
+// 設定更新・保存・現在の IME 状態での表示反映までを一括で行うため、cmd 200 のような
+// 「show は次の IME イベント任せ」という制約は無い。
+// 未注入時は設定値の反転と保存のみ行う（UI 反映なし、warn ログ）。
+std::expected<void, ImeIndicatorCmdError> cmdToggleBackgroundImage() noexcept {
+    // ロック外で実行するためコピーを取得（cmdTogglePowerMode と同じパターン）
+    BackgroundImageToggleHandler handler;
+    {
+        std::scoped_lock lk(g_handlerMutex);
+        handler = g_backgroundImageToggleHandler;
+    }
+    if (handler) {
+        handler();  // App::toggleBackgroundImageVisible と等価
+        if (auto log = cmdLog()) log->info("ToggleBackgroundImage: handler executed");
+        return {};
+    }
+
+    // フォールバック（注入前または明示的に外された場合）
+    auto* sm = g_settingsManager.load(std::memory_order_acquire);
+    if (!sm) return std::unexpected(ImeIndicatorCmdError::ServiceNotInjected);
+
+    auto& settings = sm->mutableSettings();
+    settings.backgroundImage.isVisible = !settings.backgroundImage.isVisible;
+    sm->save();
+
+    if (auto log = cmdLog()) {
+        log->warn("ToggleBackgroundImage (fallback, no handler): isVisible={}",
+                  settings.backgroundImage.isVisible);
     }
     return {};
 }
@@ -273,6 +312,7 @@ const wchar_t* getImeIndicatorCommandName(int cmdId) noexcept {
         case 200: return L"IME インジケーター表示切替";
         case 201: return L"ピクセル検出有効/無効";
         case 202: return L"IME 設定リロード";
+        case 203: return L"背景画像表示切替";
         // 電源モード（210〜219）
         case 210: return L"電源モード切替（バックアップ付き）";
         case 211: return L"高パフォーマンス電源プラン適用";
@@ -298,6 +338,7 @@ executeImeIndicatorCommand(int cmdId, std::wstring_view param) noexcept {
         case 200: return cmdToggleIndicator();
         case 201: return cmdTogglePixelDetection();
         case 202: return cmdReloadIMESettings();
+        case 203: return cmdToggleBackgroundImage();
         case 210: return cmdTogglePowerMode();
         case 211: return cmdApplyHighPerformancePower();
         case 212: return cmdRestorePowerBackup();
@@ -331,6 +372,11 @@ void setProcessPriorityMonitor(services::ProcessPriorityMonitor* monitor) noexce
 void setPowerModeToggleHandler(PowerModeToggleHandler handler) noexcept {
     std::scoped_lock lk(g_handlerMutex);
     g_powerModeToggleHandler = std::move(handler);
+}
+
+void setBackgroundImageToggleHandler(BackgroundImageToggleHandler handler) noexcept {
+    std::scoped_lock lk(g_handlerMutex);
+    g_backgroundImageToggleHandler = std::move(handler);
 }
 
 } // namespace imeindicator::services::hotkey

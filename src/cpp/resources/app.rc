@@ -3,6 +3,7 @@
 
 #include <winres.h>
 #include "version.h"
+#include "resource_ids.h"
 
 // ---- アイコン ----
 // Release: app.ico、Debug: app-debug.ico を埋め込む
@@ -12,6 +13,11 @@ IDI_APPLICATION ICON "app-debug.ico"
 #else
 IDI_APPLICATION ICON "app.ico"
 #endif
+
+// ---- 背景画像（013-ime-corner-image） ----
+// 画面右上 IME ON 背景画像。512x512 RGBA PNG（四隅透過）を RT_RCDATA として埋め込み、
+// WicImageLoader::lockRcData で読み出して WIC でデコードする。
+IDR_BACKGROUND_IMAGE_PNG RCDATA "ime-on-background.png"
 
 // ---- マニフェスト ----
 // CREATEPROCESS_MANIFEST_RESOURCE_ID = 1

@@ -26,6 +26,7 @@ namespace imeindicator::views {
 class MouseCursorIndicatorWindow;
 class TrayIcon;
 class SettingsDialog;
+class BackgroundImageWindow;
 }
 
 namespace imeindicator::app {
@@ -55,6 +56,10 @@ public:
     // 表示切替（トレイメニュー）
     void setMouseIndicatorVisible(bool visible);
 
+    // 013-ime-corner-image: 背景画像表示の有効/無効を設定・永続化し、現在の IME 状態で表示反映する（トレイ・ホットキーからも使う単一経路）
+    void setBackgroundImageVisible(bool visible);
+    void toggleBackgroundImageVisible();
+
 private:
     bool createMessageWindow(HINSTANCE hInstance);
     static LRESULT CALLBACK messageWndProc(HWND, UINT, WPARAM, LPARAM);
@@ -63,6 +68,7 @@ private:
     void onIMEStateChanged(const models::LanguageInfo& info);  // ワーカスレッドから呼ばれる → PostMessage でマーシャリング
     void onCursorPositionChanged(int x, int y);
     void applyWindowVisibility(const models::LanguageInfo& info);
+    void applyBackgroundImageVisibility(bool imeOn);
     void refreshIndicatorColor();
 
     void startPowerToggleListener();
@@ -82,6 +88,7 @@ private:
     services::SettingsManager settingsManager_;
     std::unique_ptr<services::IMEMonitor> imeMonitor_;
     std::unique_ptr<views::MouseCursorIndicatorWindow> indicatorWindow_;
+    std::unique_ptr<views::BackgroundImageWindow> backgroundImageWindow_;
     std::unique_ptr<views::TrayIcon> trayIcon_;
     std::shared_ptr<services::ProcessPriorityService> priorityService_;
     std::unique_ptr<services::ProcessPriorityMonitor> priorityMonitor_;

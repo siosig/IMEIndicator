@@ -36,6 +36,8 @@ struct AppConstants {
     // バックアップ・破損ファイルのサフィックス
     static constexpr std::wstring_view V1BackupSuffix = L".v1.bak";
     static constexpr std::wstring_view V2BackupSuffix = L".v2.bak";
+    // v3 → v4 昇格時のバックアップ（013-ime-corner-image / contracts/settings-schema-v4.md）
+    static constexpr std::wstring_view V3BackupSuffix = L".v3.bak";
     static constexpr std::wstring_view BrokenSuffixPrefix = L".broken-";
     static constexpr std::wstring_view TempSuffix = L".tmp";
 
@@ -45,6 +47,11 @@ struct AppConstants {
     static constexpr int MaxPollingIntervalSeconds = 1800;
     static constexpr int MaxIndicatorTextChars = 8;
     static constexpr int MaxBackoffExponentLimit = 10;
+
+    // 画面右上 IME ON 背景画像（013-ime-corner-image / spec FR-012）
+    // 論理ピクセル。表示先モニターの DPI で拡縮する（BackgroundImageLayout::compute）。
+    static constexpr int BackgroundImageLogicalSize   = 128;
+    static constexpr int BackgroundImageLogicalMargin = 16;
 
     // ロガーカテゴリ（contracts/log-file-contract.md §ロガー）
     static constexpr std::string_view LoggerApp = "app";
@@ -68,6 +75,8 @@ struct AppConstants {
     static constexpr int TrayOpenSettings       = 1003;
     static constexpr int TrayExit               = 1004;
     static constexpr int TrayOpenHotkeySettings = 1010;  // 新規（ホットキー設定タブを開く）
+    // 013-ime-corner-image: 背景画像表示切替（1002〜1004 は上記の予約済み ID のため 1005）
+    static constexpr int TrayToggleBackgroundImage = 1005;
     static constexpr int TrayHotkeyBase         = 5000;  // 5000 + N で N 番目のホットキーを実行
     static constexpr int TrayHotkeyMax          = 5255;  // 256 件上限（FR-001）
 

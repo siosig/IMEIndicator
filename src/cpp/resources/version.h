@@ -24,11 +24,20 @@
 // 1.4.0.9 = プロセス優先度ルール編集ダイアログのプロセス名フィールドに
 //           前方一致オートコンプリートを追加（012-process-name-autocomplete）。
 //           CBS_DROPDOWN ComboBox + CBN_EDITCHANGE で最大 20 件の候補表示。
+// 1.4.0.10 = 画面右上 IME ON 背景画像を追加（013-ime-corner-image）。
+//           日本語 IME ON の間、プライマリモニター作業領域の右上に同梱 PNG を
+//           最背面・クリック透過で表示する（WS_EX_LAYERED + UpdateLayeredWindow、
+//           HWND_BOTTOM + WM_WINDOWPOSCHANGING で Z 順固定、WIC で DPI 追従）。
+//           設定スキーマは v4 へ昇格（backgroundImage.isVisible を追加）。
+//           あわせて app.rc のコンパイルに /c65001 を指定し、rc.exe が UTF-8 の
+//           日本語コメントを CP932 と誤読して version.h の #define を取りこぼす
+//           問題を解消した。これにより従来 CMake 側で二重定義していた
+//           IMEINDICATOR_VERSION_* の撤去が可能になり、本ファイルが唯一の正となる。
 // 以降は最終要素（BUILD）を 1 ずつ上げる。
 #define IMEINDICATOR_VERSION_MAJOR 1
 #define IMEINDICATOR_VERSION_MINOR 4
 #define IMEINDICATOR_VERSION_PATCH 0
-#define IMEINDICATOR_VERSION_BUILD 9
+#define IMEINDICATOR_VERSION_BUILD 10
 
 #define IMEINDICATOR_VERSION_NUM  IMEINDICATOR_VERSION_MAJOR, \
                                   IMEINDICATOR_VERSION_MINOR, \

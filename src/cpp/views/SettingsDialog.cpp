@@ -43,6 +43,9 @@ enum CtrlId : int {
     ID_RULE_EDIT,
     ID_RULE_DELETE,
     ID_POLLING,
+    // 013-ime-corner-image: 背景画像表示チェックボックス（= 1014。
+    // ID_HOTKEY_LIST = 1020 以降のホットキー ID と衝突しない）
+    ID_BACKGROUND_IMAGE,
     // Phase 3 / US1 (010-hotkeyp-merge): ホットキー編集
     ID_HOTKEY_LIST   = 1020,
     ID_HOTKEY_ADD    = 1021,
@@ -534,20 +537,30 @@ void SettingsDialog::show(HINSTANCE hInstance)
 void SettingsDialog::createControls(HWND parent, HINSTANCE hInst)
 {
     int y = kPad;
+    // ctrlW: コントロール幅の上書き（既定 kCtrlW）。013-ime-corner-image で
+    // 「インジケーター表示」チェックを縮め、同じ行の右隣に別のチェックを
+    // 並べるために追加した。既定値のため既存の呼び出しには影響しない。
     auto row = [&](const wchar_t* lbl, HWND& target, int id,
-                   bool isCheck = false, bool isCombo = false) {
+                   bool isCheck = false, bool isCombo = false,
+                   int ctrlW = kCtrlW) {
         addLabel(parent, hInst, kPad, y, kLabelW, lbl);
         if (isCheck) {
-            target = addCheck(parent, hInst, kPad + kLabelW, y, kCtrlW, id, L"");
+            target = addCheck(parent, hInst, kPad + kLabelW, y, ctrlW, id, L"");
         } else if (isCombo) {
-            target = addCombo(parent, hInst, kPad + kLabelW, y, kCtrlW, id);
+            target = addCombo(parent, hInst, kPad + kLabelW, y, ctrlW, id);
         } else {
-            target = addEdit(parent, hInst, kPad + kLabelW, y, kCtrlW, 22, id);
+            target = addEdit(parent, hInst, kPad + kLabelW, y, ctrlW, 22, id);
         }
         y += kRowH;
     };
 
-    row(L"インジケーター表示",       hVisible_,  ID_VISIBLE,  true);
+    // 013-ime-corner-image (FR-001): 「インジケーター表示」の右隣に
+    // 「背景画像表示」チェックボックスを同じ行で並べる。row ラムダは y を
+    // 進めてしまうため、行頭の y を退避してから 2 つ目を同じ y に配置する。
+    const int yVisibleRow = y;
+    row(L"インジケーター表示",       hVisible_,  ID_VISIBLE,  true, false, 24);
+    hBackgroundImage_ = addCheck(parent, hInst, kPad + kLabelW + 30, yVisibleRow,
+                                 kCtrlW - 30, ID_BACKGROUND_IMAGE, L"背景画像表示");
     row(L"サイズ (20-100)",           hSize_,     ID_SIZE);
     row(L"不透明度 (0.10-1.00)",      hOpacity_,  ID_OPACITY);
     row(L"オフセット X",              hOffsetX_,  ID_OFFSETX);
@@ -669,6 +682,9 @@ void SettingsDialog::loadFromSettings()
     const auto& s = mgr_.settings();
     ::SendMessageW(hVisible_, BM_SETCHECK,
                    s.mouseCursorIndicator.isVisible ? BST_CHECKED : BST_UNCHECKED, 0);
+    // 013-ime-corner-image: 背景画像表示（カーソル追従インジケーターとは独立）
+    ::SendMessageW(hBackgroundImage_, BM_SETCHECK,
+                   s.backgroundImage.isVisible ? BST_CHECKED : BST_UNCHECKED, 0);
     setEditDouble(hSize_,    s.mouseCursorIndicator.size,    0);
     setEditDouble(hOpacity_, s.mouseCursorIndicator.opacity, 2);
     setEditDouble(hOffsetX_, s.mouseCursorIndicator.offsetX, 0);
@@ -795,6 +811,9 @@ bool SettingsDialog::readControlsToSettings(models::AppSettings& out) const
     out = mgr_.settings();
     out.mouseCursorIndicator.isVisible =
         (::SendMessageW(hVisible_, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    // 013-ime-corner-image: 背景画像表示（FR-008 適用/OK で即時反映、キャンセルで破棄）
+    out.backgroundImage.isVisible =
+        (::SendMessageW(hBackgroundImage_, BM_GETCHECK, 0, 0) == BST_CHECKED);
     out.mouseCursorIndicator.size    = getEditDouble(hSize_,    out.mouseCursorIndicator.size);
     out.mouseCursorIndicator.opacity = getEditDouble(hOpacity_, out.mouseCursorIndicator.opacity);
     out.mouseCursorIndicator.offsetX = getEditDouble(hOffsetX_, out.mouseCursorIndicator.offsetX);
@@ -1075,6 +1094,8 @@ constexpr HotkeyCommandEntry kHotkeyCommandList[] = {
 
     // === IMEIndicator 拡張 (200-299) ===
     {200, L"[IMEIndicator] インジケーター表示切替"},
+    // 013-ime-corner-image: 背景画像表示の切替（200 とは独立したオプション）
+    {203, L"[IMEIndicator] 背景画像表示切替"},
     {201, L"[IMEIndicator] ピクセル検出 有効/無効"},
     {202, L"[IMEIndicator] IME 設定リロード"},
     {210, L"[IMEIndicator] 電源モード切替（バックアップ付き）"},

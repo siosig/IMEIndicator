@@ -8,7 +8,7 @@
 
 namespace imeindicator::services {
 
-// 設定 I/O 統括。contracts/settings-schema-v1.md / v2.md に厳密準拠。
+// 設定 I/O 統括。contracts/settings-schema-v1.md / v2.md / v3.md / v4.md に厳密準拠。
 class SettingsManager {
 public:
     // 本番用: %APPDATA%\IMEIndicator\ を使用
@@ -21,7 +21,7 @@ public:
     // 戻り値: 正常読み込み成功 = true、ファイル無し/破損で default にフォールバック = false
     bool load();
 
-    // 設定保存（アトミック書き込み）。常に v2 で書き出す。
+    // 設定保存（アトミック書き込み）。常に v4 で書き出す。
     bool save();
 
     // デフォルトに戻して保存
@@ -48,6 +48,10 @@ private:
     // （010-hotkeyp-merge / FR-013 のスキーマアップグレード時の互換性維持）
     void createV2Backup() noexcept;
 
+    // v3（schemaVersion == 3）として読み込んだ場合に、v4 へ昇格する前に v3 バックアップを作成する
+    // （013-ime-corner-image / contracts/settings-schema-v4.md のスキーマアップグレード時の互換性維持）
+    void createV3Backup() noexcept;
+
     // 破損ファイルをタイムスタンプ付きでリネーム
     void renameBroken() noexcept;
 
@@ -57,6 +61,7 @@ private:
     models::AppSettings settings_{};
     bool loadedAsV1_{false};
     bool loadedAsV2_{false};
+    bool loadedAsV3_{false};
 };
 
 } // namespace imeindicator::services

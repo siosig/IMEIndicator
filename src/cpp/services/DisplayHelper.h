@@ -2,6 +2,7 @@
 
 #include "../models/MonitorInfo.h"
 
+#include <optional>
 #include <vector>
 
 namespace imeindicator::services {
@@ -32,8 +33,15 @@ struct DisplayHelper {
     // 座標 (x,y) が任意のモニター矩形に含まれるか。
     static bool isPositionOnAnyDisplay(double x, double y);
 
+    // 013-ime-corner-image: 背景画像ウィンドウの配置先モニター取得（research.md R-5）。
+    // プライマリモニター（MONITORINFOF_PRIMARY）の MonitorInfo を返す。
+    // プライマリが見つからない場合は先頭のモニター、モニターが 0 台なら std::nullopt。
+    // 内部で getAllMonitors() を呼び毎回列挙し直すため、頻繁な呼び出しは避ける
+    // （WM_DISPLAYCHANGE 等の再配置トリガー時のみ呼ぶ想定）。
+    static std::optional<models::MonitorInfo> getPrimaryMonitor();
+
     // プライマリモニターのワーク領域（タスクバー除外、物理ピクセル）。
-    // プライマリが見つからない場合は最初のモニターを返す。
+    // プライマリが見つからない場合は最初のモニターを返す（getPrimaryMonitor() と同じ規則）。
     struct WorkArea { LONG left{}; LONG top{}; LONG right{}; LONG bottom{}; };
     static WorkArea getPrimaryWorkArea();
 

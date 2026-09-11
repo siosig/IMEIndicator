@@ -34,10 +34,16 @@ public:
     using GetCurrentPowerModeCallback = std::function<models::PowerMode()>;
     // 表示切替のチェック表示用
     using GetIsVisibleCallback = std::function<bool()>;
+    // 背景画像表示切替（チェック前の現在値の反転を引数で受ける）
+    using ToggleBackgroundImageCallback = std::function<void(bool newVisible)>;
+    // 背景画像表示のチェック表示用
+    using GetIsBackgroundImageVisibleCallback = std::function<bool()>;
 
     // メニュー項目 ID（WM_COMMAND の wParam）
     enum MenuId : int {
         IDM_TOGGLE_VISIBLE              = 1001,
+        // 013-ime-corner-image。1002〜1004 は 010 契約の予約済み ID のため 1005
+        IDM_TOGGLE_BACKGROUND_IMAGE     = 1005,
         IDM_POWER_BEST_POWER_EFFICIENCY = 1010,
         IDM_POWER_BALANCED              = 1011,
         IDM_POWER_BEST_PERFORMANCE      = 1012,
@@ -73,6 +79,9 @@ public:
     void setSetPowerModeCallback(SetPowerModeCallback cb) { setPowerModeCb_ = std::move(cb); }
     void setGetCurrentPowerModeCallback(GetCurrentPowerModeCallback cb) { getCurrentPowerModeCb_ = std::move(cb); }
     void setGetIsVisibleCallback(GetIsVisibleCallback cb) { getIsVisibleCb_ = std::move(cb); }
+    // 013-ime-corner-image: 背景画像表示切替（カーソル追従インジケーターとは独立）
+    void setToggleBackgroundImageCallback(ToggleBackgroundImageCallback cb) { toggleBackgroundImageCb_ = std::move(cb); }
+    void setGetIsBackgroundImageVisibleCallback(GetIsBackgroundImageVisibleCallback cb) { getIsBackgroundImageVisibleCb_ = std::move(cb); }
 
     // Phase 5 / US3: ホットキーサブメニュー用コールバック
     void setGetTrayHotkeysCallback(GetTrayHotkeysCallback cb) { getTrayHotkeysCb_ = std::move(cb); }
@@ -101,6 +110,9 @@ private:
     SetPowerModeCallback setPowerModeCb_;
     GetCurrentPowerModeCallback getCurrentPowerModeCb_;
     GetIsVisibleCallback getIsVisibleCb_;
+    // 013-ime-corner-image
+    ToggleBackgroundImageCallback toggleBackgroundImageCb_;
+    GetIsBackgroundImageVisibleCallback getIsBackgroundImageVisibleCb_;
     // Phase 5 / US3
     GetTrayHotkeysCallback getTrayHotkeysCb_;
     ExecuteHotkeyCallback executeHotkeyCb_;

@@ -115,20 +115,27 @@ bool DisplayHelper::isPositionOnAnyDisplay(double x, double y)
     return false;
 }
 
+std::optional<models::MonitorInfo> DisplayHelper::getPrimaryMonitor()
+{
+    // 013-ime-corner-image: 毎回 EnumDisplayMonitors で列挙し直す（キャッシュしない）。
+    auto monitors = getAllMonitors();
+    if (monitors.empty()) return std::nullopt;
+
+    for (auto& m : monitors) {
+        if (m.isPrimary) return std::move(m);
+    }
+    // MONITORINFOF_PRIMARY が 1 つも無い場合は先頭（列挙順）へフォールバック。
+    return std::move(monitors.front());
+}
+
 DisplayHelper::WorkArea DisplayHelper::getPrimaryWorkArea()
 {
-    auto monitors = getAllMonitors();
-    for (const auto& m : monitors) {
-        if (m.isPrimary) {
-            const auto& rc = m.workRect;
-            return {rc.left, rc.top, rc.right, rc.bottom};
-        }
-    }
-    if (!monitors.empty()) {
-        const auto& rc = monitors[0].workRect;
-        return {rc.left, rc.top, rc.right, rc.bottom};
-    }
-    return {};
+    // 探索規則（プライマリ → 先頭 → 無し）は getPrimaryMonitor() に一本化。
+    const auto primary = getPrimaryMonitor();
+    if (!primary) return {};
+
+    const auto& rc = primary->workRect;
+    return {rc.left, rc.top, rc.right, rc.bottom};
 }
 
 DisplayHelper::ValidPosition DisplayHelper::getValidPosition(

@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 using namespace imeindicator;
 
 namespace {
@@ -104,4 +106,53 @@ TEST(DisplayHelperTests, GetAllMonitors_HasNonZeroSizes)
         EXPECT_GE(m.dpiX, 96u);
         EXPECT_GE(m.dpiY, 96u);
     }
+}
+
+// 013-ime-corner-image: 背景画像ウィンドウの配置先モニター取得（research.md R-5）。
+
+TEST(DisplayHelperTests, GetPrimaryMonitor_HasScreens_ReturnsValueWithValidGeometry)
+{
+    if (!hasScreens()) GTEST_SKIP() << "no display";
+
+    const auto primary = services::DisplayHelper::getPrimaryMonitor();
+    ASSERT_TRUE(primary.has_value());
+
+    // ワーク領域（タスクバー除外）は空でない。
+    const auto& wr = primary->workRect;
+    EXPECT_GT(wr.right - wr.left, 0);
+    EXPECT_GT(wr.bottom - wr.top, 0);
+
+    // GetDpiForMonitor 失敗時も 96 にフォールバックするため、96 未満にはならない。
+    EXPECT_GE(primary->dpiX, 96u);
+    EXPECT_GE(primary->dpiY, 96u);
+}
+
+TEST(DisplayHelperTests, GetPrimaryMonitor_WorkRect_MatchesPrimaryWorkArea)
+{
+    if (!hasScreens()) GTEST_SKIP() << "no display";
+
+    const auto primary = services::DisplayHelper::getPrimaryMonitor();
+    ASSERT_TRUE(primary.has_value());
+
+    // 既存 getPrimaryWorkArea() と同じ探索規則（プライマリ → 先頭）であること。
+    const auto wa = services::DisplayHelper::getPrimaryWorkArea();
+    EXPECT_EQ(primary->workRect.left,   wa.left);
+    EXPECT_EQ(primary->workRect.top,    wa.top);
+    EXPECT_EQ(primary->workRect.right,  wa.right);
+    EXPECT_EQ(primary->workRect.bottom, wa.bottom);
+}
+
+TEST(DisplayHelperTests, GetPrimaryMonitor_PrimaryFlagged_ReturnsPrimaryEntry)
+{
+    if (!hasScreens()) GTEST_SKIP() << "no display";
+
+    // MONITORINFOF_PRIMARY を持つモニターが列挙に含まれるなら、それが返る。
+    const auto monitors = services::DisplayHelper::getAllMonitors();
+    const bool anyPrimary = std::any_of(monitors.begin(), monitors.end(),
+                                        [](const auto& m) { return m.isPrimary; });
+    if (!anyPrimary) GTEST_SKIP() << "no monitor flagged as primary";
+
+    const auto primary = services::DisplayHelper::getPrimaryMonitor();
+    ASSERT_TRUE(primary.has_value());
+    EXPECT_TRUE(primary->isPrimary);
 }

@@ -29,6 +29,11 @@ target_sources(IMEIndicatorTests PRIVATE
     # 012-process-name-autocomplete: enumerateDistinctProcessNames テスト
     unit/ProcessPriorityServiceTests.cpp
 
+    # 013-ime-corner-image: 背景画像（設定 v4・幾何計算・WIC デコード）テスト
+    unit/BackgroundImageSettingsTests.cpp
+    unit/BackgroundImageLayoutTests.cpp
+    unit/WicImageLoaderTests.cpp
+
     # 被テストコード（IMEIndicator 本体と同じソースを直接組み込む。
     # 静的ライブラリにせずに重複ビルドする方針：MSVC の WIN32 アプリと
     # コンソール TEST EXE で /SUBSYSTEM が異なるため、本体ライブラリ化はせず）
@@ -51,11 +56,21 @@ target_sources(IMEIndicatorTests PRIVATE
     ${CMAKE_SOURCE_DIR}/src/cpp/services/ProcessPriorityService.cpp
     ${CMAKE_SOURCE_DIR}/src/cpp/services/RuleRuntimeState.cpp
     ${CMAKE_SOURCE_DIR}/src/cpp/services/ProcessPriorityMonitor.cpp
+    # 013-ime-corner-image
+    ${CMAKE_SOURCE_DIR}/src/cpp/services/BackgroundImageLayout.cpp
+    ${CMAKE_SOURCE_DIR}/src/cpp/services/WicImageLoader.cpp
 )
 
 target_include_directories(IMEIndicatorTests PRIVATE
     ${CMAKE_SOURCE_DIR}/src/cpp
     ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# 013-ime-corner-image: WicImageLoaderTests が同梱 PNG（src/cpp/resources/ime-on-background.png）を
+# ファイルから読むためのディレクトリ（ワイド文字列リテラル）。テスト EXE にはリソース埋め込みが
+# 無いため、ソースツリーの実ファイルを直接デコードして検証する。
+target_compile_definitions(IMEIndicatorTests PRIVATE
+    IMEINDICATOR_RESOURCES_DIR=L"${CMAKE_SOURCE_DIR}/src/cpp/resources"
 )
 
 target_link_libraries(IMEIndicatorTests PRIVATE
@@ -76,6 +91,8 @@ target_link_libraries(IMEIndicatorTests PRIVATE
     shcore
     powrprof
     psapi
+    # WIC（013-ime-corner-image: WicImageLoader）
+    windowscodecs
 )
 
 # CTest 用にテストを自動登録

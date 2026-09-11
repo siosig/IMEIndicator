@@ -99,6 +99,9 @@ private:
 
     // インジケーター設定コントロール
     HWND hVisible_{nullptr};
+    // 013-ime-corner-image: 「インジケーター表示」と同じ行の右隣に並ぶ
+    // 「背景画像表示」チェックボックス（backgroundImage.isVisible / FR-001）
+    HWND hBackgroundImage_{nullptr};
     HWND hSize_{nullptr};
     HWND hOpacity_{nullptr};
     HWND hOffsetX_{nullptr};

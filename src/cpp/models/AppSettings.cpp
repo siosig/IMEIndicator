@@ -91,13 +91,16 @@ void AppSettings::clamp()
         logLevel = LogLevel::Warn;
     }
 
-    // schemaVersion は 1 / 2 / 3 のみ受容、書き出し時には to_json で 3 を強制する
-    if (schemaVersion != 1 && schemaVersion != 2 && schemaVersion != 3) {
-        schemaVersion = 3;
+    // schemaVersion は 1 / 2 / 3 / 4 のみ受容、書き出し時には to_json で 4 を強制する
+    if (schemaVersion != 1 && schemaVersion != 2 && schemaVersion != 3 && schemaVersion != 4) {
+        schemaVersion = 4;
     }
 
     // v3 新規セクションのクランプ
     hotkeySettings.clamp();
+
+    // v4 新規セクションのクランプ（013-ime-corner-image）
+    backgroundImage.clamp();
 }
 
 void to_json(nlohmann::json& j, const AppSettings& s)
@@ -115,9 +118,13 @@ void to_json(nlohmann::json& j, const AppSettings& s)
     nlohmann::json hk;
     to_json(hk, s.hotkeySettings);
 
-    // 書き出し時は常に schemaVersion: 3（contracts/settings-schema-v3.md §書き出し時の挙動）
+    nlohmann::json bg;
+    to_json(bg, s.backgroundImage);
+
+    // 書き出し時は常に schemaVersion: 4（contracts/settings-schema-v4.md §書き出し時の挙動）
+    // キー順は v3 のまま維持し、backgroundImage を末尾に追加する（往復のビット同等性を保つ）
     j = nlohmann::json{
-        {"schemaVersion",                 3},
+        {"schemaVersion",                 4},
         {"mouseCursorIndicator",          std::move(mci)},
         {"imeOnText",                     win32::wideToUtf8(s.imeOnText)},
         {"imeOffText",                    win32::wideToUtf8(s.imeOffText)},
@@ -126,7 +133,8 @@ void to_json(nlohmann::json& j, const AppSettings& s)
         {"pollingIntervalSeconds",        s.pollingIntervalSeconds},
         {"logLevel",                      logLevelToString(s.logLevel)},
         {"pixelVerificationIntervalMs",   s.pixelVerificationIntervalMs},
-        {"hotkeySettings",                std::move(hk)}
+        {"hotkeySettings",                std::move(hk)},
+        {"backgroundImage",               std::move(bg)}
     };
 }
 
@@ -179,6 +187,12 @@ void from_json(const nlohmann::json& j, AppSettings& s)
     s.hotkeySettings = hotkey::HotkeySettings{};
     if (auto it = j.find("hotkeySettings"); it != j.end() && it->is_object()) {
         from_json(*it, s.hotkeySettings);
+    }
+
+    // v4 新規: backgroundImage（v3 以前は未定義 → 既定値）
+    s.backgroundImage = BackgroundImageSettings{};
+    if (auto it = j.find("backgroundImage"); it != j.end() && it->is_object()) {
+        from_json(*it, s.backgroundImage);
     }
 
     // 読み込み直後にクランプ

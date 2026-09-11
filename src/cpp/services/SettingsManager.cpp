@@ -129,6 +129,28 @@ void SettingsManager::createV2Backup() noexcept
     }
 }
 
+void SettingsManager::createV3Backup() noexcept
+{
+    auto log = spdlog::get(std::string(app::AppConstants::LoggerSettings));
+
+    auto bak = settingsFilePath_;
+    bak += std::wstring(app::AppConstants::V3BackupSuffix);
+    std::error_code ec;
+
+    if (std::filesystem::exists(bak, ec)) {
+        // 既にバックアップ存在 → 上書きしない（最古を保持）
+        return;
+    }
+    std::filesystem::copy_file(settingsFilePath_, bak,
+                               std::filesystem::copy_options::overwrite_existing,
+                               ec);
+    if (ec) {
+        if (log) log->warn("settings v3 backup failed: {}", ec.message());
+    } else {
+        if (log) log->info("settings v3 backup created");
+    }
+}
+
 void SettingsManager::renameBroken() noexcept
 {
     auto log = spdlog::get(std::string(app::AppConstants::LoggerSettings));
@@ -193,18 +215,24 @@ bool SettingsManager::load()
         const int loadedVersion = settings_.schemaVersion;
         loadedAsV1_ = (loadedVersion < 2);
         loadedAsV2_ = (loadedVersion == 2);
+        loadedAsV3_ = (loadedVersion == 3);
         if (loadedAsV1_) {
-            // v1 → v2 → v3 と順次昇格。バックアップは v1 のみ作成（最古）。
-            settings_.schemaVersion = 3;
+            // v1 → v2 → v3 → v4 と順次昇格。バックアップは v1 のみ作成（最古）。
+            settings_.schemaVersion = 4;
             createV1Backup();
-            if (log) log->info("loaded v1 settings, will migrate to v3 on next save");
+            if (log) log->info("loaded v1 settings, will migrate to v4 on next save");
         } else if (loadedAsV2_) {
-            // v2 → v3 への昇格。v2 バックアップを生成（FR-013 / spec Edge Case「スキーマ互換性」）。
-            settings_.schemaVersion = 3;
+            // v2 → v4 への昇格。v2 バックアップを生成（FR-013 / spec Edge Case「スキーマ互換性」）。
+            settings_.schemaVersion = 4;
             createV2Backup();
-            if (log) log->info("loaded v2 settings, will migrate to v3 on next save");
+            if (log) log->info("loaded v2 settings, will migrate to v4 on next save");
+        } else if (loadedAsV3_) {
+            // v3 → v4 への昇格。v3 バックアップを生成（013-ime-corner-image / contracts/settings-schema-v4.md）。
+            settings_.schemaVersion = 4;
+            createV3Backup();
+            if (log) log->info("loaded v3 settings, will migrate to v4 on next save");
         } else {
-            if (log) log->debug("loaded v3 settings");
+            if (log) log->debug("loaded v4 settings");
         }
         return true;
     } catch (const std::exception& ex) {
@@ -253,7 +281,7 @@ bool SettingsManager::save()
     lastError_.clear();
     auto log = spdlog::get(std::string(app::AppConstants::LoggerSettings));
 
-    settings_.schemaVersion = 3;  // 書き出し時は常に v3（contracts/settings-schema-v3.md）
+    settings_.schemaVersion = 4;  // 書き出し時は常に v4（contracts/settings-schema-v4.md）
 
     nlohmann::json j;
     try {
@@ -274,6 +302,7 @@ bool SettingsManager::save()
     if (log) log->debug("settings saved ({} bytes)", utf8Content.size());
     loadedAsV1_ = false;
     loadedAsV2_ = false;
+    loadedAsV3_ = false;
     return true;
 }
 

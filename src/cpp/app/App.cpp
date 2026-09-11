@@ -13,6 +13,7 @@
 #include "../services/hotkey/commands/ImeIndicatorCommands.h"
 #include "../services/hotkey/commands/ProcessCommands.h"
 #include "../views/MouseCursorIndicatorWindow.h"
+#include "../views/BackgroundImageWindow.h"
 #include "../views/TrayIcon.h"
 #include "../views/SettingsDialog.h"
 #include "../win32/NativeConstants.h"
@@ -113,6 +114,15 @@ bool App::initialize(HINSTANCE hInstance)
     indicatorWindow_->updateText(settingsManager_.settings().imeOnText);
     refreshIndicatorColor();
 
+    // ---- 背景画像ウィンドウ（013-ime-corner-image） ----
+    backgroundImageWindow_ = std::make_unique<views::BackgroundImageWindow>();
+    if (!backgroundImageWindow_->initialize(hInstance)) {
+        if (auto log = spdlog::get(std::string(AppConstants::LoggerDisplay))) {
+            log->error("BackgroundImageWindow init failed (背景画像表示は無効のまま続行)");
+        }
+        backgroundImageWindow_.reset();
+    }
+
     // ---- トレイアイコン ----
     trayIcon_ = std::make_unique<views::TrayIcon>();
     if (!trayIcon_->initialize(hInstance)) {
@@ -191,6 +201,14 @@ bool App::initialize(HINSTANCE hInstance)
     trayIcon_->setGetIsVisibleCallback([this]() {
         return settingsManager_.settings().mouseCursorIndicator.isVisible;
     });
+    // 013-ime-corner-image: 背景画像表示切替（カーソル追従インジケーターとは独立 / FR-016）。
+    // 設定画面・トレイ・ホットキーのすべてが setBackgroundImageVisible に集約される。
+    trayIcon_->setToggleBackgroundImageCallback([this](bool v) {
+        setBackgroundImageVisible(v);
+    });
+    trayIcon_->setGetIsBackgroundImageVisibleCallback([this]() {
+        return settingsManager_.settings().backgroundImage.isVisible;
+    });
     // Phase 5 / US3: ホットキーサブメニュー連携
     trayIcon_->setGetTrayHotkeysCallback([this]() {
         return std::span<const models::hotkey::HotKeyEntry>{
@@ -258,6 +276,10 @@ bool App::initialize(HINSTANCE hInstance)
     // cmd 210（電源モード切替）が /toggle と同じ通知付き処理を実行するためのハンドラを注入。
     services::hotkey::setPowerModeToggleHandler(
         [this]() { togglePowerModeAndNotify(); });
+    // cmd 203（背景画像表示切替）。設定更新・保存・現在の IME 状態での表示反映までを
+    // App 側で一括処理する（013-ime-corner-image / FR-017）。
+    services::hotkey::setBackgroundImageToggleHandler(
+        [this]() { toggleBackgroundImageVisible(); });
 
     hotkeyService_ = std::make_unique<services::hotkey::HotkeyService>();
     if (!hotkeyService_->start(messageHwnd_,
@@ -302,10 +324,12 @@ void App::shutdown()
     services::hotkey::setSettingsManager(nullptr);
     services::hotkey::setProcessPriorityMonitor(nullptr);
     services::hotkey::setPowerModeToggleHandler(nullptr);
+    services::hotkey::setBackgroundImageToggleHandler(nullptr);
 
     settingsDialog_.reset();
     trayIcon_.reset();
     indicatorWindow_.reset();
+    backgroundImageWindow_.reset();
 
     // 正常終了の証としてバックアップを削除（次回起動で復元発火を防ぐ）
     if (!localAppDataDir_.empty()) clearPowerModeBackup();
@@ -462,20 +486,34 @@ void App::onCursorPositionChanged(int x, int y)
 
 void App::applyWindowVisibility(const models::LanguageInfo& info)
 {
-    if (!indicatorWindow_) return;
-    const auto& cfg = settingsManager_.settings().mouseCursorIndicator;
-    if (auto log = spdlog::get(std::string(AppConstants::LoggerApp))) {
-        log->debug("App: applyWindowVisibility lang={} ime={} cfgVisible={}",
-                   static_cast<int>(info.language), info.isImeOn, cfg.isVisible);
+    const bool imeOn = (info.language == models::LanguageType::Japanese) && info.isImeOn;
+
+    if (indicatorWindow_) {
+        const auto& cfg = settingsManager_.settings().mouseCursorIndicator;
+        if (auto log = spdlog::get(std::string(AppConstants::LoggerApp))) {
+            log->debug("App: applyWindowVisibility lang={} ime={} cfgVisible={}",
+                       static_cast<int>(info.language), info.isImeOn, cfg.isVisible);
+        }
+        if (!cfg.isVisible) {
+            indicatorWindow_->hide();
+        } else if (imeOn) {
+            indicatorWindow_->show();
+        } else {
+            indicatorWindow_->hide();
+        }
     }
-    if (!cfg.isVisible) {
-        indicatorWindow_->hide();
-        return;
-    }
-    const bool shouldShow = (info.language == models::LanguageType::Japanese)
-                          && info.isImeOn;
-    if (shouldShow) indicatorWindow_->show();
-    else            indicatorWindow_->hide();
+
+    // 013-ime-corner-image: 背景画像は「インジケーター表示」と完全に独立（FR-009）。
+    // cfg.isVisible の早期 return に巻き込まれないよう、ここで必ず評価する。
+    applyBackgroundImageVisibility(imeOn);
+}
+
+void App::applyBackgroundImageVisibility(bool imeOn)
+{
+    if (!backgroundImageWindow_) return;
+    const bool shouldShow = settingsManager_.settings().backgroundImage.isVisible && imeOn;
+    if (shouldShow) backgroundImageWindow_->show();
+    else            backgroundImageWindow_->hide();
 }
 
 void App::refreshIndicatorColor()
@@ -499,6 +537,22 @@ void App::setMouseIndicatorVisible(bool visible)
     } else if (indicatorWindow_) {
         indicatorWindow_->hide();
     }
+}
+
+void App::setBackgroundImageVisible(bool visible)
+{
+    auto s = settingsManager_.settings();
+    s.backgroundImage.isVisible = visible;
+    settingsManager_.setSettings(std::move(s));
+    settingsManager_.save();
+
+    if (imeMonitor_) applyWindowVisibility(imeMonitor_->currentState());
+    else if (backgroundImageWindow_) backgroundImageWindow_->hide();
+}
+
+void App::toggleBackgroundImageVisible()
+{
+    setBackgroundImageVisible(!settingsManager_.settings().backgroundImage.isVisible);
 }
 
 void App::togglePowerModeAndNotify()
