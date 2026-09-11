@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/csharp/">
+    <Project Path="src/csharp/IMEIndicator/IMEIndicator.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/csharp/">
+    <Project Path="tests/csharp/IMEIndicator.Tests/IMEIndicator.Tests.csproj" />
+  </Folder>
+</Solution>

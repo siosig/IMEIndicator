@@ -1,0 +1,27 @@
+<Project>
+  <!--
+    C# 移植版（014-port-to-csharp）の共通ビルド設定。
+    バージョンはここ 1 箇所のみで定義し、csproj 側では参照しない（暗黙的に継承される）。
+    参照: specs/014-port-to-csharp/plan.md Constitution Check（R-17: 1.5.0.0 から開始）
+  -->
+  <PropertyGroup>
+    <Version>1.5.0.0</Version>
+    <AssemblyVersion>1.5.0.0</AssemblyVersion>
+    <FileVersion>1.5.0.0</FileVersion>
+    <Product>IME Indicator</Product>
+    <Company>IMEIndicator Project</Company>
+    <Authors>Daisuke ITO</Authors>
+    <Copyright>Copyright (C) 2026 IMEIndicator Project. Licensed under GPL v2 or later.</Copyright>
+
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+    <NeutralLanguage>ja</NeutralLanguage>
+
+    <!-- FR-009 に合わせ、サーバー GC ではなくデスクトップ既定の Workstation Concurrent GC を明示 -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+  </PropertyGroup>
+</Project>

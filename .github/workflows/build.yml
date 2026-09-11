@@ -17,60 +17,41 @@ on:
 permissions:
   contents: read
 
-env:
-  # vcpkg.json の builtin-baseline と一致させること。
-  # ここを更新するときは vcpkg.json も同時に更新する。
-  VCPKG_BASELINE: 73248d88e09d43dfd7836902462a64fd2a43387b
-
 jobs:
-  build:
-    name: Build and test (Windows x64)
+  dotnet-build:
+    name: Build and test (.NET, Windows x64)
     runs-on: windows-2022
 
+    # C++ 実装（CMake/vcpkg）は 014-port-to-csharp で削除済み。C# / .NET 10 版がこのリポジトリの
+    # 唯一のビルド対象であり、release ジョブが配布する成果物もこのジョブの出力になる。
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
 
-      - name: Cache vcpkg binary packages
-        uses: actions/cache@v4
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
-          path: ${{ github.workspace }}/vcpkg-binary-cache
-          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_BASELINE }}-${{ hashFiles('vcpkg.json') }}
-          restore-keys: |
-            vcpkg-${{ runner.os }}-${{ env.VCPKG_BASELINE }}-
-
-      - name: Set up vcpkg at the pinned baseline
-        shell: pwsh
-        run: |
-          # baseline のコミットだけを浅く取得する。完全な clone は 700MB 近くあり遅いため。
-          $vcpkg = Join-Path $env:RUNNER_TEMP 'vcpkg'
-          git init --quiet $vcpkg
-          git -C $vcpkg remote add origin https://github.com/microsoft/vcpkg.git
-          git -C $vcpkg fetch --quiet --depth 1 origin $env:VCPKG_BASELINE
-          git -C $vcpkg checkout --quiet FETCH_HEAD
-          & (Join-Path $vcpkg 'bootstrap-vcpkg.bat') -disableMetrics
-          if ($LASTEXITCODE -ne 0) { throw "bootstrap-vcpkg failed with exit code $LASTEXITCODE" }
-          "VCPKG_ROOT=$vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          New-Item -ItemType Directory -Force "${{ github.workspace }}/vcpkg-binary-cache" | Out-Null
-
-      - name: Configure
-        shell: pwsh
-        env:
-          VCPKG_BINARY_SOURCES: 'clear;files,${{ github.workspace }}\vcpkg-binary-cache,readwrite'
-        run: cmake --preset ci-windows-x64-release
+          dotnet-version: '10.0.x'
 
       - name: Build
         shell: pwsh
-        run: cmake --build --preset ci-windows-x64-release
+        run: dotnet build IMEIndicator.slnx -c Release
 
       - name: Test
         shell: pwsh
-        run: ctest --preset ci-windows-x64-release
+        run: dotnet test IMEIndicator.slnx -c Release
+
+      - name: Publish (self-contained, single file)
+        shell: pwsh
+        run: >-
+          dotnet publish src/csharp/IMEIndicator/IMEIndicator.csproj -c Release -r win-x64
+          -p:SelfContained=true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true
+          -o dist/csharp
 
       - name: Report the produced binary
         shell: pwsh
         run: |
-          $exe = 'build/release/bin/Release/IMEIndicator.exe'
+          $exe = 'dist/csharp/IMEIndicator.exe'
           $item = Get-Item $exe
           "Size: {0:N0} bytes" -f $item.Length
           "FileVersion: {0}" -f $item.VersionInfo.FileVersion
@@ -79,13 +60,13 @@ jobs:
       - name: Upload the build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: IMEIndicator-windows-x64
-          path: build/release/bin/Release/IMEIndicator.exe
+          name: IMEIndicator-csharp
+          path: dist/csharp/IMEIndicator.exe
           if-no-files-found: error
 
   release:
     name: Publish release
-    needs: build
+    needs: dotnet-build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
@@ -95,7 +76,7 @@ jobs:
       - name: Download the build artifact
         uses: actions/download-artifact@v4
         with:
-          name: IMEIndicator-windows-x64
+          name: IMEIndicator-csharp
           path: dist
 
       - name: Create the release
@@ -109,6 +90,7 @@ jobs:
           generate_release_notes: true
           body: |
             Windows x64 build produced by the `build` workflow from this tag.
+            Self-contained .NET 10 single-file executable; no runtime install required.
 
             The executable is **not code signed**. Windows Smart App Control and
             SmartScreen may block it.

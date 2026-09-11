@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <assemblyIdentity version="1.5.0.0"
+                    processorArchitecture="*"
+                    name="IMEIndicator"
+                    type="win32"/>
+  <description>IME Indicator (C# port)</description>
+
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <requestedExecutionLevel level="asInvoker" uiAccess="false"/>
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <!-- Windows 10/11 サポート宣言 -->
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- Windows 10/11 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>
+    </application>
+  </compatibility>
+
+  <!--
+    DPI awareness はここでは宣言しない。WinForms SDK アナライザー WFO0003
+    （https://github.com/dotnet/winforms/blob/main/docs/analyzers/AppManifestAnalyzer.Help.md）が、
+    マニフェストでの DPI 宣言と Application.SetHighDpiMode API の併用をビルドエラーとして検出するため。
+    PerMonitorV2 は T042 の Program.cs で Application.SetHighDpiMode(HighDpiMode.PerMonitorV2) により設定する（research.md R-16）。
+    C++ 版の app.manifest（src/cpp/resources/app.manifest）はこの制約を受けないため dpiAwareness/dpiAware を保持したまま。
+  -->
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+      <activeCodePage xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">UTF-8</activeCodePage>
+    </windowsSettings>
+  </application>
+
+  <!-- Common Controls v6 (R-003: SysTabControl32 / SysListView32 等のテーマ対応) -->
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32"
+                        name="Microsoft.Windows.Common-Controls"
+                        version="6.0.0.0"
+                        processorArchitecture="*"
+                        publicKeyToken="6595b64144ccf1df"
+                        language="*"/>
+    </dependentAssembly>
+  </dependency>
+</assembly>

@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>IMEIndicator</RootNamespace>
+    <AssemblyName>IMEIndicator</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <!-- リリースビルドごとに 1 つずつインクリメントすること（FR-009、README.md「バージョン管理」）。 -->
+    <Version>1.5.0.0</Version>
+  </PropertyGroup>
+
+  <!--
+    配布既定値（R-2）: 自己完結・単一ファイル・win-x64。
+    `dotnet publish` 実行時に有効。`dotnet build` の通常デバッグ/リリースには影響しない。
+  -->
+  <PropertyGroup>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishReadyToRun>false</PublishReadyToRun>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+  </ItemGroup>
+
+  <!--
+    UI Automation（Services/PixelImeDetector.cs, T028, research.md R-5）。
+    <UseWindowsForms>true</UseWindowsForms> だけでは、SDK
+    （Sdks/Microsoft.NET.Sdk.WindowsDesktop/targets/Microsoft.NET.Sdk.WindowsDesktop.props の
+    FrameworkReference 条件分岐）が "Microsoft.WindowsDesktop.App.WindowsForms"
+    （WinForms サブセットのみ）を暗黙参照するため、System.Windows.Automation 名前空間
+    （UIAutomationClient/UIAutomationTypes と、BoundingRectangle が返す System.Windows.Rect の
+    WindowsBase）は解決できない（単純な <Reference Include="UIAutomationClient" /> は
+    MSB3245 で失敗することを実機で確認済み）。<UseWPF>true</UseWPF> は設定せず
+    （本アプリは WinForms のみを UI フレームワークとして使う。R-1 参照。UseWPF は XAML
+    コンパイル等の WPF 専用ビルドターゲットまで有効化してしまう）、WPF サブセットの
+    FrameworkReference だけを明示的に追加する。契約:
+    specs/014-port-to-csharp/contracts/win32-interop-contract.md
+    「UI Automation | UIAutomationClient（WindowsDesktop 同梱の管理ラッパ） | ピクセル検証」
+  -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\ime-on-background.png" />
+  </ItemGroup>
+
+  <!--
+    トレイアイコン（TrayIcon.cs）が Debug/Release で app-debug.ico / app.ico を切り替えるために、
+    実行ファイル本体への埋め込み（ApplicationIcon、常に app.ico 固定）とは別に、
+    出力ディレクトリの Resources/ 配下へも配置する。
+  -->
+  <ItemGroup>
+    <None Include="Resources\app.ico" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Resources\app-debug.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

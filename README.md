@@ -3,7 +3,8 @@
 IMEIndicator は、Windows 11 上で日本語 IME の ON 状態をマウスカーソル付近に表示する常駐アプリです。通常はタスクトレイに常駐し、設定画面から表示サイズやオフセット、プロセス優先度ルールを変更できます。
 
 > [!IMPORTANT]
-> v1.3.0 から **ネイティブ C++ 実装** に移行しました。.NET ランタイム不要の単一 EXE（約 0.8 MB）として配布されます。
+> **.NET 10 / C# 実装**に全面移行しました（旧ネイティブ C++ 実装は廃止）。自己完結・単一 EXE
+> （約 72 MB）として配布され、.NET ランタイムの事前導入は不要です。
 
 ## できること
 
@@ -17,10 +18,10 @@ IMEIndicator は、Windows 11 上で日本語 IME の ON 状態をマウスカ�
 ## 対応環境
 
 - Windows 11 64-bit
-- ランタイム不要（C++ 版はスタティック CRT で単一 EXE）
+- ランタイム不要（自己完結・単一 EXE として配布。.NET 10 ランタイムの事前導入は不要）
 
 > [!NOTE]
-> C++ 版は .NET / WPF / WinForms ランタイム依存ゼロです。配布された `IMEIndicator.exe` を任意のフォルダに置くだけで動作します（管理者権限不要）。プロセス優先度ルールでシステムプロセスを操作する場合のみ管理者権限を推奨。
+> 配布された `IMEIndicator.exe` を任意のフォルダに置くだけで動作します（管理者権限不要）。プロセス優先度ルールでシステムプロセスを操作する場合のみ管理者権限を推奨。
 
 ## 入手
 
@@ -196,59 +197,37 @@ IMEIndicator.exe /powertoggle
 
 ### 前提
 
-- Visual Studio 2022 (17.8 以降) もしくは Visual Studio 2026
-- C++ デスクトップ開発ワークロード + Windows 11 SDK
-- CMake 3.27 以降（VS 同梱で OK）
-- vcpkg（依存パッケージの取得に使用）
+- .NET 10 SDK（[dotnet.microsoft.com](https://dotnet.microsoft.com/) から入手）
 
-### 初回セットアップ
-
-vcpkg を取得して bootstrap し、環境変数 `VCPKG_ROOT` を設定します。
+### ビルド・テスト
 
 ```powershell
-git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
-C:\vcpkg\bootstrap-vcpkg.bat -disableMetrics
-[Environment]::SetEnvironmentVariable('VCPKG_ROOT', 'C:\vcpkg', 'User')
+dotnet build IMEIndicator.slnx -c Release
+dotnet test IMEIndicator.slnx -c Release
 ```
 
-`VCPKG_ROOT` を設定しない場合は、構成時に toolchain を直接指定してください。
+### 配布用ビルド（自己完結・単一ファイル）
 
 ```powershell
-cmake --preset windows-x64-release -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake
+dotnet publish src/csharp/IMEIndicator/IMEIndicator.csproj -c Release -r win-x64 `
+  --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true `
+  -o dist/csharp
 ```
 
-### Release ビルド
-
-```powershell
-cmake --preset windows-x64-release
-cmake --build --preset windows-x64-release
-```
-
-成果物: `build/release/bin/Release/IMEIndicator.exe`（約 0.8 MB）
-
-### Debug ビルド
-
-```powershell
-cmake --build --preset windows-x64-debug
-```
-
-### テスト
-
-```powershell
-ctest --preset windows-x64-release
-```
-
-GoogleTest による単体テスト 69 件が実行されます。
+成果物: `dist/csharp/IMEIndicator.exe`（自己完結・単一ファイル、約 72 MB。.NET ランタイムの事前導入は不要）。
 
 ### バージョン管理
 
-リリースビルドごとに [src/cpp/resources/version.h](src/cpp/resources/version.h) と
-[src/cpp/CMakeLists.txt](src/cpp/CMakeLists.txt) の `IMEINDICATOR_VERSION_BUILD` を 1 ずつ
-インクリメントしてください（FR-009）。
+リリースビルドごとに [src/csharp/IMEIndicator/IMEIndicator.csproj](src/csharp/IMEIndicator/IMEIndicator.csproj)
+の `<Version>` を 1 つずつインクリメントしてください（FR-009）。
 
 ### 配布
 
-`build/release/bin/Release/IMEIndicator.exe` をそのまま配布できます。OS 同梱 DLL のみに依存し、VC ランタイム再頒布パッケージは不要です。署名手順は [自己署名.md](自己署名.md) を参照。
+`dist/csharp/IMEIndicator.exe` をそのまま配布できます。自己完結ビルドのため、.NET ランタイムの事前導入は不要です。
+
+未署名のため、Windows の Smart App Control が有効な環境では起動がブロックされる可能性があります。
+その場合は、ダウンロードした `IMEIndicator.exe` のプロパティで「セキュリティ: 許可する」にチェックを
+入れてから起動してください（上記「入手」節と同じ対処法）。
 
 ## 補足
 
@@ -264,4 +243,4 @@ GoogleTest による単体テスト 69 件が実行されます。
 
 ## 謝辞 (Acknowledgments)
 
-- **HotkeyP** by Petr Lastovicka — グローバルホットキー機能のコア実装は HotkeyP 4.11（GPL v2）から派生しています。原典: <https://hotkeyp.sourceforge.net/> / <https://github.com/plastovicka/HotkeyP>。HotkeyP 由来のソースは `src/cpp/services/hotkey/` および `src/cpp/models/hotkey/HotKeyEntry.h` に配置されており、各ファイル先頭に著作権表記とライセンスヘッダを保持しています。
+- **HotkeyP** by Petr Lastovicka — グローバルホットキー機能のコア実装は HotkeyP 4.11（GPL v2）から派生しています。原典: <https://hotkeyp.sourceforge.net/> / <https://github.com/plastovicka/HotkeyP>。HotkeyP 由来のソースは `src/csharp/IMEIndicator/Services/Hotkey/` および `src/csharp/IMEIndicator/Models/Hotkey/HotKeyEntry.cs` に配置されており、各ファイル先頭に著作権表記とライセンスヘッダを保持しています。

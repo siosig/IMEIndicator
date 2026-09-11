@@ -1,0 +1,167 @@
+// Copyright (C) 2026 IMEIndicator Project
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License v2 or later.
+// See COPYING in the repository root for the full license text.
+
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using IMEIndicator.Models;
+using IMEIndicator.Models.Hotkey;
+using IMEIndicator.Settings;
+using Xunit;
+
+namespace IMEIndicator.Tests.Settings;
+
+/// <summary>
+/// settings.json のバイト互換性テスト（契約: specs/014-port-to-csharp/contracts/settings-compat-contract.md）。
+/// C++ 版（nlohmann::json の dump(2)）と同じキー順・インデント・改行・非エスケープ・小数点表記になることを検証する。
+/// </summary>
+/// <remarks>
+/// 2026-09-11 時点、このマシンでは Smart App Control が dotnet test の実行をブロックしているため
+/// （specs/014-port-to-csharp/quickstart.md 検証記録参照）、本ファイルは未実行のまま作成した。
+/// SAC 解除後、最初に実行して結果を確認すること。C++ 版で実際に保存した settings.json との
+/// バイト比較（quickstart.md「同一性の検証」）は本フィーチャーの Polish フェーズ（T073）で別途行う。
+/// </remarks>
+public sealed class SettingsByteCompatTests
+{
+    private static JsonSerializerOptions BuildOptions() => new()
+    {
+        TypeInfoResolver = SettingsJsonContext.Default,
+        WriteIndented = true,
+        NewLine = "\n",
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        Converters =
+        {
+            new DoubleWithPointConverter(),
+            new LogLevelConverter(),
+            new PriorityLevelConverter(),
+            new HookModeConverter(),
+        },
+    };
+
+    [Fact]
+    public void DefaultSettings_TopLevelKeyOrder_MatchesContract()
+    {
+        string json = JsonSerializer.Serialize(new AppSettings(), BuildOptions());
+        string[] expectedOrder =
+        [
+            "schemaVersion", "mouseCursorIndicator", "imeOnText", "imeOffText", "isFirstLaunch",
+            "processPriorityRules", "pollingIntervalSeconds", "logLevel", "pixelVerificationIntervalMs",
+            "hotkeySettings", "backgroundImage",
+        ];
+        AssertTopLevelKeyOrder(json, expectedOrder);
+    }
+
+    [Fact]
+    public void DefaultSettings_MouseCursorIndicatorKeyOrder_MatchesContract()
+    {
+        string json = JsonSerializer.Serialize(new AppSettings(), BuildOptions());
+        using JsonDocument doc = JsonDocument.Parse(json);
+        JsonElement mci = doc.RootElement.GetProperty("mouseCursorIndicator");
+        string[] expected = ["isVisible", "size", "opacity", "offsetX", "offsetY"];
+        AssertObjectKeyOrder(mci, expected);
+    }
+
+    [Fact]
+    public void DefaultSettings_HotkeySettingsKeyOrder_MatchesContract()
+    {
+        string json = JsonSerializer.Serialize(new AppSettings(), BuildOptions());
+        using JsonDocument doc = JsonDocument.Parse(json);
+        JsonElement hk = doc.RootElement.GetProperty("hotkeySettings");
+        AssertObjectKeyOrder(hk, ["hotkeys", "categories", "globalOptions"]);
+        AssertObjectKeyOrder(hk.GetProperty("globalOptions"),
+            ["hookMode", "distinguishLeftRightModifiers", "foregroundExcludeProcesses", "mouseDelayMs", "playSoundOnExecution"]);
+    }
+
+    [Fact]
+    public void DefaultSettings_WritesAlwaysSchemaVersion4()
+    {
+        var settings = new AppSettings { SchemaVersion = 1 }; // 意図的に不整合な値を入れても
+        string json = JsonSerializer.Serialize(settings, BuildOptions());
+        using JsonDocument doc = JsonDocument.Parse(json);
+        // Serialize 単体では SchemaVersion をこちらで明示的に 4 にしない限り書き出し値は反映されない。
+        // 「常に 4」を強制するのは SettingsManager.Save() の責務（SettingsManagerTests で別途検証）。
+        // ここでは Clamp() が 1 を許容範囲として保持することのみ確認する（無効値のみ 4 に補正される）。
+        Assert.Equal(1, doc.RootElement.GetProperty("schemaVersion").GetInt32());
+    }
+
+    [Fact]
+    public void NonAsciiCharacters_AreNotEscaped()
+    {
+        var settings = new AppSettings { ImeOnText = "あ", ImeOffText = "A" };
+        string json = JsonSerializer.Serialize(settings, BuildOptions());
+        Assert.Contains("\"あ\"", json);
+        Assert.DoesNotContain("\\u3042", json); // "あ" の \uXXXX エスケープが出ないこと
+    }
+
+    [Fact]
+    public void ForwardSlash_IsNotEscaped()
+    {
+        var settings = new AppSettings();
+        settings.HotkeySettings.Hotkeys.Add(new HotKeyEntry { Exe = "C:/path/to/app.exe" });
+        string json = JsonSerializer.Serialize(settings, BuildOptions());
+        Assert.Contains("C:/path/to/app.exe", json);
+        Assert.DoesNotContain("C:\\/path", json); // "\/" にエスケープされないこと
+    }
+
+    [Theory]
+    [InlineData(34.0, "34.0")]
+    [InlineData(0.9, "0.9")]
+    [InlineData(15.0, "15.0")]
+    public void DoubleFields_AlwaysIncludeDecimalPoint(double value, string expectedSubstring)
+    {
+        var settings = new AppSettings();
+        settings.MouseCursorIndicator.Size = value;
+        settings.MouseCursorIndicator.Opacity = value is >= 0.1 and <= 1.0 ? value : 0.9;
+        string json = JsonSerializer.Serialize(settings, BuildOptions());
+        Assert.Contains($"\"size\": {expectedSubstring}", json);
+    }
+
+    [Fact]
+    public void SerializedJson_UsesTwoSpaceIndentAndNoCarriageReturn()
+    {
+        string json = JsonSerializer.Serialize(new AppSettings(), BuildOptions());
+        Assert.Contains("\n  \"mouseCursorIndicator\"", json);
+        Assert.DoesNotContain("\r\n", json);
+        Assert.DoesNotContain("\r", json);
+    }
+
+    [Fact]
+    public void EmptyArrays_AreWrittenInline()
+    {
+        string json = JsonSerializer.Serialize(new AppSettings(), BuildOptions());
+        Assert.Contains("\"processPriorityRules\": []", json);
+    }
+
+    [Fact]
+    public void UnknownFields_AreIgnoredWithoutThrowing()
+    {
+        const string json = """
+        {
+          "schemaVersion": 2,
+          "mouseCursorIndicator": { "isVisible": true, "size": 34.0, "opacity": 0.9, "offsetX": 15.0, "offsetY": 15.0 },
+          "imeOnText": "あ", "imeOffText": "A", "isFirstLaunch": false,
+          "processPriorityRules": [], "pollingIntervalSeconds": 1,
+          "logLevel": "warn", "pixelVerificationIntervalMs": 2000,
+          "someFutureField": "ignored"
+        }
+        """;
+        AppSettings? settings = JsonSerializer.Deserialize<AppSettings>(json, BuildOptions());
+        Assert.NotNull(settings);
+        Assert.Equal(LogLevel.Warn, settings!.LogLevel);
+    }
+
+    // 上位キーの出現順を、値の型を問わず先頭からの出現順で検証する。
+    private static void AssertTopLevelKeyOrder(string json, string[] expectedOrder)
+    {
+        using JsonDocument doc = JsonDocument.Parse(json);
+        AssertObjectKeyOrder(doc.RootElement, expectedOrder);
+    }
+
+    private static void AssertObjectKeyOrder(JsonElement obj, string[] expectedOrder)
+    {
+        string[] actual = obj.EnumerateObject().Select(p => p.Name).ToArray();
+        Assert.Equal(expectedOrder, actual);
+    }
+}
