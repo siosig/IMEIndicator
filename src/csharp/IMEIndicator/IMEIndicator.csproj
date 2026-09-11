@@ -11,8 +11,15 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <InvariantGlobalization>false</InvariantGlobalization>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <!-- リリースビルドごとに 1 つずつインクリメントすること（FR-009、README.md「バージョン管理」）。 -->
-    <Version>1.5.0.0</Version>
+    <!--
+      リリースビルドごとに 1 つずつインクリメントすること（FR-009、README.md「バージョン管理」）。
+      SDK既定では AssemblyVersion/FileVersion は Version の先頭 3 要素だけから導出され、
+      4 番目（ビルド番号）が無視されて常に .0 になる（実機で `dotnet build -getProperty:FileVersion`
+      にて確認済み）。実行ファイルのプロパティに実際のビルド番号を反映させるため明示指定する。
+    -->
+    <Version>1.5.0.1</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
   </PropertyGroup>
 
   <!--
@@ -26,7 +33,15 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <PublishTrimmed>false</PublishTrimmed>
-    <PublishReadyToRun>false</PublishReadyToRun>
+    <!--
+      ReadyToRun でネイティブコードを事前生成し起動を高速化する（win-x64 固定）。
+      CPU 命令セット（AVX2 等）は通常 JIT が実行時に自動検出・利用するため R2R でも変わらず、
+      MSBuild で命令セットを指定する公開プロパティも存在しない（Native AOT の
+      IlcInstructionSet 相当は R2R にはない）。特定 CPU への最適化として意味があるのは
+      起動時間の短縮のみ。Native AOT は WinForms の trimming 非対応（COM marshalling 依存）
+      のため採用しない。
+    -->
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
 
   <ItemGroup>
