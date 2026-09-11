@@ -133,7 +133,7 @@ IMEIndicator.exe を通常起動すると、以下の動作になります。
 | 210 | 電源モード切替（バックアップ付き） |
 | 211 | 高パフォーマンス電源プラン適用 |
 
-詳細なコマンド一覧は [specs/010-hotkeyp-merge/contracts/internal-command-catalog.md](specs/010-hotkeyp-merge/contracts/internal-command-catalog.md) を参照。
+内部コマンドの一覧は、設定ダイアログのホットキー編集画面にあるコマンド選択リストで確認できます。
 
 ホットキー編集ダイアログ:
 
@@ -190,13 +190,22 @@ IMEIndicator.exe /powertoggle
 - Visual Studio 2022 (17.8 以降) もしくは Visual Studio 2026
 - C++ デスクトップ開発ワークロード + Windows 11 SDK
 - CMake 3.27 以降（VS 同梱で OK）
-- Git submodule で vcpkg を取得（初回のみ）
+- vcpkg（依存パッケージの取得に使用）
 
 ### 初回セットアップ
 
+vcpkg を取得して bootstrap し、環境変数 `VCPKG_ROOT` を設定します。
+
 ```powershell
-git submodule update --init --recursive
-external\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+C:\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+[Environment]::SetEnvironmentVariable('VCPKG_ROOT', 'C:\vcpkg', 'User')
+```
+
+`VCPKG_ROOT` を設定しない場合は、構成時に toolchain を直接指定してください。
+
+```powershell
+cmake --preset windows-x64-release -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake
 ```
 
 ### Release ビルド
@@ -242,7 +251,7 @@ GoogleTest による単体テスト 69 件が実行されます。
 
 本プロジェクトは **GNU General Public License v2 (or later)** で配布されます。完全なライセンス本文は [COPYING](COPYING) を参照してください。
 
-> **注**: 本リポジトリは現在、作者個人による私的利用を目的としており、OSS としての公開・再配布は予定していません。GPL は HotkeyP（後述）由来コードを取り込んだ結果としての必然的な選択です。将来公開・再配布する場合は、依存ライブラリのライセンス互換性を再確認する必要があります。
+> **注**: GPL は HotkeyP（後述）由来コードを取り込んだ結果としての必然的な選択です。ホットキー機能のコア実装が GPL v2 の派生物であるため、本プロジェクト全体を GPL v2 (or later) 以外のライセンスで配布することはできません。
 
 ## 謝辞 (Acknowledgments)
 

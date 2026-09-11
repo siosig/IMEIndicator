@@ -8,7 +8,6 @@
 namespace imeindicator::views {
 
 // 画面右上 IME ON 背景画像ウィンドウ（013-ime-corner-image）。
-// 契約: specs/013-ime-corner-image/contracts/background-image-window-contract.md
 //
 // 概要:
 //   IME ON 時にプライマリモニター作業領域の右上へ、同梱 PNG（IDR_BACKGROUND_IMAGE_PNG）を

@@ -61,13 +61,9 @@ release/
 dist/*.zip
 /ref/
 
-# C++ ポーティング (009-port-to-cpp)
+# C++ build
 build/
 dist/
-external/vcpkg/buildtrees/
-external/vcpkg/downloads/
-external/vcpkg/installed/
-external/vcpkg/packages/
 *.obj
 *.lib
 *.dll
@@ -75,3 +71,16 @@ external/vcpkg/packages/
 *.exp
 .cache/
 CMakeUserPresets.json
+
+# ローカルの作業用ディレクトリ・エディタ設定・支援ツールの成果物。
+# ディスク上には残すが、公開リポジトリには含めない。
+/.claude/
+/.vscode/
+/.specify/
+/.gemini/
+/ref/
+/report/
+/specs/
+/external/
+/tmp/
+/CLAUDE.md

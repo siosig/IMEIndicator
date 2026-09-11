@@ -1,10 +1,23 @@
 cmake_minimum_required(VERSION 3.27)
 
-# vcpkg toolchain（manifest mode）はプリセット側で指定するが、
-# 直接 cmake を呼ぶケースに備えてここでも探索する。
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND EXISTS "${CMAKE_SOURCE_DIR}/external/vcpkg/scripts/buildsystems/vcpkg.cmake")
-    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/external/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        CACHE STRING "vcpkg toolchain")
+# vcpkg toolchain（manifest mode）の解決順:
+#   1. コマンドラインで -DCMAKE_TOOLCHAIN_FILE=... を明示指定した場合はそれを使う。
+#   2. 環境変数 VCPKG_ROOT。本リポジトリを clone した環境では通常これで解決する。
+#   3. ソースツリー内の external/vcpkg。リポジトリには含まれないが、
+#      作者のローカル環境には配置されているため最後の候補として探索する。
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    if(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "vcpkg toolchain")
+    elseif(EXISTS "${CMAKE_SOURCE_DIR}/external/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/external/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "vcpkg toolchain")
+    else()
+        message(FATAL_ERROR
+            "vcpkg が見つかりません。https://github.com/microsoft/vcpkg を clone して"
+            " bootstrap スクリプトを実行し、環境変数 VCPKG_ROOT を設定するか、"
+            " -DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake を指定してください。")
+    endif()
 endif()
 
 project(IMEIndicator
