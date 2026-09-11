@@ -22,6 +22,15 @@ IMEIndicator は、Windows 11 上で日本語 IME の ON 状態をマウスカ�
 > [!NOTE]
 > C++ 版は .NET / WPF / WinForms ランタイム依存ゼロです。配布された `IMEIndicator.exe` を任意のフォルダに置くだけで動作します（管理者権限不要）。プロセス優先度ルールでシステムプロセスを操作する場合のみ管理者権限を推奨。
 
+## 入手
+
+[Releases](https://github.com/siosig/IMEIndicator/releases) から `IMEIndicator.exe` をダウンロードします。インストール作業はなく、単一の実行ファイルを任意の場所に置いて起動するだけです。
+
+配布物は GitHub Actions が本リポジトリからビルドしたものです（[.github/workflows/build.yml](.github/workflows/build.yml)）。
+
+> [!WARNING]
+> 実行ファイルは現在コード署名されていません。Windows の Smart App Control が有効な環境では起動がブロックされることがあります。原因と対処は [docs/code-signing.md](docs/code-signing.md) を参照してください。
+
 ## クイックスタート
 
 1. IMEIndicator.exe を起動します。

@@ -3,16 +3,23 @@
   "cmakeMinimumRequired": { "major": 3, "minor": 27, "patch": 0 },
   "configurePresets": [
     {
-      "name": "windows-x64-release",
-      "displayName": "Windows x64 Release (VS18, static CRT)",
-      "generator": "Visual Studio 18 2026",
+      "name": "windows-x64-common",
+      "hidden": true,
       "architecture": { "value": "x64", "strategy": "set" },
-      "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
         "VCPKG_TARGET_TRIPLET": "x64-windows-static",
         "VCPKG_HOST_TRIPLET": "x64-windows-static",
         "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+      }
+    },
+    {
+      "name": "windows-x64-release",
+      "displayName": "Windows x64 Release (VS18, static CRT)",
+      "inherits": "windows-x64-common",
+      "generator": "Visual Studio 18 2026",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
@@ -22,6 +29,16 @@
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "ci-windows-x64-release",
+      "displayName": "CI: Windows x64 Release (VS2022, static CRT)",
+      "inherits": "windows-x64-common",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
@@ -35,6 +52,11 @@
       "name": "windows-x64-debug",
       "configurePreset": "windows-x64-debug",
       "configuration": "Debug"
+    },
+    {
+      "name": "ci-windows-x64-release",
+      "configurePreset": "ci-windows-x64-release",
+      "configuration": "Release"
     }
   ],
   "testPresets": [
@@ -49,6 +71,13 @@
       "name": "windows-x64-debug",
       "configurePreset": "windows-x64-debug",
       "configuration": "Debug",
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error", "stopOnFailure": false }
+    },
+    {
+      "name": "ci-windows-x64-release",
+      "configurePreset": "ci-windows-x64-release",
+      "configuration": "Release",
       "output": { "outputOnFailure": true },
       "execution": { "noTestsAction": "error", "stopOnFailure": false }
     }

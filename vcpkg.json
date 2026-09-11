@@ -3,7 +3,7 @@
   "name": "imeindicator-cpp",
   "version-string": "1.4.0",
   "description": "IME Indicator (C++ native port of the C#/WPF tool)",
-  "homepage": "https://github.com/obott9/IMEIndicator",
+  "homepage": "https://github.com/siosig/IMEIndicator",
   "supports": "windows & x64",
   "dependencies": [
     "nlohmann-json",

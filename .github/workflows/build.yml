@@ -1,0 +1,110 @@
+name: build
+
+# 公開リポジトリのビルド検証と、タグ push 時のリリース生成を行う。
+#
+# SignPath Foundation の審査では「配布バイナリが公開リポジトリから再現可能な形で
+# ビルドされていること」が確認される。そのため、リリース成果物は必ずこの
+# ワークフローの成果物だけを使い、手元でビルドした実行ファイルは配布しない。
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # vcpkg.json の builtin-baseline と一致させること。
+  # ここを更新するときは vcpkg.json も同時に更新する。
+  VCPKG_BASELINE: 73248d88e09d43dfd7836902462a64fd2a43387b
+
+jobs:
+  build:
+    name: Build and test (Windows x64)
+    runs-on: windows-2022
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Cache vcpkg binary packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg-binary-cache
+          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_BASELINE }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ env.VCPKG_BASELINE }}-
+
+      - name: Set up vcpkg at the pinned baseline
+        shell: pwsh
+        run: |
+          # baseline のコミットだけを浅く取得する。完全な clone は 700MB 近くあり遅いため。
+          $vcpkg = Join-Path $env:RUNNER_TEMP 'vcpkg'
+          git init --quiet $vcpkg
+          git -C $vcpkg remote add origin https://github.com/microsoft/vcpkg.git
+          git -C $vcpkg fetch --quiet --depth 1 origin $env:VCPKG_BASELINE
+          git -C $vcpkg checkout --quiet FETCH_HEAD
+          & (Join-Path $vcpkg 'bootstrap-vcpkg.bat') -disableMetrics
+          if ($LASTEXITCODE -ne 0) { throw "bootstrap-vcpkg failed with exit code $LASTEXITCODE" }
+          "VCPKG_ROOT=$vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          New-Item -ItemType Directory -Force "${{ github.workspace }}/vcpkg-binary-cache" | Out-Null
+
+      - name: Configure
+        shell: pwsh
+        env:
+          VCPKG_BINARY_SOURCES: 'clear;files,${{ github.workspace }}\vcpkg-binary-cache,readwrite'
+        run: cmake --preset ci-windows-x64-release
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build --preset ci-windows-x64-release
+
+      - name: Test
+        shell: pwsh
+        run: ctest --preset ci-windows-x64-release
+
+      - name: Report the produced binary
+        shell: pwsh
+        run: |
+          $exe = 'build/release/bin/Release/IMEIndicator.exe'
+          $item = Get-Item $exe
+          "Size: {0:N0} bytes" -f $item.Length
+          "FileVersion: {0}" -f $item.VersionInfo.FileVersion
+          "SHA256: {0}" -f (Get-FileHash $exe -Algorithm SHA256).Hash
+
+      - name: Upload the build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IMEIndicator-windows-x64
+          path: build/release/bin/Release/IMEIndicator.exe
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download the build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: IMEIndicator-windows-x64
+          path: dist
+
+      - name: Create the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/IMEIndicator.exe
+          generate_release_notes: true
+          body: |
+            Windows x64 build produced by the `build` workflow from this tag.
+
+            The executable is **not code signed**. Windows Smart App Control and
+            SmartScreen may block it. See `docs/code-signing.md` for the details.
