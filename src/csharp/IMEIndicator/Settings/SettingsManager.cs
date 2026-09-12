@@ -15,7 +15,8 @@ namespace IMEIndicator.Settings;
 
 /// <summary>
 /// 設定 I/O 統括。移植元: src/cpp/services/SettingsManager.h / .cpp の class SettingsManager。
-/// 契約: specs/014-port-to-csharp/contracts/settings-compat-contract.md。
+/// 契約: specs/014-port-to-csharp/contracts/settings-compat-contract.md（v4 まで）、
+/// specs/015-split-appearance-settings/contracts/settings-schema-contract.md（v4→v5 差分）。
 /// </summary>
 public sealed class SettingsManager
 {
@@ -29,6 +30,7 @@ public sealed class SettingsManager
     private bool _loadedAsV1;
     private bool _loadedAsV2;
     private bool _loadedAsV3;
+    private bool _loadedAsV4;
 
     /// <summary>本番用: %APPDATA%\IMEIndicator\ を使用する。</summary>
     public SettingsManager() : this(DefaultSettingsDirectory())
@@ -57,6 +59,7 @@ public sealed class SettingsManager
     private string V1BackupPath => SettingsFilePath + ".v1.bak";
     private string V2BackupPath => SettingsFilePath + ".v2.bak";
     private string V3BackupPath => SettingsFilePath + ".v3.bak";
+    private string V4BackupPath => SettingsFilePath + ".v4.bak";
 
     /// <summary>
     /// 設定読み込み。失敗時は既定値で構築して内部状態として保持する。
@@ -70,7 +73,7 @@ public sealed class SettingsManager
         if (!File.Exists(SettingsFilePath))
         {
             Settings = new AppSettings { IsFirstLaunch = true };
-            _loadedAsV1 = _loadedAsV2 = _loadedAsV3 = false;
+            _loadedAsV1 = _loadedAsV2 = _loadedAsV3 = _loadedAsV4 = false;
             Log.Settings.Information("settings file not found, using defaults");
             return false;
         }
@@ -126,28 +129,37 @@ public sealed class SettingsManager
                 _loadedAsV1 = loadedVersion < 2;
                 _loadedAsV2 = loadedVersion == 2;
                 _loadedAsV3 = loadedVersion == 3;
+                _loadedAsV4 = loadedVersion == 4;
 
                 if (_loadedAsV1)
                 {
-                    Settings.SchemaVersion = 4;
+                    Settings.SchemaVersion = 5;
                     CreateBackupIfAbsent(V1BackupPath, "v1");
-                    Log.Settings.Information("loaded v1 settings, will migrate to v4 on next save");
+                    Log.Settings.Information("loaded v1 settings, will migrate to v5 on next save");
                 }
                 else if (_loadedAsV2)
                 {
-                    Settings.SchemaVersion = 4;
+                    Settings.SchemaVersion = 5;
                     CreateBackupIfAbsent(V2BackupPath, "v2");
-                    Log.Settings.Information("loaded v2 settings, will migrate to v4 on next save");
+                    Log.Settings.Information("loaded v2 settings, will migrate to v5 on next save");
                 }
                 else if (_loadedAsV3)
                 {
-                    Settings.SchemaVersion = 4;
+                    Settings.SchemaVersion = 5;
                     CreateBackupIfAbsent(V3BackupPath, "v3");
-                    Log.Settings.Information("loaded v3 settings, will migrate to v4 on next save");
+                    Log.Settings.Information("loaded v3 settings, will migrate to v5 on next save");
+                }
+                else if (_loadedAsV4)
+                {
+                    // 015-split-appearance-settings: backgroundImage.size/opacity を追加した v5 への移行。
+                    // v1/v2/v3 と同じパターン（初回のみバックアップ、次回保存時に確定）を踏襲する。
+                    Settings.SchemaVersion = 5;
+                    CreateBackupIfAbsent(V4BackupPath, "v4");
+                    Log.Settings.Information("loaded v4 settings, will migrate to v5 on next save");
                 }
                 else
                 {
-                    Log.Settings.Debug("loaded v4 settings");
+                    Log.Settings.Debug("loaded v5 settings");
                 }
 
                 return true;
@@ -162,11 +174,11 @@ public sealed class SettingsManager
         }
     }
 
-    /// <summary>設定保存（アトミック書き込み）。常に v4 で書き出す。</summary>
+    /// <summary>設定保存（アトミック書き込み）。常に v5 で書き出す。</summary>
     public bool Save()
     {
         LastError = null;
-        Settings.SchemaVersion = 4;
+        Settings.SchemaVersion = 5;
 
         string content;
         try
@@ -186,7 +198,7 @@ public sealed class SettingsManager
         }
 
         Log.Settings.Debug("settings saved ({Bytes} bytes)", Encoding.UTF8.GetByteCount(content));
-        _loadedAsV1 = _loadedAsV2 = _loadedAsV3 = false;
+        _loadedAsV1 = _loadedAsV2 = _loadedAsV3 = _loadedAsV4 = false;
         return true;
     }
 

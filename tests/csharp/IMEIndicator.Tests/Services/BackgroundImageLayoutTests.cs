@@ -85,6 +85,39 @@ public sealed class BackgroundImageLayoutTests
         Assert.Equal(expected, actual);
     }
 
+    // ---- 015-split-appearance-settings: 背景画像サイズ設定の値域境界（32〜512）----
+    // Compute 自体は無改修（research.md R-1）だが、設定値として新たに導入する値域の両端が
+    // 既存の作業領域クランプで正しく扱われることを確認する。
+
+    [Theory]
+    // logicalSize, expLeft, expTop, expRight, expBottom（work=FullHD 1920x1080、margin=16、dpi=96）
+    [InlineData(32, 1872, 16, 1904, 48)]    // 値域下限
+    [InlineData(512, 1392, 16, 1904, 528)]  // 値域上限（フル HD では縮小されない）
+    public void Compute_HonorsNewSizeRangeBoundaries_OnTypicalDisplay(
+        int logicalSize, int expLeft, int expTop, int expRight, int expBottom)
+    {
+        var work = Rectangle.FromLTRB(0, 0, 1920, 1080);
+        var expected = Rectangle.FromLTRB(expLeft, expTop, expRight, expBottom);
+
+        var actual = BackgroundImageLayout.Compute(work, 96, logicalSize);
+
+        Assert.Equal(expected, actual);
+        AssertWithin(actual, work);
+    }
+
+    [Fact]
+    public void Compute_MaxSize512_ShrinksToFitOnSmallWorkArea()
+    {
+        // 低解像度ディスプレイ（例: 640x480）では 512 論理 px がそのまま収まらないため、
+        // 既存の作業領域クランプ（avail = 短辺 - 2*margin）で縮小される必要がある（Edge Cases 節）。
+        var work = Rectangle.FromLTRB(0, 0, 640, 480);
+
+        var actual = BackgroundImageLayout.Compute(work, 96, 512);
+
+        Assert.Equal(Rectangle.FromLTRB(176, 16, 624, 464), actual);
+        AssertWithin(actual, work);
+    }
+
     // 矩形 inner が outer に完全に収まっているか（FR-004: 作業領域の右上に配置、タスクバーと重ならない）。
     private static void AssertWithin(Rectangle inner, Rectangle outer)
     {

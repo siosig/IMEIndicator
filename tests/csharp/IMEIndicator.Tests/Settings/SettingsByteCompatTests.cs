@@ -14,15 +14,10 @@ using Xunit;
 namespace IMEIndicator.Tests.Settings;
 
 /// <summary>
-/// settings.json のバイト互換性テスト（契約: specs/014-port-to-csharp/contracts/settings-compat-contract.md）。
+/// settings.json のバイト互換性テスト（契約: specs/014-port-to-csharp/contracts/settings-compat-contract.md
+/// （v4 まで）、specs/015-split-appearance-settings/contracts/settings-schema-contract.md（v4→v5 差分））。
 /// C++ 版（nlohmann::json の dump(2)）と同じキー順・インデント・改行・非エスケープ・小数点表記になることを検証する。
 /// </summary>
-/// <remarks>
-/// 2026-09-11 時点、このマシンでは Smart App Control が dotnet test の実行をブロックしているため
-/// （specs/014-port-to-csharp/quickstart.md 検証記録参照）、本ファイルは未実行のまま作成した。
-/// SAC 解除後、最初に実行して結果を確認すること。C++ 版で実際に保存した settings.json との
-/// バイト比較（quickstart.md「同一性の検証」）は本フィーチャーの Polish フェーズ（T073）で別途行う。
-/// </remarks>
 public sealed class SettingsByteCompatTests
 {
     private static JsonSerializerOptions BuildOptions() => new()
@@ -75,14 +70,25 @@ public sealed class SettingsByteCompatTests
     }
 
     [Fact]
-    public void DefaultSettings_WritesAlwaysSchemaVersion4()
+    public void DefaultSettings_BackgroundImageKeyOrder_MatchesContract()
+    {
+        // 015-split-appearance-settings: size/opacity 追加後のキー順
+        // （contracts/settings-schema-contract.md「差分」節）。
+        string json = JsonSerializer.Serialize(new AppSettings(), BuildOptions());
+        using JsonDocument doc = JsonDocument.Parse(json);
+        JsonElement bg = doc.RootElement.GetProperty("backgroundImage");
+        AssertObjectKeyOrder(bg, ["isVisible", "size", "opacity"]);
+    }
+
+    [Fact]
+    public void DefaultSettings_WritesAlwaysSchemaVersion5()
     {
         var settings = new AppSettings { SchemaVersion = 1 }; // 意図的に不整合な値を入れても
         string json = JsonSerializer.Serialize(settings, BuildOptions());
         using JsonDocument doc = JsonDocument.Parse(json);
-        // Serialize 単体では SchemaVersion をこちらで明示的に 4 にしない限り書き出し値は反映されない。
-        // 「常に 4」を強制するのは SettingsManager.Save() の責務（SettingsManagerTests で別途検証）。
-        // ここでは Clamp() が 1 を許容範囲として保持することのみ確認する（無効値のみ 4 に補正される）。
+        // Serialize 単体では SchemaVersion をこちらで明示的に 5 にしない限り書き出し値は反映されない。
+        // 「常に 5」を強制するのは SettingsManager.Save() の責務（SettingsManagerTests で別途検証）。
+        // ここでは Clamp() が 1 を許容範囲として保持することのみ確認する（無効値のみ 5 に補正される）。
         Assert.Equal(1, doc.RootElement.GetProperty("schemaVersion").GetInt32());
     }
 
@@ -114,6 +120,18 @@ public sealed class SettingsByteCompatTests
         var settings = new AppSettings();
         settings.MouseCursorIndicator.Size = value;
         settings.MouseCursorIndicator.Opacity = value is >= 0.1 and <= 1.0 ? value : 0.9;
+        string json = JsonSerializer.Serialize(settings, BuildOptions());
+        Assert.Contains($"\"size\": {expectedSubstring}", json);
+    }
+
+    [Theory]
+    [InlineData(32.0, "32.0")]
+    [InlineData(128.0, "128.0")]
+    [InlineData(512.0, "512.0")]
+    public void BackgroundImageDoubleFields_AlwaysIncludeDecimalPoint(double size, string expectedSubstring)
+    {
+        var settings = new AppSettings();
+        settings.BackgroundImage.Size = size;
         string json = JsonSerializer.Serialize(settings, BuildOptions());
         Assert.Contains($"\"size\": {expectedSubstring}", json);
     }

@@ -37,6 +37,11 @@ public static class AppConstants
     public const int BackgroundImageLogicalSize = 128;
     public const int BackgroundImageLogicalMargin = 16;
 
+    // 背景画像サイズの値域（015-split-appearance-settings FR-001）。
+    // AppSettings.Clamp() と SettingsForm の NumericUpDown の双方から参照する。
+    public const int BackgroundImageMinSize = 32;
+    public const int BackgroundImageMaxSize = 512;
+
     // 設定ダイアログのタイトル（specs/014-port-to-csharp/contracts/ui-parity-contract.md §4）。
     public const string SettingsTitle = "IME Indicator 設定";
 }

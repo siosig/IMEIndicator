@@ -108,6 +108,7 @@ public sealed class App : ApplicationContext
 
         // ---- 背景画像ウィンドウ ----
         // 初期化自体は失敗しない設計（Relayout 失敗時は警告ログのみ。LayeredWindow 参照）。
+        _backgroundImageWindow.ApplySettings(_settingsManager.Settings.BackgroundImage);
 
         // ---- ホットキー（HotkeyService、US4） ----
         // ImeIndicatorCommands（内部コマンド 200〜299）から本クラスの公開メソッドへ委譲するための
@@ -321,6 +322,7 @@ public sealed class App : ApplicationContext
     {
         _indicatorWindow.ApplySettings(settings.MouseCursorIndicator);
         _indicatorWindow.SetText(settings.ImeOnText);
+        _backgroundImageWindow.ApplySettings(settings.BackgroundImage);
         _imeMonitor.SetPixelVerificationIntervalMs(settings.PixelVerificationIntervalMs);
         Log.SetLevel(settings.LogLevel);
         _priorityMonitor.UpdateRules(settings.ProcessPriorityRules);

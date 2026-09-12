@@ -38,13 +38,19 @@ public sealed class SettingsForm : Form
 
     // ---- インジケーター ----
     private readonly CheckBox _visibleCheckBox = new() { Text = "インジケーター表示", AutoSize = true };
-    private readonly CheckBox _backgroundImageCheckBox = new() { Text = "背景画像表示", AutoSize = true };
     private readonly NumericUpDown _sizeUpDown = new() { Minimum = 20, Maximum = 100, DecimalPlaces = 0, Dock = DockStyle.Fill };
     private readonly NumericUpDown _opacityUpDown = new() { Minimum = 0.10m, Maximum = 1.00m, DecimalPlaces = 2, Increment = 0.05m, Dock = DockStyle.Fill };
     private readonly NumericUpDown _offsetXUpDown = new() { Minimum = -1_000_000, Maximum = 1_000_000, DecimalPlaces = 0, Dock = DockStyle.Fill };
     private readonly NumericUpDown _offsetYUpDown = new() { Minimum = -1_000_000, Maximum = 1_000_000, DecimalPlaces = 0, Dock = DockStyle.Fill };
     private readonly TextBox _imeOnTextBox = new() { MaxLength = 8, Dock = DockStyle.Fill };
     private readonly TextBox _imeOffTextBox = new() { MaxLength = 8, Dock = DockStyle.Fill };
+
+    // ---- 背景画像（015-split-appearance-settings。インジケーターとは独立、FR-003） ----
+    private readonly CheckBox _backgroundImageCheckBox = new() { Text = "背景画像表示", AutoSize = true };
+    private readonly NumericUpDown _backgroundImageSizeUpDown = new() { Minimum = AppConstants.BackgroundImageMinSize, Maximum = AppConstants.BackgroundImageMaxSize, DecimalPlaces = 0, Dock = DockStyle.Fill };
+    private readonly NumericUpDown _backgroundImageOpacityUpDown = new() { Minimum = 0.10m, Maximum = 1.00m, DecimalPlaces = 2, Increment = 0.05m, Dock = DockStyle.Fill };
+
+    // ---- 全般 ----
     private readonly ComboBox _logLevelComboBox = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
 
     // ---- プロセス優先度ルール ----
@@ -172,11 +178,17 @@ public sealed class SettingsForm : Form
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
+        // 表示順は contracts/settings-ui-contract.md 「表示順」節のとおり
+        // （インジケーター→背景画像→全般→プロセス優先度ルール→ホットキー→ボタン）。
         root.Controls.Add(BuildIndicatorGroup(), 0, 0);
-        root.Controls.Add(BuildRulesGroup(), 0, 1);
-        root.Controls.Add(BuildHotkeysGroup(), 0, 2);
-        root.Controls.Add(BuildButtonRow(), 0, 3);
+        root.Controls.Add(BuildBackgroundImageGroup(), 0, 1);
+        root.Controls.Add(BuildGeneralGroup(), 0, 2);
+        root.Controls.Add(BuildRulesGroup(), 0, 3);
+        root.Controls.Add(BuildHotkeysGroup(), 0, 4);
+        root.Controls.Add(BuildButtonRow(), 0, 5);
 
         Controls.Add(root);
         return root;
@@ -190,15 +202,45 @@ public sealed class SettingsForm : Form
         table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
-        AddRow(table, "表示", CreateFlow(_visibleCheckBox, _backgroundImageCheckBox));
+        AddRow(table, "表示", _visibleCheckBox);
         AddRow(table, "サイズ (20-100)", _sizeUpDown);
         AddRow(table, "不透明度 (0.10-1.00)", _opacityUpDown);
         AddRow(table, "オフセット X", _offsetXUpDown);
         AddRow(table, "オフセット Y", _offsetYUpDown);
         AddRow(table, "IME ON テキスト", _imeOnTextBox);
         AddRow(table, "IME OFF テキスト", _imeOffTextBox);
-        AddRow(table, "ログレベル", _logLevelComboBox);
 
+        group.Controls.Add(table);
+        return group;
+    }
+
+    // 015-split-appearance-settings US1/US2: インジケーターとは別グループ・別値域（FR-001/002/003/004）。
+    private GroupBox BuildBackgroundImageGroup()
+    {
+        var group = new GroupBox { Text = "背景画像", AutoSize = true, Dock = DockStyle.Top, Padding = new Padding(6) };
+
+        var table = new TableLayoutPanel { ColumnCount = 2, AutoSize = true, Dock = DockStyle.Top };
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+
+        AddRow(table, "表示", _backgroundImageCheckBox);
+        AddRow(table, "サイズ (32-512)", _backgroundImageSizeUpDown);
+        AddRow(table, "不透明度 (0.10-1.00)", _backgroundImageOpacityUpDown);
+
+        group.Controls.Add(table);
+        return group;
+    }
+
+    // 015-split-appearance-settings FR-013: どちらの表示対象にも属さない全体設定。
+    private GroupBox BuildGeneralGroup()
+    {
+        var group = new GroupBox { Text = "全般", AutoSize = true, Dock = DockStyle.Top, Padding = new Padding(6) };
+
+        var table = new TableLayoutPanel { ColumnCount = 2, AutoSize = true, Dock = DockStyle.Top };
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+
+        AddRow(table, "ログレベル", _logLevelComboBox);
         foreach (string level in new[] { "trace", "debug", "info", "warn", "error", "critical" })
         {
             _logLevelComboBox.Items.Add(level);
@@ -346,13 +388,17 @@ public sealed class SettingsForm : Form
     private void LoadFrom(AppSettings settings)
     {
         _visibleCheckBox.Checked = settings.MouseCursorIndicator.IsVisible;
-        _backgroundImageCheckBox.Checked = settings.BackgroundImage.IsVisible;
         _sizeUpDown.Value = ClampToRange(settings.MouseCursorIndicator.Size, _sizeUpDown);
         _opacityUpDown.Value = ClampToRange(settings.MouseCursorIndicator.Opacity, _opacityUpDown);
         _offsetXUpDown.Value = ClampToRange(settings.MouseCursorIndicator.OffsetX, _offsetXUpDown);
         _offsetYUpDown.Value = ClampToRange(settings.MouseCursorIndicator.OffsetY, _offsetYUpDown);
         _imeOnTextBox.Text = settings.ImeOnText;
         _imeOffTextBox.Text = settings.ImeOffText;
+
+        _backgroundImageCheckBox.Checked = settings.BackgroundImage.IsVisible;
+        _backgroundImageSizeUpDown.Value = ClampToRange(settings.BackgroundImage.Size, _backgroundImageSizeUpDown);
+        _backgroundImageOpacityUpDown.Value = ClampToRange(settings.BackgroundImage.Opacity, _backgroundImageOpacityUpDown);
+
         _logLevelComboBox.SelectedIndex = (int)settings.LogLevel;
 
         _pollingUpDown.Value = Math.Clamp(settings.PollingIntervalSeconds, (int)_pollingUpDown.Minimum, (int)_pollingUpDown.Maximum);
@@ -377,11 +423,14 @@ public sealed class SettingsForm : Form
     private void ReadTo(AppSettings settings)
     {
         settings.MouseCursorIndicator.IsVisible = _visibleCheckBox.Checked;
-        settings.BackgroundImage.IsVisible = _backgroundImageCheckBox.Checked;
         settings.MouseCursorIndicator.Size = (double)_sizeUpDown.Value;
         settings.MouseCursorIndicator.Opacity = (double)_opacityUpDown.Value;
         settings.MouseCursorIndicator.OffsetX = (double)_offsetXUpDown.Value;
         settings.MouseCursorIndicator.OffsetY = (double)_offsetYUpDown.Value;
+
+        settings.BackgroundImage.IsVisible = _backgroundImageCheckBox.Checked;
+        settings.BackgroundImage.Size = (double)_backgroundImageSizeUpDown.Value;
+        settings.BackgroundImage.Opacity = (double)_backgroundImageOpacityUpDown.Value;
 
         // 空欄は「変更なし」を意味する（移植元: !on.empty() のときのみ上書き）。
         string on = _imeOnTextBox.Text;

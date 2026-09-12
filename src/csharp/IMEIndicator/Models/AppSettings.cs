@@ -5,6 +5,7 @@
 // See COPYING in the repository root for the full license text.
 
 using System.Text.Json.Serialization;
+using IMEIndicator.App;
 using IMEIndicator.Models.Hotkey;
 
 namespace IMEIndicator.Models;
@@ -26,7 +27,8 @@ public enum LogLevel
 
 /// <summary>
 /// 設定ファイル（%APPDATA%\IMEIndicator\settings.json）のルートエンティティ。
-/// キー順・既定値・値域は specs/014-port-to-csharp/contracts/settings-compat-contract.md、
+/// キー順・既定値・値域は specs/014-port-to-csharp/contracts/settings-compat-contract.md（v4 まで）、
+/// specs/015-split-appearance-settings/data-model.md §3（backgroundImage の値域、v5）。
 /// 移植元は src/cpp/models/AppSettings.h / .cpp の struct AppSettings。
 /// </summary>
 /// <remarks>
@@ -39,13 +41,14 @@ public enum LogLevel
 public sealed class AppSettings : IJsonOnDeserializing, IJsonOnDeserialized
 {
     /// <summary>
-    /// スキーマバージョン。<c>new AppSettings()</c> の既定値は 4（fresh install）。
+    /// スキーマバージョン。<c>new AppSettings()</c> の既定値は 5（fresh install。
+    /// 015-split-appearance-settings で backgroundImage.size/opacity を追加し 4→5）。
     /// JSON からのデシリアライズでキーが無い場合は 1 として扱う（<see cref="OnDeserializing"/> 参照）。
-    /// 読み込みは 1〜4 を受容し、書き出しは常に 4（<see cref="Settings.SettingsManager"/> が書き出し直前に上書きする）。
+    /// 読み込みは 1〜5 を受容し、書き出しは常に 5（<see cref="Settings.SettingsManager"/> が書き出し直前に上書きする）。
     /// </summary>
     [JsonPropertyName("schemaVersion")]
     [JsonPropertyOrder(0)]
-    public int SchemaVersion { get; set; } = 4;
+    public int SchemaVersion { get; set; } = 5;
 
     [JsonPropertyName("mouseCursorIndicator")]
     [JsonPropertyOrder(1)]
@@ -137,10 +140,10 @@ public sealed class AppSettings : IJsonOnDeserializing, IJsonOnDeserialized
             LogLevel = LogLevel.Warn;
         }
 
-        // schemaVersion は 1/2/3/4 のみ受容。書き出しは SettingsManager.Save() が常に 4 にする。
-        if (SchemaVersion is not (1 or 2 or 3 or 4))
+        // schemaVersion は 1/2/3/4/5 のみ受容。書き出しは SettingsManager.Save() が常に 5 にする。
+        if (SchemaVersion is not (1 or 2 or 3 or 4 or 5))
         {
-            SchemaVersion = 4;
+            SchemaVersion = 5;
         }
 
         HotkeySettings.Hotkeys ??= new List<HotKeyEntry>();
@@ -169,7 +172,9 @@ public sealed class AppSettings : IJsonOnDeserializing, IJsonOnDeserialized
                 32, HotkeySettings.GlobalOptions.ForegroundExcludeProcesses.Count - 32);
         }
 
-        // BackgroundImage は bool のみのため Clamp 不要（移植元 BackgroundImageSettings::clamp() も no-op）
+        // 015-split-appearance-settings FR-001/FR-002/FR-010。
+        BackgroundImage.Size = Math.Clamp(BackgroundImage.Size, AppConstants.BackgroundImageMinSize, AppConstants.BackgroundImageMaxSize);
+        BackgroundImage.Opacity = Math.Clamp(BackgroundImage.Opacity, 0.1, 1.0);
     }
 
     // 移植元: AppSettings.cpp 内の無名名前空間 clampIndicatorText()。

@@ -196,8 +196,12 @@ public sealed class JsonConvertersTests
         var settings = new AppSettings();
         string json = JsonSerializer.Serialize(settings, options);
 
-        Assert.Contains("\"schemaVersion\": 4", json);
+        Assert.Contains("\"schemaVersion\": 5", json);
         Assert.Contains("\"size\": 34.0", json);
+        // 015-split-appearance-settings: backgroundImage.size/opacity も DoubleWithPointConverter で
+        // 末尾 .0 付きの表記になること（contracts/settings-schema-contract.md）。
+        Assert.Contains("\"size\": 128.0", json);
+        Assert.Contains("\"opacity\": 1.0", json);
         Assert.Contains("あ", json); // 非 ASCII が \uXXXX にエスケープされないこと
         Assert.DoesNotContain("\\u", json);
     }
