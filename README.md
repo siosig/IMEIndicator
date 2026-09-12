@@ -192,6 +192,9 @@ IMEIndicator.exe /powertoggle
 - imeOffText
 - processPriorityRules
 - pollingIntervalSeconds
+- backgroundImage.isVisible
+- backgroundImage.size
+- backgroundImage.opacity
 
 ## ビルド
 
