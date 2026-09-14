@@ -78,6 +78,7 @@ CMakeUserPresets.json
 /.vscode/
 /.specify/
 /.gemini/
+/.serena/
 /ref/
 /report/
 /specs/
