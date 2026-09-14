@@ -3,11 +3,18 @@
     C# 移植版（014-port-to-csharp）の共通ビルド設定。
     バージョンはここ 1 箇所のみで定義し、csproj 側では参照しない（暗黙的に継承される）。
     参照: specs/014-port-to-csharp/plan.md Constitution Check（R-17: 1.5.0.0 から開始）
+
+    X.Y.Z の3分割（2026-09-14 に4分割から移行。/github-release スキルの自動採番が
+    3分割タグしか認識しないため、git tag と一致させて手動運用を無くす）。
+    リリースビルドごとに patch（Z）を1つずつインクリメントすること（FR-009、README.md「バージョン管理」）。
+    AssemblyVersion/FileVersion は明示せず SDK既定の導出（$(Version) をそのまま使う。
+    .NET SDK の GetAssemblyVersion タスクが AssemblyVersion 未設定時にこの導出を行う）に委ねる。
+    以前はここに AssemblyVersion/FileVersion を "1.5.0.0" 固定文字列で重複定義しており、
+    csproj 側の再上書き（fe5eb79 で追加、2026-09-14 に削除）に隠れて気づかれていなかった
+    （バージョンをここ1箇所に集約するという本コメントの元々の意図に反していた）。
   -->
   <PropertyGroup>
-    <Version>1.5.0.0</Version>
-    <AssemblyVersion>1.5.0.0</AssemblyVersion>
-    <FileVersion>1.5.0.0</FileVersion>
+    <Version>1.5.1</Version>
     <Product>IME Indicator</Product>
     <Company>IMEIndicator Project</Company>
     <Authors>Daisuke ITO</Authors>
