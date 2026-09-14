@@ -41,14 +41,15 @@ public enum LogLevel
 public sealed class AppSettings : IJsonOnDeserializing, IJsonOnDeserialized
 {
     /// <summary>
-    /// スキーマバージョン。<c>new AppSettings()</c> の既定値は 5（fresh install。
-    /// 015-split-appearance-settings で backgroundImage.size/opacity を追加し 4→5）。
+    /// スキーマバージョン。<c>new AppSettings()</c> の既定値は 6（fresh install。
+    /// 015-split-appearance-settings で backgroundImage.size/opacity を追加し 4→5、
+    /// 016-custom-background-image で backgroundImage.imagePath を追加し 5→6）。
     /// JSON からのデシリアライズでキーが無い場合は 1 として扱う（<see cref="OnDeserializing"/> 参照）。
-    /// 読み込みは 1〜5 を受容し、書き出しは常に 5（<see cref="Settings.SettingsManager"/> が書き出し直前に上書きする）。
+    /// 読み込みは 1〜6 を受容し、書き出しは常に 6（<see cref="Settings.SettingsManager"/> が書き出し直前に上書きする）。
     /// </summary>
     [JsonPropertyName("schemaVersion")]
     [JsonPropertyOrder(0)]
-    public int SchemaVersion { get; set; } = 5;
+    public int SchemaVersion { get; set; } = 6;
 
     [JsonPropertyName("mouseCursorIndicator")]
     [JsonPropertyOrder(1)]
@@ -140,10 +141,10 @@ public sealed class AppSettings : IJsonOnDeserializing, IJsonOnDeserialized
             LogLevel = LogLevel.Warn;
         }
 
-        // schemaVersion は 1/2/3/4/5 のみ受容。書き出しは SettingsManager.Save() が常に 5 にする。
-        if (SchemaVersion is not (1 or 2 or 3 or 4 or 5))
+        // schemaVersion は 1/2/3/4/5/6 のみ受容。書き出しは SettingsManager.Save() が常に 6 にする。
+        if (SchemaVersion is not (1 or 2 or 3 or 4 or 5 or 6))
         {
-            SchemaVersion = 5;
+            SchemaVersion = 6;
         }
 
         HotkeySettings.Hotkeys ??= new List<HotKeyEntry>();
@@ -175,6 +176,10 @@ public sealed class AppSettings : IJsonOnDeserializing, IJsonOnDeserialized
         // 015-split-appearance-settings FR-001/FR-002/FR-010。
         BackgroundImage.Size = Math.Clamp(BackgroundImage.Size, AppConstants.BackgroundImageMinSize, AppConstants.BackgroundImageMaxSize);
         BackgroundImage.Opacity = Math.Clamp(BackgroundImage.Opacity, 0.1, 1.0);
+        // 016-custom-background-image: 前後の空白を除去する。トリム結果が空文字なら「未指定」として
+        // 扱われ（異常値ではない）、同梱の既定画像へフォールバックする（実際のファイル存在・読込可否の検証は
+        // ここでは行わず、表示時に BackgroundImageSource.Load が行う）。
+        BackgroundImage.ImagePath = (BackgroundImage.ImagePath ?? string.Empty).Trim();
     }
 
     // 移植元: AppSettings.cpp 内の無名名前空間 clampIndicatorText()。

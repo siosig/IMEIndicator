@@ -28,6 +28,13 @@ public sealed class BackgroundImageSettingsTests
         Assert.Equal(1.0, s.Opacity);
     }
 
+    [Fact]
+    public void DefaultImagePathIsEmpty()
+    {
+        var s = new BackgroundImageSettings();
+        Assert.Equal(string.Empty, s.ImagePath);
+    }
+
     [Theory]
     [InlineData(0.0, 32.0)]
     [InlineData(10000.0, 512.0)]
@@ -56,5 +63,19 @@ public sealed class BackgroundImageSettingsTests
         settings.Clamp();
 
         Assert.Equal(expected, settings.BackgroundImage.Opacity);
+    }
+
+    [Theory]
+    [InlineData("  C:\\images\\custom.png  ", "C:\\images\\custom.png")]
+    [InlineData("   ", "")]
+    [InlineData("", "")]
+    public void ClampTrimsImagePath(string input, string expected)
+    {
+        var settings = new AppSettings();
+        settings.BackgroundImage.ImagePath = input;
+
+        settings.Clamp();
+
+        Assert.Equal(expected, settings.BackgroundImage.ImagePath);
     }
 }

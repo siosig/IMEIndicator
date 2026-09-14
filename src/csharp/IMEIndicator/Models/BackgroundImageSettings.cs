@@ -40,4 +40,12 @@ public sealed class BackgroundImageSettings
     [JsonPropertyName("opacity")]
     [JsonPropertyOrder(2)]
     public double Opacity { get; set; } = 1.0;
+
+    /// <summary>
+    /// 背景画像として使う PNG ファイルの絶対パス。空文字は「未指定」を意味し、その場合は
+    /// 同梱の既定画像を使う（016-custom-background-image FR-004）。null は使わず、常に非 null 文字列とする。
+    /// </summary>
+    [JsonPropertyName("imagePath")]
+    [JsonPropertyOrder(3)]
+    public string ImagePath { get; set; } = string.Empty;
 }

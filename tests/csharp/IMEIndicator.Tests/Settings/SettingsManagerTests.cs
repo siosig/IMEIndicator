@@ -72,12 +72,12 @@ public sealed class SettingsManagerTests
         Assert.Equal(2, mgr.Settings.PollingIntervalSeconds);
         ProcessPriorityRule rule = Assert.Single(mgr.Settings.ProcessPriorityRules);
         Assert.Equal(PriorityLevel.BelowNormal, rule.TargetPriority);
-        // v1 として読まれたあと内部で v5 に昇格しているはず
-        Assert.Equal(5, mgr.Settings.SchemaVersion);
+        // v1 として読まれたあと内部で v6 に昇格しているはず
+        Assert.Equal(6, mgr.Settings.SchemaVersion);
 
         Assert.True(mgr.Save());
         using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(mgr.SettingsFilePath));
-        Assert.Equal(5, doc.RootElement.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal(6, doc.RootElement.GetProperty("schemaVersion").GetInt32());
         Assert.True(doc.RootElement.TryGetProperty("logLevel", out _));
         Assert.True(doc.RootElement.TryGetProperty("pixelVerificationIntervalMs", out _));
     }
@@ -90,7 +90,7 @@ public sealed class SettingsManagerTests
         CopyFixtureTo("settings-v2-sample.json", mgr.SettingsFilePath);
 
         Assert.True(mgr.Load());
-        Assert.Equal(5, mgr.Settings.SchemaVersion);
+        Assert.Equal(6, mgr.Settings.SchemaVersion);
         Assert.Equal(2, mgr.Settings.ProcessPriorityRules.Count);
         Assert.Equal(LogLevel.Warn, mgr.Settings.LogLevel);
         Assert.Equal(2000, mgr.Settings.PixelVerificationIntervalMs);
@@ -104,11 +104,11 @@ public sealed class SettingsManagerTests
         Assert.True(mgr2.Load());
         Assert.Equal(originalSize, mgr2.Settings.MouseCursorIndicator.Size);
         Assert.Equal(originalRuleCount, mgr2.Settings.ProcessPriorityRules.Count);
-        Assert.Equal(5, mgr2.Settings.SchemaVersion);
+        Assert.Equal(6, mgr2.Settings.SchemaVersion);
     }
 
     [Fact]
-    public void LoadV3SampleMigratesToV5AndCreatesBackup()
+    public void LoadV3SampleMigratesToV6AndCreatesBackup()
     {
         using TempDir tmp = new();
         var mgr = new SettingsManager(tmp.Path);
@@ -119,8 +119,8 @@ public sealed class SettingsManagerTests
         Assert.False(mgr.Settings.BackgroundImage.IsVisible);
         Assert.Equal(128.0, mgr.Settings.BackgroundImage.Size);
         Assert.Equal(1.0, mgr.Settings.BackgroundImage.Opacity);
-        // v3 として読まれたあと内部で v5 に昇格
-        Assert.Equal(5, mgr.Settings.SchemaVersion);
+        // v3 として読まれたあと内部で v6 に昇格
+        Assert.Equal(6, mgr.Settings.SchemaVersion);
         Assert.Equal(2, mgr.Settings.ProcessPriorityRules.Count);
         Assert.Empty(mgr.Settings.HotkeySettings.Hotkeys);
 
@@ -134,18 +134,18 @@ public sealed class SettingsManagerTests
         Assert.True(again.Load());
         Assert.Contains("// marker", File.ReadAllText(bak));
 
-        // Save すれば v5 で書き出され、backgroundImage が含まれる
+        // Save すれば v6 で書き出され、backgroundImage が含まれる
         Assert.True(mgr.Save());
         using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(mgr.SettingsFilePath));
-        Assert.Equal(5, doc.RootElement.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal(6, doc.RootElement.GetProperty("schemaVersion").GetInt32());
         Assert.False(doc.RootElement.GetProperty("backgroundImage").GetProperty("isVisible").GetBoolean());
     }
 
     [Fact]
-    public void LoadV4SampleMigratesToV5AndCreatesBackup()
+    public void LoadV4SampleMigratesToV6AndCreatesBackup()
     {
-        // 015-split-appearance-settings（contracts/settings-schema-contract.md「マイグレーション」節）:
-        // v1/v2/v3 と同じパターンを v4→v5 にも延長したことの検証。
+        // 016-custom-background-image（contracts/settings-schema-contract.md「マイグレーション」節）:
+        // v1/v2/v3 と同じパターンを v5→v6 にも延長したことの検証。
         using TempDir tmp = new();
         var mgr = new SettingsManager(tmp.Path);
         string v4Json = File.ReadAllText(System.IO.Path.Combine(FixturesDir(), "settings-v3-sample.json"))
@@ -153,7 +153,7 @@ public sealed class SettingsManagerTests
         File.WriteAllText(mgr.SettingsFilePath, v4Json);
 
         Assert.True(mgr.Load());
-        Assert.Equal(5, mgr.Settings.SchemaVersion);
+        Assert.Equal(6, mgr.Settings.SchemaVersion);
 
         // v4 バックアップが作られる
         string bak = mgr.SettingsFilePath + ".v4.bak";
@@ -167,7 +167,7 @@ public sealed class SettingsManagerTests
 
         Assert.True(mgr.Save());
         using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(mgr.SettingsFilePath));
-        Assert.Equal(5, doc.RootElement.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal(6, doc.RootElement.GetProperty("schemaVersion").GetInt32());
     }
 
     [Fact]
@@ -184,7 +184,7 @@ public sealed class SettingsManagerTests
         var mgr2 = new SettingsManager(tmp.Path);
         Assert.True(mgr2.Load());
         Assert.True(mgr2.Settings.BackgroundImage.IsVisible);
-        Assert.Equal(5, mgr2.Settings.SchemaVersion);
+        Assert.Equal(6, mgr2.Settings.SchemaVersion);
         // mouseCursorIndicator.isVisible とは独立
         Assert.True(mgr2.Settings.MouseCursorIndicator.IsVisible);
     }
@@ -198,15 +198,67 @@ public sealed class SettingsManagerTests
         CopyFixtureTo("settings-v5-sample.json", mgr.SettingsFilePath);
 
         Assert.True(mgr.Load());
-        Assert.Equal(5, mgr.Settings.SchemaVersion);
+        Assert.Equal(6, mgr.Settings.SchemaVersion);
         Assert.Equal(300.0, mgr.Settings.BackgroundImage.Size);
         Assert.Equal(0.3, mgr.Settings.BackgroundImage.Opacity);
+        Assert.Equal(string.Empty, mgr.Settings.BackgroundImage.ImagePath);
 
         Assert.True(mgr.Save());
         var mgr2 = new SettingsManager(tmp.Path);
         Assert.True(mgr2.Load());
         Assert.Equal(300.0, mgr2.Settings.BackgroundImage.Size);
         Assert.Equal(0.3, mgr2.Settings.BackgroundImage.Opacity);
+    }
+
+    [Fact]
+    public void LoadV5SampleMigratesToV6AndCreatesBackup()
+    {
+        // 016-custom-background-image(contracts/settings-schema-contract.md「マイグレーション」節):
+        // v1〜v4 と同じパターンを v5→v6 にも延長したことの検証。
+        using TempDir tmp = new();
+        var mgr = new SettingsManager(tmp.Path);
+        CopyFixtureTo("settings-v5-sample.json", mgr.SettingsFilePath);
+
+        Assert.True(mgr.Load());
+        Assert.Equal(6, mgr.Settings.SchemaVersion);
+        // v5 には imagePath が無い → 既定値(未指定)
+        Assert.Equal(string.Empty, mgr.Settings.BackgroundImage.ImagePath);
+
+        // v5 バックアップが作られる
+        string bak = mgr.SettingsFilePath + ".v5.bak";
+        Assert.True(File.Exists(bak));
+
+        // 最古を保持: 既存の .v5.bak は 2 回目の load で上書きされない
+        File.AppendAllText(bak, "\n// marker");
+        var again = new SettingsManager(tmp.Path);
+        Assert.True(again.Load());
+        Assert.Contains("// marker", File.ReadAllText(bak));
+
+        Assert.True(mgr.Save());
+        using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(mgr.SettingsFilePath));
+        Assert.Equal(6, doc.RootElement.GetProperty("schemaVersion").GetInt32());
+    }
+
+    [Fact]
+    public void LoadV6SampleRoundTrip()
+    {
+        // 016-custom-background-image: backgroundImage.imagePath を持つファイルの読み書き検証。
+        using TempDir tmp = new();
+        var mgr = new SettingsManager(tmp.Path);
+        CopyFixtureTo("settings-v6-sample.json", mgr.SettingsFilePath);
+
+        Assert.True(mgr.Load());
+        Assert.Equal(6, mgr.Settings.SchemaVersion);
+        Assert.Equal(300.0, mgr.Settings.BackgroundImage.Size);
+        Assert.Equal(0.3, mgr.Settings.BackgroundImage.Opacity);
+        Assert.Equal(@"C:\Users\example\Pictures\ime-on.png", mgr.Settings.BackgroundImage.ImagePath);
+
+        Assert.True(mgr.Save());
+        var mgr2 = new SettingsManager(tmp.Path);
+        Assert.True(mgr2.Load());
+        Assert.Equal(300.0, mgr2.Settings.BackgroundImage.Size);
+        Assert.Equal(0.3, mgr2.Settings.BackgroundImage.Opacity);
+        Assert.Equal(@"C:\Users\example\Pictures\ime-on.png", mgr2.Settings.BackgroundImage.ImagePath);
     }
 
     [Fact]

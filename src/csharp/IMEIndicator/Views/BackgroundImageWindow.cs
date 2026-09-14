@@ -4,10 +4,6 @@
 // under the terms of the GNU General Public License v2 or later.
 // See COPYING in the repository root for the full license text.
 
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using IMEIndicator.App;
 using IMEIndicator.Interop;
 using IMEIndicator.Models;
@@ -23,17 +19,19 @@ namespace IMEIndicator.Views;
 /// 現行 C++ 版 <c>src/cpp/views/BackgroundImageWindow.h</c> / <c>.cpp</c>。
 /// </summary>
 /// <remarks>
-/// 現行 C++ 版は WIC でデコードするが、C# 版は GDI+（<see cref="Image.FromStream(Stream)"/> +
-/// <see cref="InterpolationMode.HighQualityBicubic"/>）で埋め込みリソースから読み込む
-/// （「許容する差異」としてライブラリの違いを認めている。リソース名の解決方法は
-/// tests/csharp/IMEIndicator.Tests/Services/EmbeddedImageTests.cs の T023 と同じ規則）。
+/// 画像の読込・フォールバック・contain フィット描画は <see cref="Services.BackgroundImageSource"/>
+/// （ウィンドウ・ハンドルに依存しない静的サービス）に委譲する。本クラスの責務は、表示矩形
+/// （物理サイズ）またはユーザー指定画像パスが変化したときにだけ再読込を発生させる判断
+/// （<see cref="Relayout"/> 内 <c>sourceChanged</c>）と、得られたビットマップの提示のみ
+/// （specs/016-custom-background-image/contracts/background-image-source-contract.md
+/// 「再読込トリガー」節）。現行 C++ 版は WIC でデコードするが、C# 版は GDI+ で読み込む
+/// （「許容する差異」としてライブラリの違いを認めている）。
 /// </remarks>
 public sealed class BackgroundImageWindow : LayeredWindow
 {
-    private const string ResourceFileName = "ime-on-background.png";
-
     private Bitmap? _bitmap;
     private Rectangle _lastRect;
+    private string? _loadedImagePath;
     private BackgroundImageSettings _settings = new();
 
     public BackgroundImageWindow()
@@ -97,22 +95,24 @@ public sealed class BackgroundImageWindow : LayeredWindow
             logicalSize,
             AppConstants.BackgroundImageLogicalMargin);
 
-        bool sizeChanged = _bitmap is null || _bitmap.Width != rect.Width || _bitmap.Height != rect.Height;
-        if (sizeChanged)
+        bool sourceChanged = _bitmap is null || _bitmap.Width != rect.Width || _bitmap.Height != rect.Height
+            || _loadedImagePath != _settings.ImagePath;
+        if (sourceChanged)
         {
-            Bitmap? decoded = TryLoadScaledBitmap(rect.Width, rect.Height);
+            Bitmap? decoded = BackgroundImageSource.Load(_settings.ImagePath, rect.Width, rect.Height);
             if (decoded is not null)
             {
                 _bitmap?.Dispose();
                 _bitmap = decoded;
+                _loadedImagePath = _settings.ImagePath;
                 Present(decoded, new Point(rect.X, rect.Y), ComputeAlpha());
             }
-            // デコード失敗時: 契約どおり既存ビットマップを維持する（無ければ表示しない）。
-            // bitmapWidth/Height 相当（_bitmap のサイズ）を更新しないため、次回 Relayout() で再試行される。
+            // デコード失敗時: 契約どおり既存ビットマップ・_loadedImagePath を維持する（無ければ表示しない）。
+            // 次回 Relayout() で再試行される（research.md R-5、contracts/background-image-source-contract.md「再読込トリガー」）。
         }
         else if (_bitmap is not null)
         {
-            // サイズは変わらず不透明度だけが変わったケース。再デコードせず Present だけやり直す
+            // サイズ・画像ソースは変わらず不透明度だけが変わったケース。再デコードせず Present だけやり直す
             // （015-split-appearance-settings research.md R-2 の最適化方針）。
             Present(_bitmap, new Point(rect.X, rect.Y), ComputeAlpha());
         }
@@ -142,56 +142,6 @@ public sealed class BackgroundImageWindow : LayeredWindow
         NativeMethods.SetWindowPos(
             Handle, NativeConstants.HWND_BOTTOM, _lastRect.X, _lastRect.Y, 0, 0,
             NativeConstants.SWP_NOACTIVATE | NativeConstants.SWP_NOSIZE);
-    }
-
-    // 埋め込み PNG を本体アセンブリから読み込み、GDI+ の HighQualityBicubic で指定サイズへ縮小する。
-    // UpdateLayeredWindow(AC_SRC_ALPHA) は premultiplied alpha を要求するため、Format32bppPArgb で
-    // 描画する（LayeredWindow.Present の注意事項と同じ理由。plan.md リスク一覧: 縁が黒ずむ対策）。
-    private static Bitmap? TryLoadScaledBitmap(int width, int height)
-    {
-        if (width <= 0 || height <= 0)
-        {
-            return null;
-        }
-
-        try
-        {
-            Assembly assembly = typeof(BackgroundImageWindow).Assembly;
-            string? resourceName = assembly.GetManifestResourceNames()
-                .SingleOrDefault(n => n.EndsWith(ResourceFileName, StringComparison.Ordinal));
-            if (resourceName is null)
-            {
-                Log.Display.Warning("BackgroundImageWindow: 埋め込みリソース '{ResourceFileName}' が見つかりません。", ResourceFileName);
-                return null;
-            }
-
-            using Stream? stream = assembly.GetManifestResourceStream(resourceName);
-            if (stream is null)
-            {
-                Log.Display.Warning("BackgroundImageWindow: 埋め込みリソース '{ResourceName}' のストリームを取得できません。", resourceName);
-                return null;
-            }
-
-            using Image source = Image.FromStream(stream);
-
-            var scaled = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
-            using (Graphics g = Graphics.FromImage(scaled))
-            {
-                g.Clear(Color.Transparent);
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                g.DrawImage(source, new Rectangle(0, 0, width, height));
-            }
-            return scaled;
-        }
-        catch (Exception ex) when (ex is IOException or InvalidOperationException or ArgumentException
-                                        or ExternalException or OutOfMemoryException)
-        {
-            // GDI+ は不正な画像データも慣例的に OutOfMemoryException で報告するため捕捉に含める
-            // （Image.FromStream の既知の挙動）。
-            Log.Display.Warning(ex, "BackgroundImageWindow: 埋め込み画像のデコードに失敗しました。");
-            return null;
-        }
     }
 
     /// <inheritdoc/>

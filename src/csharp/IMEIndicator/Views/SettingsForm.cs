@@ -49,6 +49,9 @@ public sealed class SettingsForm : Form
     private readonly CheckBox _backgroundImageCheckBox = new() { Text = "背景画像表示", AutoSize = true };
     private readonly NumericUpDown _backgroundImageSizeUpDown = new() { Minimum = AppConstants.BackgroundImageMinSize, Maximum = AppConstants.BackgroundImageMaxSize, DecimalPlaces = 0, Dock = DockStyle.Fill };
     private readonly NumericUpDown _backgroundImageOpacityUpDown = new() { Minimum = 0.10m, Maximum = 1.00m, DecimalPlaces = 2, Increment = 0.05m, Dock = DockStyle.Fill };
+    private readonly TextBox _backgroundImagePathTextBox = new();
+    private readonly Button _backgroundImageBrowseButton = new() { Text = "参照...", AutoSize = true };
+    private readonly Button _backgroundImageClearButton = new() { Text = "クリア", AutoSize = true };
 
     // ---- 全般 ----
     private readonly ComboBox _logLevelComboBox = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
@@ -226,6 +229,7 @@ public sealed class SettingsForm : Form
         AddRow(table, "表示", _backgroundImageCheckBox);
         AddRow(table, "サイズ (32-512)", _backgroundImageSizeUpDown);
         AddRow(table, "不透明度 (0.10-1.00)", _backgroundImageOpacityUpDown);
+        AddRow(table, "画像ファイル", CreateBackgroundImagePathRow());
 
         group.Controls.Add(table);
         return group;
@@ -356,12 +360,39 @@ public sealed class SettingsForm : Form
         return flow;
     }
 
+    // 016-custom-background-image: contracts/settings-ui-contract.md「レイアウト」節のとおり、
+    // HotkeyEditForm.CreateExeRow() と同型（テキストボックス＋ボタン群）の 3 カラム版。
+    private Control CreateBackgroundImagePathRow()
+    {
+        var panel = new TableLayoutPanel
+        {
+            ColumnCount = 3,
+            RowCount = 1,
+            AutoSize = true,
+            Margin = new Padding(0),
+        };
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        _backgroundImagePathTextBox.Dock = DockStyle.Fill;
+        _backgroundImagePathTextBox.Margin = new Padding(0, 0, 6, 0);
+        _backgroundImageBrowseButton.Margin = new Padding(0, 0, 6, 0);
+        _backgroundImageClearButton.Margin = new Padding(0);
+        panel.Controls.Add(_backgroundImagePathTextBox, 0, 0);
+        panel.Controls.Add(_backgroundImageBrowseButton, 1, 0);
+        panel.Controls.Add(_backgroundImageClearButton, 2, 0);
+        return panel;
+    }
+
     // ------------------------------------------------------------------
     // イベント配線
     // ------------------------------------------------------------------
 
     private void WireEvents()
     {
+        _backgroundImageBrowseButton.Click += BackgroundImageBrowseButton_Click;
+        _backgroundImageClearButton.Click += BackgroundImageClearButton_Click;
+
         _addRuleButton.Click += (_, _) => OnAddRule();
         _editRuleButton.Click += (_, _) => OnEditRule();
         _deleteRuleButton.Click += (_, _) => OnDeleteRule();
@@ -378,6 +409,28 @@ public sealed class SettingsForm : Form
         _okButton.Click += (_, _) => OnApply();
         _cancelButton.DialogResult = DialogResult.Cancel;
         _applyButton.Click += (_, _) => OnApply();
+    }
+
+    // 016-custom-background-image: contracts/settings-ui-contract.md「参照ダイアログ」節のとおり、
+    // HotkeyEditForm.BrowseButton_Click と同型だが PNG 単一フィルター（FR-002）。
+    private void BackgroundImageBrowseButton_Click(object? sender, EventArgs e)
+    {
+        using var dialog = new OpenFileDialog
+        {
+            Filter = "PNG ファイル (*.png)|*.png",
+            CheckFileExists = true,
+            CheckPathExists = true,
+        };
+        if (dialog.ShowDialog(this) == DialogResult.OK)
+        {
+            _backgroundImagePathTextBox.Text = dialog.FileName;
+        }
+    }
+
+    // 016-custom-background-image: contracts/settings-ui-contract.md「クリア操作」節のとおり。
+    private void BackgroundImageClearButton_Click(object? sender, EventArgs e)
+    {
+        _backgroundImagePathTextBox.Text = string.Empty;
     }
 
     // ------------------------------------------------------------------
@@ -398,6 +451,7 @@ public sealed class SettingsForm : Form
         _backgroundImageCheckBox.Checked = settings.BackgroundImage.IsVisible;
         _backgroundImageSizeUpDown.Value = ClampToRange(settings.BackgroundImage.Size, _backgroundImageSizeUpDown);
         _backgroundImageOpacityUpDown.Value = ClampToRange(settings.BackgroundImage.Opacity, _backgroundImageOpacityUpDown);
+        _backgroundImagePathTextBox.Text = settings.BackgroundImage.ImagePath;
 
         _logLevelComboBox.SelectedIndex = (int)settings.LogLevel;
 
@@ -431,6 +485,7 @@ public sealed class SettingsForm : Form
         settings.BackgroundImage.IsVisible = _backgroundImageCheckBox.Checked;
         settings.BackgroundImage.Size = (double)_backgroundImageSizeUpDown.Value;
         settings.BackgroundImage.Opacity = (double)_backgroundImageOpacityUpDown.Value;
+        settings.BackgroundImage.ImagePath = _backgroundImagePathTextBox.Text;
 
         // 空欄は「変更なし」を意味する（移植元: !on.empty() のときのみ上書き）。
         string on = _imeOnTextBox.Text;

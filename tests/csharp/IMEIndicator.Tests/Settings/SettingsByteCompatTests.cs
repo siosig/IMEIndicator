@@ -15,7 +15,8 @@ namespace IMEIndicator.Tests.Settings;
 
 /// <summary>
 /// settings.json のバイト互換性テスト（契約: specs/014-port-to-csharp/contracts/settings-compat-contract.md
-/// （v4 まで）、specs/015-split-appearance-settings/contracts/settings-schema-contract.md（v4→v5 差分））。
+/// （v4 まで）、specs/015-split-appearance-settings/contracts/settings-schema-contract.md（v4→v5 差分）、
+/// specs/016-custom-background-image/contracts/settings-schema-contract.md（v5→v6 差分））。
 /// C++ 版（nlohmann::json の dump(2)）と同じキー順・インデント・改行・非エスケープ・小数点表記になることを検証する。
 /// </summary>
 public sealed class SettingsByteCompatTests
@@ -72,23 +73,33 @@ public sealed class SettingsByteCompatTests
     [Fact]
     public void DefaultSettings_BackgroundImageKeyOrder_MatchesContract()
     {
-        // 015-split-appearance-settings: size/opacity 追加後のキー順
+        // 016-custom-background-image: imagePath 追加後のキー順
         // （contracts/settings-schema-contract.md「差分」節）。
         string json = JsonSerializer.Serialize(new AppSettings(), BuildOptions());
         using JsonDocument doc = JsonDocument.Parse(json);
         JsonElement bg = doc.RootElement.GetProperty("backgroundImage");
-        AssertObjectKeyOrder(bg, ["isVisible", "size", "opacity"]);
+        AssertObjectKeyOrder(bg, ["isVisible", "size", "opacity", "imagePath"]);
     }
 
     [Fact]
-    public void DefaultSettings_WritesAlwaysSchemaVersion5()
+    public void DefaultSettings_BackgroundImageImagePath_IsEmptyString()
+    {
+        // 016-custom-background-image FR-004: 未指定は空文字で表現し、同梱の既定画像を使う。
+        string json = JsonSerializer.Serialize(new AppSettings(), BuildOptions());
+        using JsonDocument doc = JsonDocument.Parse(json);
+        JsonElement bg = doc.RootElement.GetProperty("backgroundImage");
+        Assert.Equal(string.Empty, bg.GetProperty("imagePath").GetString());
+    }
+
+    [Fact]
+    public void DefaultSettings_WritesAlwaysSchemaVersion6()
     {
         var settings = new AppSettings { SchemaVersion = 1 }; // 意図的に不整合な値を入れても
         string json = JsonSerializer.Serialize(settings, BuildOptions());
         using JsonDocument doc = JsonDocument.Parse(json);
-        // Serialize 単体では SchemaVersion をこちらで明示的に 5 にしない限り書き出し値は反映されない。
-        // 「常に 5」を強制するのは SettingsManager.Save() の責務（SettingsManagerTests で別途検証）。
-        // ここでは Clamp() が 1 を許容範囲として保持することのみ確認する（無効値のみ 5 に補正される）。
+        // Serialize 単体では SchemaVersion をこちらで明示的に 6 にしない限り書き出し値は反映されない。
+        // 「常に 6」を強制するのは SettingsManager.Save() の責務（SettingsManagerTests で別途検証）。
+        // ここでは Clamp() が 1 を許容範囲として保持することのみ確認する（無効値のみ 6 に補正される）。
         Assert.Equal(1, doc.RootElement.GetProperty("schemaVersion").GetInt32());
     }
 

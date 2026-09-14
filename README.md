@@ -195,6 +195,7 @@ IMEIndicator.exe /powertoggle
 - backgroundImage.isVisible
 - backgroundImage.size
 - backgroundImage.opacity
+- backgroundImage.imagePath
 
 ## ビルド
 
