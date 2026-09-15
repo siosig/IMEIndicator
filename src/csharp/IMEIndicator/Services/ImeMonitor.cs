@@ -11,6 +11,10 @@ using IMEIndicator.Models;
 // MouseTracker.cs / ProcessPriorityMonitor.cs と同じ理由で明示エイリアスを使う。
 using SystemTimer = System.Threading.Timer;
 
+// Log.LevelSwitch.MinimumLevel（LoggingLevelSwitch.MinimumLevel の型）との比較にのみ使う
+// （017-fix-notepad-ime-display research.md R-7: 診断ログが無効なときは引数のボックス化も発生させない）。
+using Serilog.Events;
+
 namespace IMEIndicator.Services;
 
 /// <summary>
@@ -30,10 +34,8 @@ public sealed class ImeMonitor : IDisposable
     private const int DebounceDelayMs = 30;
     private const int VerificationDelayMs = 200;
 
-    // 移植元 IMEMonitor.cpp::onIMEKeyPressed 内のローカル定数と同じ値。
-    private const int VkKanji = 0x19;
-    private const int VkOemAuto = 0xF3;
-    private const int VkOemEnlw = 0xF4;
+    // IME 切替キーの仮想キー値は ImeStateRules に集約した（017-fix-notepad-ime-display research.md R-5）。
+    // 単一の情報源にするため、ここには局所定数を複製しない。
 
     private readonly object _stateLock = new();
     private readonly MouseTracker _mouseTracker = new();
@@ -49,6 +51,13 @@ public sealed class ImeMonitor : IDisposable
     private bool _trackedImeState;
     private LanguageType? _trackedLanguageForTerminal;
     private long _optimisticUpdateTimestampMs;
+
+    // 推定対象キー（ImeStateRules.InferFromKey が null を返さないキー）の押下ごとに 1 増やす。
+    // CheckImeState は判定の開始時にこの値を控え、完了時に値が変わっていればその判定結果を古いとみなして
+    // 捨てる（通知も追跡状態の再同期もしない）。判定の実行中に押されたキーの推定を、キー押下前の
+    // 読み取り値で上書きしてしまう「表示 → 非表示 → 再表示」のちらつきを防ぐ
+    // （017-fix-notepad-ime-display research.md R-4、FR-004、data-model.md §4）。
+    private long _keyGeneration;
 
     // 移植元と同じくデッドコード（research.md R-5 参照）: App 側から設定されるが、
     // PixelImeDetector の動作には一切影響しない。保持のみ行い、FR-001/FR-002 に従い
@@ -175,6 +184,13 @@ public sealed class ImeMonitor : IDisposable
     }
 
     // 実際の IME チェック処理（多重実行防止つき）。移植元 checkIMEState。
+    //
+    // 017-fix-notepad-ime-display での変更点（research.md R-1〜R-4・R-6・R-7、contracts/
+    // ime-state-rules-contract.md「ImeMonitor への組み込み」）: 判定規則を ImeStateRules に委譲し、
+    // (1) IMM32 が読めた判定ではピクセル判定を呼ばない（IMM32 優先。旧実装はピクセル判定が
+    // 常に IMM32 を上書きしていた）、(2) 確実な判定が得られたときだけ追跡状態を再同期する、
+    // (3) 判定の実行中に押されたキーより古い結果は捨てる、(4) 判定不能時は追跡状態（キー推定）を
+    // そのまま使い、表示を消さない（FR-012）、という 4 点を実現する。
     private void CheckImeState(bool forceUpdate)
     {
         if (Interlocked.CompareExchange(ref _isChecking, 1, 0) != 0)
@@ -192,32 +208,28 @@ public sealed class ImeMonitor : IDisposable
             }
 
             LanguageType? trackedLanguageForTerminal;
+            long generationAtStart;
             lock (_stateLock)
             {
                 trackedLanguageForTerminal = _trackedLanguageForTerminal;
+                generationAtStart = _keyGeneration;
             }
 
             ImeDetectionResult detection = ImeDetector.GetCurrentImeStateEx(trackedLanguageForTerminal);
-            LanguageInfo state = detection.State;
+            LanguageType language = detection.State.Language;
+            bool immIsOpen = detection.State.IsImeOn;
+            bool immReliable = detection.ReliableStatus;
+
+            // IMM32 が読めない日本語のときだけピクセル判定を呼ぶ（research.md R-2・R-9:
+            // 判定 1 回あたりの UI Automation 検索を減らす。IMM32 が読めた判定はもう上書きされない）。
+            bool? pixelIsOn = ImeStateRules.NeedsPixelFallback(language, immReliable)
+                ? PixelImeDetector.Instance.DetectImeStateTimed(language)
+                : null;
 
             bool windowChanged;
             lock (_stateLock)
             {
                 windowChanged = hwndForeground != _lastForegroundWindow;
-            }
-
-            // 日本語ならピクセル判定で答え合わせ（移植元: detectIMEStateTimed の同期呼び出し）。
-            if (state.Language == LanguageType.Japanese)
-            {
-                bool? pixelOn = PixelImeDetector.Instance.DetectImeStateTimed(state.Language);
-                if (pixelOn.HasValue)
-                {
-                    state = state with { IsImeOn = pixelOn.Value };
-                    lock (_stateLock)
-                    {
-                        _trackedImeState = pixelOn.Value;
-                    }
-                }
             }
 
             if (windowChanged)
@@ -228,25 +240,44 @@ public sealed class ImeMonitor : IDisposable
                 }
             }
 
-            // 楽観的更新の検証窓内（200ms）かつ状態一致なら発火しない。
-            bool shouldFire = false;
+            LanguageInfo state;
+            bool stale;
+            bool trackedSnapshot;
+            ImeStateSource source;
+            bool shouldFire;
             lock (_stateLock)
             {
-                bool stateChanged = state != _lastState;
-                if (stateChanged || forceUpdate)
+                // research.md R-4: 判定開始時から世代が進んでいれば、この判定結果は古いとみなして捨てる。
+                stale = _keyGeneration != generationAtStart;
+                trackedSnapshot = _trackedImeState;
+
+                ImeResolution resolution = ImeStateRules.Resolve(language, immIsOpen, immReliable, pixelIsOn, trackedSnapshot);
+                source = resolution.Source;
+                state = new LanguageInfo(language, resolution.IsImeOn);
+
+                // research.md R-3: 確実な判定（IMM32/ピクセル）が得られたら、キー推定の追跡状態を合わせる。
+                if (!stale && resolution.ResyncsTrackedState)
                 {
-                    long elapsed = Environment.TickCount64 - _optimisticUpdateTimestampMs;
-                    bool withinOptimisticWindow = elapsed < VerificationDelayMs;
-                    if (withinOptimisticWindow && !stateChanged)
-                    {
-                        // 一致 → 何もしない
-                    }
-                    else
-                    {
-                        _lastState = state;
-                        shouldFire = true;
-                    }
+                    _trackedImeState = resolution.IsImeOn;
                 }
+
+                bool stateChanged = state != _lastState;
+                long elapsed = Environment.TickCount64 - _optimisticUpdateTimestampMs;
+                shouldFire = ImeStateRules.ShouldFire(stale, stateChanged, forceUpdate, elapsed, VerificationDelayMs);
+
+                if (shouldFire)
+                {
+                    _lastState = state;
+                }
+            }
+
+            if (Log.LevelSwitch.MinimumLevel <= LogEventLevel.Debug)
+            {
+                Log.Ime.Debug(
+                    "ImeMonitor.CheckImeState: fg=0x{ForegroundWindow:X}/{ForegroundThreadId} query=0x{QueryWindow:X}/{QueryThreadId} " +
+                    "lang={Language} imm={ImmIsOpen} reliable={ImmReliable} pixel={PixelIsOn} tracked={TrackedImeState} source={Source} ime={ImeOn} stale={Stale} fire={Fire}",
+                    detection.ForegroundWindow, detection.ForegroundThreadId, detection.QueryWindow, detection.QueryThreadId,
+                    language, immIsOpen, immReliable, pixelIsOn, trackedSnapshot, source, state.IsImeOn, stale, shouldFire);
             }
 
             if (shouldFire)
@@ -263,44 +294,48 @@ public sealed class ImeMonitor : IDisposable
     // KeyboardHook のコールバック先（IME 切替キー）。低レベルフックの呼び出し元スレッド
     // （＝フックを登録した UI スレッド）で直接実行されるため、追加のマーシャリングは不要
     // （移植元 onIMEKeyPressed も同じスレッドで直接実行される）。軽量な処理に留めること。
+    //
+    // 017-fix-notepad-ime-display での変更点: 推定規則を ImeStateRules.InferFromKey に委譲し
+    // （VK_IME_ON / VK_IME_OFF を推定対象に追加。research.md R-5）、推定対象キーの押下ごとに
+    // _keyGeneration を進める（判定中に押された古い結果を捨てるための世代番号。research.md R-4）。
     private void OnImeKeyPressed(int vkCode)
     {
-        Log.Ime.Debug("ImeMonitor.OnImeKeyPressed: vk=0x{VkCode:X2}", vkCode);
-
-        bool stateChanged = false;
+        ImeKeyInference? inference;
+        long generation = 0;
         LanguageInfo optimisticState = default;
 
         lock (_stateLock)
         {
-            if (vkCode == VkKanji)
+            inference = ImeStateRules.InferFromKey(vkCode, _trackedImeState);
+            if (inference is not null)
             {
-                _trackedImeState = !_trackedImeState;
-                stateChanged = true;
-            }
-            else if (vkCode == VkOemAuto)
-            {
-                _trackedImeState = false;
-                _trackedLanguageForTerminal = LanguageType.Japanese;
-                stateChanged = true;
-            }
-            else if (vkCode == VkOemEnlw)
-            {
-                _trackedImeState = true;
-                _trackedLanguageForTerminal = LanguageType.Japanese;
-                stateChanged = true;
-            }
+                _trackedImeState = inference.Value.IsImeOn;
+                if (inference.Value.ImpliesJapaneseLanguage)
+                {
+                    _trackedLanguageForTerminal = LanguageType.Japanese;
+                }
 
-            if (stateChanged)
-            {
+                _keyGeneration++;
+                generation = _keyGeneration;
+
                 optimisticState = new LanguageInfo(LanguageType.Japanese, _trackedImeState);
                 _lastState = optimisticState;
                 _optimisticUpdateTimestampMs = Environment.TickCount64;
             }
         }
 
-        if (!stateChanged)
+        if (inference is null)
         {
+            // 推定対象外のキー（VK_KANA・VK_CONVERT・VK_NONCONVERT 等）。既存どおり vk のみ記録する。
+            Log.Ime.Debug("ImeMonitor.OnImeKeyPressed: vk=0x{VkCode:X2}", vkCode);
             return;
+        }
+
+        if (Log.LevelSwitch.MinimumLevel <= LogEventLevel.Debug)
+        {
+            Log.Ime.Debug(
+                "ImeMonitor.OnImeKeyPressed: vk=0x{VkCode:X2} inferred={InferredImeOn} tracked={TrackedImeState} generation={KeyGeneration}",
+                vkCode, inference.Value.IsImeOn, optimisticState.IsImeOn, generation);
         }
 
         ImeStateChanged?.Invoke(optimisticState);

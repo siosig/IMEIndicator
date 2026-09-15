@@ -14,7 +14,7 @@
     （バージョンをここ1箇所に集約するという本コメントの元々の意図に反していた）。
   -->
   <PropertyGroup>
-    <Version>1.5.1</Version>
+    <Version>1.5.2</Version>
     <Product>IME Indicator</Product>
     <Company>IMEIndicator Project</Company>
     <Authors>Daisuke ITO</Authors>
