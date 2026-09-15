@@ -25,13 +25,22 @@ public sealed class DoubleWithPointConverter : JsonConverter<double>
         => reader.GetDouble();
 
     public override void Write(Utf8JsonWriter writer, double value, JsonSerializerOptions options)
+        => writer.WriteRawValue(FormatDouble(value), skipInputValidation: true);
+
+    /// <summary>
+    /// 上記クラス概要の書式化ロジック本体（最短往復表現。整数値のときのみ ".0" を補う）。
+    /// <see cref="BackgroundImagePositionConverter"/> など、double を同じ書式で書き出す必要がある
+    /// 他のコンバーターと共有するために切り出す（ロジックの重複を避ける。契約:
+    /// specs/018-draggable-background-image/contracts/settings-schema-contract.md §書き出し規則）。
+    /// </summary>
+    internal static string FormatDouble(double value)
     {
         string formatted = value.ToString(CultureInfo.InvariantCulture);
         if (!formatted.Contains('.') && !formatted.Contains('E') && !formatted.Contains('e'))
         {
             formatted += ".0";
         }
-        writer.WriteRawValue(formatted, skipInputValidation: true);
+        return formatted;
     }
 }
 
@@ -167,4 +176,113 @@ public sealed class HookModeConverter : JsonConverter<HookMode>
     };
 
     private static bool Eq(string? a, string b) => a is not null && string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+}
+
+/// <summary>
+/// <see cref="BackgroundImagePosition"/> ↔ JSON オブジェクトの変換（018-draggable-background-image、契約:
+/// specs/018-draggable-background-image/contracts/settings-schema-contract.md §不正値の扱い・§書き出し規則）。
+/// 読み込みは例外を一切投げない: オブジェクト以外のトークン、monitorId の欠落・非文字列、未知の anchor、
+/// offsetX/offsetY の欠落・非数値は、いずれも null（未移動）にフォールバックする。
+/// <c>JsonDocument.ParseValue(ref reader)</c> で値全体を読み切ってから
+/// <c>TryGetProperty</c> 等の非例外系 API だけで検証するため、例外を投げずにリーダーを値の終端まで
+/// 進められ、後続のプロパティを通常どおり読み続けられる（SettingsManager.Load() 段階2が型変換の例外で
+/// 設定全体を既定値に戻すのを防ぐ、FR-017）。
+/// </summary>
+public sealed class BackgroundImagePositionConverter : JsonConverter<BackgroundImagePosition?>
+{
+    public override BackgroundImagePosition? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        // Nullable 参照型の JsonConverter<T?> では、null トークンに対し既定ではコンバーターの Read は
+        // 呼ばれない（シリアライザーが直接 null を割り当てる）が、念のため安全側に倒しておく。
+        if (reader.TokenType == JsonTokenType.Null)
+        {
+            return null;
+        }
+
+        if (reader.TokenType != JsonTokenType.StartObject)
+        {
+            reader.Skip();
+            return null;
+        }
+
+        using JsonDocument document = JsonDocument.ParseValue(ref reader);
+        JsonElement element = document.RootElement;
+
+        string? monitorId = null;
+        if (element.TryGetProperty("monitorId", out JsonElement monitorIdProp) && monitorIdProp.ValueKind == JsonValueKind.String)
+        {
+            monitorId = monitorIdProp.GetString();
+        }
+
+        string? anchorText = null;
+        if (element.TryGetProperty("anchor", out JsonElement anchorProp) && anchorProp.ValueKind == JsonValueKind.String)
+        {
+            anchorText = anchorProp.GetString();
+        }
+        bool anchorOk = TryParseAnchor(anchorText, out BackgroundImageAnchor anchor);
+
+        double offsetX = 0.0;
+        bool offsetXOk = element.TryGetProperty("offsetX", out JsonElement offsetXProp)
+            && offsetXProp.ValueKind == JsonValueKind.Number
+            && offsetXProp.TryGetDouble(out offsetX);
+
+        double offsetY = 0.0;
+        bool offsetYOk = element.TryGetProperty("offsetY", out JsonElement offsetYProp)
+            && offsetYProp.ValueKind == JsonValueKind.Number
+            && offsetYProp.TryGetDouble(out offsetY);
+
+        if (monitorId is null || !anchorOk || !offsetXOk || !offsetYOk)
+        {
+            return null;
+        }
+
+        return new BackgroundImagePosition(monitorId, anchor, offsetX, offsetY);
+    }
+
+    public override void Write(Utf8JsonWriter writer, BackgroundImagePosition? value, JsonSerializerOptions options)
+    {
+        if (value is null)
+        {
+            writer.WriteNullValue();
+            return;
+        }
+
+        writer.WriteStartObject();
+        writer.WriteString("monitorId", value.MonitorId);
+        writer.WriteString("anchor", AnchorToText(value.Anchor));
+        WriteDoubleWithPoint(writer, "offsetX", value.OffsetX);
+        WriteDoubleWithPoint(writer, "offsetY", value.OffsetY);
+        writer.WriteEndObject();
+    }
+
+    /// <summary>大小無視でのパース。設定画面など、他の箇所からも使えるよう公開する。</summary>
+    public static bool TryParseAnchor(string? s, out BackgroundImageAnchor anchor)
+    {
+        if (s is not null)
+        {
+            if (Eq(s, "topLeft")) { anchor = BackgroundImageAnchor.TopLeft; return true; }
+            if (Eq(s, "topRight")) { anchor = BackgroundImageAnchor.TopRight; return true; }
+            if (Eq(s, "bottomLeft")) { anchor = BackgroundImageAnchor.BottomLeft; return true; }
+            if (Eq(s, "bottomRight")) { anchor = BackgroundImageAnchor.BottomRight; return true; }
+        }
+        anchor = BackgroundImageAnchor.TopLeft;
+        return false;
+    }
+
+    public static string AnchorToText(BackgroundImageAnchor anchor) => anchor switch
+    {
+        BackgroundImageAnchor.TopLeft => "topLeft",
+        BackgroundImageAnchor.TopRight => "topRight",
+        BackgroundImageAnchor.BottomLeft => "bottomLeft",
+        BackgroundImageAnchor.BottomRight => "bottomRight",
+        _ => "topLeft",
+    };
+
+    private static void WriteDoubleWithPoint(Utf8JsonWriter writer, string propertyName, double value)
+    {
+        writer.WritePropertyName(propertyName);
+        writer.WriteRawValue(DoubleWithPointConverter.FormatDouble(value), skipInputValidation: true);
+    }
+
+    private static bool Eq(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 }

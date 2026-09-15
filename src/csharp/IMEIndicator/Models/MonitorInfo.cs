@@ -18,13 +18,18 @@ namespace IMEIndicator.Models;
 /// <param name="DpiX">横方向 DPI（既定 96 = 100%）。</param>
 /// <param name="DpiY">縦方向 DPI（既定 96 = 100%）。</param>
 /// <param name="DeviceName">ディスプレイデバイス名（例: \\.\DISPLAY1）。</param>
+/// <param name="DevicePath">
+/// ディスプレイデバイスのインターフェースパス。
+/// <c>EnumDisplayDevicesW(EDD_GET_DEVICE_INTERFACE_NAME)</c> で取得する。取得できなければ空文字。
+/// </param>
 public sealed record MonitorInfo(
     Rectangle MonitorRect,
     Rectangle WorkRect,
     bool IsPrimary,
     uint DpiX = 96,
     uint DpiY = 96,
-    string DeviceName = "")
+    string DeviceName = "",
+    string DevicePath = "")
 {
     /// <summary>中心座標 X（物理ピクセル）。</summary>
     public int CenterX => (MonitorRect.Left + MonitorRect.Right) / 2;
@@ -37,4 +42,7 @@ public sealed record MonitorInfo(
 
     /// <summary>矩形の高さ。</summary>
     public int Height => MonitorRect.Height;
+
+    /// <summary>モニターの識別に使うキー。DevicePath があればそれを、無ければ DeviceName を使う。</summary>
+    public string IdentityKey => DevicePath.Length > 0 ? DevicePath : DeviceName;
 }

@@ -33,6 +33,8 @@ public sealed class KeyboardHook
     // WH_KEYBOARD_LL の wParam に載るメッセージ ID（NativeConstants 未定義のため局所定数）。
     private const int WM_KEYDOWN = 0x0100;
     private const int WM_SYSKEYDOWN = 0x0104;
+    private const int WM_KEYUP = 0x0101;
+    private const int WM_SYSKEYUP = 0x0105;
 
     /// <summary>プロセス内で共有するシングルトンインスタンス。</summary>
     public static KeyboardHook Instance { get; } = new();
@@ -46,6 +48,11 @@ public sealed class KeyboardHook
     // （契約: win32-interop-contract.md §コールバックの寿命と割り当て禁止）。
     private volatile Action<int>? _imeKeyCallback;
     private volatile Action? _languageSwitchCallback;
+
+    // Ctrl キー（左右・汎用いずれのコードでも）の押下状態を追跡する状態機械と、その遷移を
+    // 通知するコールバック。背景画像のドラッグ開始・終了判定に使う（018-draggable-background-image）。
+    private readonly ControlKeyTracker _controlKeyTracker = new();
+    private volatile Action<bool>? _controlKeyCallback;
 
     private nint _hook;
 
@@ -64,6 +71,19 @@ public sealed class KeyboardHook
 
     /// <summary>Win+Space（言語切替キー）検出時に呼ぶコールバックを登録する。null を渡すと登録解除。</summary>
     public void SetLanguageSwitchCallback(Action? callback) => _languageSwitchCallback = callback;
+
+    /// <summary>
+    /// Ctrl キーの押下状態（左右どちらか、または汎用コード）が変化したときに呼ぶコールバックを登録する。
+    /// null を渡すと登録解除。018-draggable-background-image FR-005: このコールバックの追加によって
+    /// キー入力を消費・遅延させてはならない（CallNextHookEx は必ず呼ぶ）。
+    /// </summary>
+    public void SetControlKeyCallback(Action<bool>? callback) => _controlKeyCallback = callback;
+
+    /// <summary>
+    /// Ctrl の解放を取りこぼした（画面ロック中に離した等）形跡を検知したとき、App から呼ばれる。
+    /// フック側の状態を「何も押されていない」に戻す。
+    /// </summary>
+    public void ResetControlKeyState() => _controlKeyTracker.Reset();
 
     /// <summary>フックを開始する。</summary>
     public bool Start()
@@ -103,13 +123,19 @@ public sealed class KeyboardHook
     // どちらの順序でも必ず CallNextHookEx で次に渡すため、他方の動作を阻害しない。
     private static unsafe nint HookProc(int nCode, nint wParam, nint lParam)
     {
-        if (nCode >= 0)
+        if (nCode >= 0 && lParam != 0)
         {
             bool keyDown = wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN;
-            if (lParam != 0 && keyDown)
+            bool keyUp = wParam == WM_KEYUP || wParam == WM_SYSKEYUP;
+            if (keyDown || keyUp)
             {
                 var kb = (KBDLLHOOKSTRUCT*)lParam;
-                Instance.HandleKeyDown(kb->VkCode);
+                uint vkCode = kb->VkCode;
+                if (keyDown)
+                {
+                    Instance.HandleKeyDown(vkCode);
+                }
+                Instance.HandleControlKeyTransition(vkCode, keyUp);
             }
         }
 
@@ -126,6 +152,17 @@ public sealed class KeyboardHook
         if (vkCode == VK_SPACE && IsWinKeyDown())
         {
             _languageSwitchCallback?.Invoke();
+        }
+    }
+
+    // Ctrl 系の仮想キー（VK_LCONTROL/VK_RCONTROL/VK_CONTROL）の押下/解放だけを ControlKeyTracker へ通す。
+    // 契約: フック内の処理は真偽の比較とコールバック呼び出しだけに限る（research.md R-2、
+    // LowLevelHooksTimeout を超えると Windows 7 以降は通知なくフックが削除されるため）。
+    private void HandleControlKeyTransition(uint vkCode, bool isKeyUp)
+    {
+        if (_controlKeyTracker.OnKey(vkCode, isKeyUp))
+        {
+            _controlKeyCallback?.Invoke(_controlKeyTracker.IsDown);
         }
     }
 

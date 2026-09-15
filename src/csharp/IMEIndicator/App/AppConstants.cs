@@ -42,6 +42,9 @@ public static class AppConstants
     public const int BackgroundImageMinSize = 32;
     public const int BackgroundImageMaxSize = 512;
 
+    /// <summary>背景画像の位置オフセット（offsetX/offsetY）の上限（論理 px）。research.md R-10。</summary>
+    public const double BackgroundImageMaxPositionOffset = 100000.0;
+
     // 設定ダイアログのタイトル（specs/014-port-to-csharp/contracts/ui-parity-contract.md §4）。
     public const string SettingsTitle = "IME Indicator 設定";
 }

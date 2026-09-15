@@ -111,4 +111,35 @@ public sealed class DisplayHelperTests
 
         Assert.True(dpi >= 96u, $"dpi={dpi}");
     }
+
+    [Fact]
+    public void GetMonitors_WithIncludeDevicePath_AllMonitorsHaveNonEmptyIdentityKey()
+    {
+        var monitors = DisplayHelper.GetMonitors(includeDevicePath: true);
+        Assert.NotEmpty(monitors);
+        foreach (var m in monitors)
+        {
+            Assert.False(string.IsNullOrEmpty(m.IdentityKey));
+        }
+    }
+
+    [Fact]
+    public void GetMonitors_WithIncludeDevicePath_DevicePathIsEmptyOrDevicePathFormat()
+    {
+        var monitors = DisplayHelper.GetMonitors(includeDevicePath: true);
+        foreach (var m in monitors)
+        {
+            Assert.True(m.DevicePath.Length == 0 || m.DevicePath.StartsWith(@"\\?\", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
+    public void GetMonitors_WithoutIncludeDevicePath_DevicePathIsEmpty()
+    {
+        var monitors = DisplayHelper.GetMonitors();
+        foreach (var m in monitors)
+        {
+            Assert.Equal(string.Empty, m.DevicePath);
+        }
+    }
 }

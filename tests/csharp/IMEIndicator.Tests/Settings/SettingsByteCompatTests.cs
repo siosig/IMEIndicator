@@ -16,7 +16,8 @@ namespace IMEIndicator.Tests.Settings;
 /// <summary>
 /// settings.json のバイト互換性テスト（契約: specs/014-port-to-csharp/contracts/settings-compat-contract.md
 /// （v4 まで）、specs/015-split-appearance-settings/contracts/settings-schema-contract.md（v4→v5 差分）、
-/// specs/016-custom-background-image/contracts/settings-schema-contract.md（v5→v6 差分））。
+/// specs/016-custom-background-image/contracts/settings-schema-contract.md（v5→v6 差分）、
+/// specs/018-draggable-background-image/contracts/settings-schema-contract.md（v6→v7 差分））。
 /// C++ 版（nlohmann::json の dump(2)）と同じキー順・インデント・改行・非エスケープ・小数点表記になることを検証する。
 /// </summary>
 public sealed class SettingsByteCompatTests
@@ -33,6 +34,7 @@ public sealed class SettingsByteCompatTests
             new LogLevelConverter(),
             new PriorityLevelConverter(),
             new HookModeConverter(),
+            new BackgroundImagePositionConverter(),
         },
     };
 
@@ -73,12 +75,23 @@ public sealed class SettingsByteCompatTests
     [Fact]
     public void DefaultSettings_BackgroundImageKeyOrder_MatchesContract()
     {
-        // 016-custom-background-image: imagePath 追加後のキー順
+        // 018-draggable-background-image: position 追加後のキー順
         // （contracts/settings-schema-contract.md「差分」節）。
         string json = JsonSerializer.Serialize(new AppSettings(), BuildOptions());
         using JsonDocument doc = JsonDocument.Parse(json);
         JsonElement bg = doc.RootElement.GetProperty("backgroundImage");
-        AssertObjectKeyOrder(bg, ["isVisible", "size", "opacity", "imagePath"]);
+        AssertObjectKeyOrder(bg, ["isVisible", "size", "opacity", "imagePath", "position"]);
+    }
+
+    [Fact]
+    public void DefaultSettings_BackgroundImagePosition_IsNull()
+    {
+        // 018-draggable-background-image FR-015: 未移動は position: null で表現する
+        // （contracts/settings-schema-contract.md「書き出し規則」節）。
+        string json = JsonSerializer.Serialize(new AppSettings(), BuildOptions());
+        using JsonDocument doc = JsonDocument.Parse(json);
+        JsonElement position = doc.RootElement.GetProperty("backgroundImage").GetProperty("position");
+        Assert.Equal(JsonValueKind.Null, position.ValueKind);
     }
 
     [Fact]
@@ -92,14 +105,64 @@ public sealed class SettingsByteCompatTests
     }
 
     [Fact]
-    public void DefaultSettings_WritesAlwaysSchemaVersion6()
+    public void MovedBackgroundImagePosition_KeyOrder_MatchesContract()
+    {
+        // 018-draggable-background-image: position オブジェクトのキー順
+        // （contracts/settings-schema-contract.md「差分」節）。
+        var settings = new AppSettings();
+        settings.BackgroundImage.Position = new BackgroundImagePosition("DISPLAY1", BackgroundImageAnchor.BottomRight, 24.0, 16.0);
+        string json = JsonSerializer.Serialize(settings, BuildOptions());
+        using JsonDocument doc = JsonDocument.Parse(json);
+        JsonElement position = doc.RootElement.GetProperty("backgroundImage").GetProperty("position");
+        AssertObjectKeyOrder(position, ["monitorId", "anchor", "offsetX", "offsetY"]);
+    }
+
+    [Fact]
+    public void BackgroundImagePositionOffsets_AlwaysIncludeDecimalPoint()
+    {
+        // 018-draggable-background-image: offsetX/offsetY も DoubleWithPointConverter と同じ書式
+        // （contracts/settings-schema-contract.md「書き出し規則」節）。整数値の 24.0 / 16.0 でも
+        // 小数点が付くこと（DoubleFields_AlwaysIncludeDecimalPoint と同じ観点）。
+        var settings = new AppSettings();
+        settings.BackgroundImage.Position = new BackgroundImagePosition("DISPLAY1", BackgroundImageAnchor.BottomRight, 24.0, 16.0);
+        string json = JsonSerializer.Serialize(settings, BuildOptions());
+        Assert.Contains("\"offsetX\": 24.0", json);
+        Assert.Contains("\"offsetY\": 16.0", json);
+    }
+
+    [Fact]
+    public void BackgroundImagePositionMonitorId_BackslashesAreEscaped()
+    {
+        // 018-draggable-background-image: monitorId の \ は JSON の規則により \\ になる
+        // （contracts/settings-schema-contract.md「書き出し規則」節）。
+        const string monitorId = @"\\?\DISPLAY#GSM1388#4&125707d6&0&UID8388688#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}";
+        var settings = new AppSettings();
+        settings.BackgroundImage.Position = new BackgroundImagePosition(monitorId, BackgroundImageAnchor.BottomRight, 24.0, 16.0);
+        string json = JsonSerializer.Serialize(settings, BuildOptions());
+
+        // 生 JSON 文字列内で "\" が "\\"（2 文字）にエスケープされていること。
+        string expectedEscaped = monitorId.Replace("\\", "\\\\");
+        Assert.Contains($"\"monitorId\": \"{expectedEscaped}\"", json);
+
+        // 読み戻すと元の値（エスケープ前）と一致すること。
+        using JsonDocument doc = JsonDocument.Parse(json);
+        string? roundTripped = doc.RootElement
+            .GetProperty("backgroundImage")
+            .GetProperty("position")
+            .GetProperty("monitorId")
+            .GetString();
+        Assert.Equal(monitorId, roundTripped);
+    }
+
+    [Fact]
+    public void DefaultSettings_WritesAlwaysSchemaVersion7()
     {
         var settings = new AppSettings { SchemaVersion = 1 }; // 意図的に不整合な値を入れても
         string json = JsonSerializer.Serialize(settings, BuildOptions());
         using JsonDocument doc = JsonDocument.Parse(json);
-        // Serialize 単体では SchemaVersion をこちらで明示的に 6 にしない限り書き出し値は反映されない。
-        // 「常に 6」を強制するのは SettingsManager.Save() の責務（SettingsManagerTests で別途検証）。
-        // ここでは Clamp() が 1 を許容範囲として保持することのみ確認する（無効値のみ 6 に補正される）。
+        // Serialize 単体では SchemaVersion をこちらで明示的に 7 にしない限り書き出し値は反映されない。
+        // 「常に 7」を強制するのは SettingsManager.Save() の責務（SettingsManagerTests で別途検証）。
+        // ここでは Clamp() が 1 を許容範囲として保持することのみ確認する（無効値のみ 7 に補正される）。
         Assert.Equal(1, doc.RootElement.GetProperty("schemaVersion").GetInt32());
     }
 

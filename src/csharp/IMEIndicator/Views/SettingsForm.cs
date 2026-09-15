@@ -53,6 +53,23 @@ public sealed class SettingsForm : Form
     private readonly Button _backgroundImageBrowseButton = new() { Text = "参照...", AutoSize = true };
     private readonly Button _backgroundImageClearButton = new() { Text = "クリア", AutoSize = true };
 
+    // 018-draggable-background-image: 背景画像の位置。Ctrl+ドラッグの操作説明と、
+    // ドラッグで確定した位置を既定へ戻すボタン（US5）。保留の扱いは
+    // contracts/settings-ui-contract.md「既定の位置に戻す（保留の扱い）」のとおり。
+    private readonly Button _backgroundImageResetPositionButton = new() { Text = "既定の位置に戻す", AutoSize = true };
+    private readonly Label _backgroundImagePositionHintLabel = new()
+    {
+        Text = "Ctrl キーを押しながら画像をドラッグすると、表示位置を移動できます",
+        AutoSize = true,
+        MaximumSize = new Size(420, 0),
+        ForeColor = SystemColors.GrayText,
+    };
+
+    // 「既定の位置に戻す」ボタンが押されてから ReadTo() で実際に Position = null が
+    // 書き込まれるまでの保留フラグ（FR-016: ドラッグで確定した位置を設定画面の操作で
+    // 書き換えない。OnApply() で一度 false に戻すため、適用後のドラッグは巻き戻らない）。
+    private bool _resetPositionPending;
+
     // ---- 全般 ----
     private readonly ComboBox _logLevelComboBox = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
 
@@ -230,6 +247,7 @@ public sealed class SettingsForm : Form
         AddRow(table, "サイズ (32-512)", _backgroundImageSizeUpDown);
         AddRow(table, "不透明度 (0.10-1.00)", _backgroundImageOpacityUpDown);
         AddRow(table, "画像ファイル", CreateBackgroundImagePathRow());
+        AddRow(table, "位置", CreateBackgroundImagePositionRow());
 
         group.Controls.Add(table);
         return group;
@@ -384,6 +402,21 @@ public sealed class SettingsForm : Form
         return panel;
     }
 
+    // 018-draggable-background-image: contracts/settings-ui-contract.md「レイアウト」節のとおり。
+    private Control CreateBackgroundImagePositionRow()
+    {
+        var flow = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            AutoSize = true,
+            Margin = new Padding(0),
+        };
+        flow.Controls.Add(_backgroundImageResetPositionButton);
+        flow.Controls.Add(_backgroundImagePositionHintLabel);
+        return flow;
+    }
+
     // ------------------------------------------------------------------
     // イベント配線
     // ------------------------------------------------------------------
@@ -392,6 +425,7 @@ public sealed class SettingsForm : Form
     {
         _backgroundImageBrowseButton.Click += BackgroundImageBrowseButton_Click;
         _backgroundImageClearButton.Click += BackgroundImageClearButton_Click;
+        _backgroundImageResetPositionButton.Click += BackgroundImageResetPositionButton_Click;
 
         _addRuleButton.Click += (_, _) => OnAddRule();
         _editRuleButton.Click += (_, _) => OnEditRule();
@@ -433,6 +467,14 @@ public sealed class SettingsForm : Form
         _backgroundImagePathTextBox.Text = string.Empty;
     }
 
+    // 018-draggable-background-image: contracts/settings-ui-contract.md「既定の位置に戻す（保留の扱い）」。
+    // ボタンは保留フラグを立てるだけで、実際に Position を null にするのは適用時（ReadTo）。
+    private void BackgroundImageResetPositionButton_Click(object? sender, EventArgs e)
+    {
+        _resetPositionPending = true;
+        _backgroundImageResetPositionButton.Enabled = false;
+    }
+
     // ------------------------------------------------------------------
     // 設定 ⇔ コントロール
     // ------------------------------------------------------------------
@@ -462,6 +504,9 @@ public sealed class SettingsForm : Form
         RefreshRuleListView();
         RefreshHotkeyListView();
         UpdateAdminStatusLabel();
+
+        _resetPositionPending = false;
+        _backgroundImageResetPositionButton.Enabled = true;
     }
 
     private static decimal ClampToRange(double value, NumericUpDown control) =>
@@ -486,6 +531,10 @@ public sealed class SettingsForm : Form
         settings.BackgroundImage.Size = (double)_backgroundImageSizeUpDown.Value;
         settings.BackgroundImage.Opacity = (double)_backgroundImageOpacityUpDown.Value;
         settings.BackgroundImage.ImagePath = _backgroundImagePathTextBox.Text;
+        if (_resetPositionPending)
+        {
+            settings.BackgroundImage.Position = null;
+        }
 
         // 空欄は「変更なし」を意味する（移植元: !on.empty() のときのみ上書き）。
         string on = _imeOnTextBox.Text;
@@ -529,6 +578,9 @@ public sealed class SettingsForm : Form
         UpdateAdminStatusLabel();
 
         AppliedCallback?.Invoke(_settingsManager.Settings);
+
+        _resetPositionPending = false;
+        _backgroundImageResetPositionButton.Enabled = true;
     }
 
     // ------------------------------------------------------------------

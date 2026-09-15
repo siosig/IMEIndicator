@@ -48,4 +48,14 @@ public sealed class BackgroundImageSettings
     [JsonPropertyName("imagePath")]
     [JsonPropertyOrder(3)]
     public string ImagePath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ユーザーが最後にドロップした背景画像の位置。null は「未移動」を意味し、その場合は
+    /// 同梱の既定位置(プライマリモニター作業領域の右上)に表示される(018-draggable-background-image FR-015)。
+    /// 016 で確立した「設定ツリーにヌル許容参照型を持ち込まない」方針の例外とする。未移動を表す値として
+    /// null が最も誤解が少なく、空のオブジェクトやフラグを別に持つより単純なため。
+    /// </summary>
+    [JsonPropertyName("position")]
+    [JsonPropertyOrder(4)]
+    public BackgroundImagePosition? Position { get; set; }
 }

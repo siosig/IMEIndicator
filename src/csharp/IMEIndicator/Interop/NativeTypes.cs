@@ -144,6 +144,33 @@ internal struct MONITORINFOEXW
     public static MONITORINFOEXW Create() => new() { CbSize = (uint)Marshal.SizeOf<MONITORINFOEXW>(), SzDevice = string.Empty };
 }
 
+// EnumDisplayDevicesW が返すモニター識別子。固定長 Unicode 文字列は MONITORINFOEXW と同じ方式で宣言する
+// (018-draggable-background-image)。
+// https://learn.microsoft.com/windows/win32/api/wingdi/ns-wingdi-display_devicew
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+internal struct DISPLAY_DEVICEW
+{
+    public uint Cb;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+    public string DeviceName;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+    public string DeviceString;
+    public uint StateFlags;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+    public string DeviceID;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+    public string DeviceKey;
+
+    public static DISPLAY_DEVICEW Create() => new()
+    {
+        Cb = (uint)Marshal.SizeOf<DISPLAY_DEVICEW>(),
+        DeviceName = string.Empty,
+        DeviceString = string.Empty,
+        DeviceID = string.Empty,
+        DeviceKey = string.Empty,
+    };
+}
+
 // https://learn.microsoft.com/windows/win32/api/wingdi/ns-wingdi-devmodew（cmd 18/23 の回転用に必要な範囲のみ）
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 internal struct DEVMODEW
@@ -243,6 +270,10 @@ internal static class NativeConstants
     public const int WS_EX_TOOLWINDOW = 0x00000080;
     public const int WS_EX_NOACTIVATE = 0x08000000;
 
+    // ---- GetWindowLongPtrW/SetWindowLongPtrW(拡張スタイルの取得・設定、018-draggable-background-image) ----
+    // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getwindowlongptrw
+    public const int GWL_EXSTYLE = -20;
+
     // ---- メッセージ ----
     public const int WM_WINDOWPOSCHANGING = 0x0046;
     public const int WM_SIZE = 0x0005;
@@ -251,16 +282,49 @@ internal static class NativeConstants
     public const int WM_SETTINGCHANGE = 0x001A;
     public const int WM_HOTKEY = 0x0312;
     public const int WM_IME_CONTROL = 0x0283;
+    // 背景画像ドラッグ用に追加(018-draggable-background-image)。
+    // https://learn.microsoft.com/windows/win32/winmsg/wm-enable
+    public const int WM_ENABLE = 0x000A;
+    // https://learn.microsoft.com/windows/win32/menurc/wm-setcursor
+    public const int WM_SETCURSOR = 0x0020;
+    // https://learn.microsoft.com/windows/win32/inputdev/wm-mouseactivate
+    public const int WM_MOUSEACTIVATE = 0x0021;
+    // MA_NOACTIVATE: WM_MOUSEACTIVATE への戻り値(アクティブ化を抑止する)。
+    // https://learn.microsoft.com/windows/win32/inputdev/wm-mouseactivate
+    public const int MA_NOACTIVATE = 3;
+    // HTCLIENT: WM_SETCURSOR/WM_NCHITTEST の lParam 下位ワード(クライアント領域内)。
+    // https://learn.microsoft.com/windows/win32/inputdev/wm-nchittest
+    public const int HTCLIENT = 1;
+    // https://learn.microsoft.com/windows/win32/inputdev/wm-mousemove
+    public const int WM_MOUSEMOVE = 0x0200;
+    // https://learn.microsoft.com/windows/win32/inputdev/wm-lbuttonup
+    public const int WM_LBUTTONUP = 0x0202;
+    // https://learn.microsoft.com/windows/win32/inputdev/wm-lbuttondblclk
+    public const int WM_LBUTTONDBLCLK = 0x0203;
+    // https://learn.microsoft.com/windows/win32/inputdev/wm-capturechanged
+    public const int WM_CAPTURECHANGED = 0x0215;
+    // MK_LBUTTON: WM_MOUSEMOVE 等の wParam 下位ワード(左ボタン押下フラグ)。
+    // https://learn.microsoft.com/windows/win32/inputdev/wm-mousemove
+    public const int MK_LBUTTON = 0x0001;
+    // ウィンドウ内部メッセージ(WM_APP_CONTROL_KEY 等)の基点。
+    // https://learn.microsoft.com/windows/win32/winmsg/wm-app
+    public const int WM_APP = 0x8000;
     public const int SIZE_MINIMIZED = 1;
     public const uint SPI_GETWORKAREA = 0x0030;
     public const int SPI_SETWORKAREA = 0x002F;
     public const nint IMC_GETOPENSTATUS = 0x0005;
+
+    // ---- カーソル(LoadCursorW、背景画像ドラッグ用、018-draggable-background-image) ----
+    // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-loadcursorw
+    public const int IDC_SIZEALL = 32646;
 
     // ---- SetWindowPos ----
     public const uint SWP_NOZORDER = 0x0004;
     public const uint SWP_NOACTIVATE = 0x0010;
     public const uint SWP_NOSIZE = 0x0001;
     public const uint SWP_NOMOVE = 0x0002;
+    // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-setwindowpos
+    public const uint SWP_FRAMECHANGED = 0x0020;
     public static readonly nint HWND_BOTTOM = 1;
     public static readonly nint HWND_TOPMOST = -1;
     public static readonly nint HWND_NOTOPMOST = -2;
@@ -351,6 +415,9 @@ internal static class NativeConstants
     // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getsystemmetrics
     public const int SM_CXSCREEN = 0;
     public const int SM_CYSCREEN = 1;
+    // SM_CXDRAG/SM_CYDRAG: ドラッグ開始とみなす移動量のしきい値(背景画像ドラッグ用、018-draggable-background-image)。
+    public const int SM_CXDRAG = 68;
+    public const int SM_CYDRAG = 69;
 
     // ---- 仮想キー（IME 切替・言語切替キー検出、KeyboardHook.cpp と同じ範囲） ----
     public const int VK_HANGEUL = 0x15; // IME On/Off と共用（Kana）
@@ -370,6 +437,11 @@ internal static class NativeConstants
     public const int VK_TAB = 0x09;
     public const int VK_LWIN = 0x5B;
     public const int VK_RWIN = 0x5C;
+    // VK_CONTROL/VK_LCONTROL/VK_RCONTROL: 背景画像ドラッグの Ctrl 検知用(018-draggable-background-image)。
+    // https://learn.microsoft.com/windows/win32/inputdev/virtual-key-codes
+    public const int VK_CONTROL = 0x11;
+    public const int VK_LCONTROL = 0xA2;
+    public const int VK_RCONTROL = 0xA3;
 
     // ---- 電源オーバーレイ GUID（PowerModeService.cpp と同値） ----
     // 最適な電力効率
@@ -393,6 +465,14 @@ internal static class NativeConstants
     // MONITORINFOEXW.DwFlags に立つプライマリモニターフラグ。
     // https://learn.microsoft.com/windows/win32/api/winuser/ns-winuser-monitorinfo
     public const uint MONITORINFOF_PRIMARY = 0x00000001;
+
+    // ---- モニター識別子(EnumDisplayDevicesW、018-draggable-background-image) ----
+    // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-enumdisplaydevicesw
+    public const uint EDD_GET_DEVICE_INTERFACE_NAME = 0x00000001;
+    // DISPLAY_DEVICEW.StateFlags のビット。
+    // https://learn.microsoft.com/windows/win32/api/wingdi/ns-wingdi-display_devicew
+    public const uint DISPLAY_DEVICE_ACTIVE = 0x00000001;
+    public const uint DISPLAY_DEVICE_MIRRORING_DRIVER = 0x00000008;
 }
 
 #endregion

@@ -79,7 +79,7 @@ public static class BackgroundImageLayout
     // 本関数の実引数は常に非負（logicalSize/logicalMargin は非負、effectiveDpi・BaseDpi は正）だが、
     // 一般の MulDiv 実装（Wine 等）に倣い符号付きでも正しく丸まるようにしておく。
     // https://learn.microsoft.com/windows/win32/api/winbase/nf-winbase-muldiv
-    private static int MulDiv(int number, int numerator, int denominator)
+    internal static int MulDiv(int number, int numerator, int denominator)
     {
         var product = (long)number * numerator;
         var half = denominator / 2;

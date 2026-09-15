@@ -27,7 +27,13 @@ public static class DisplayHelper
     /// <summary>
     /// 全モニター情報を取得する（プライマリも含む）。EnumDisplayMonitors の列挙順を保持する。
     /// </summary>
-    public static IReadOnlyList<MonitorInfo> GetMonitors()
+    /// <param name="includeDevicePath">
+    /// true の場合、各モニターの <see cref="MonitorInfo.DevicePath"/> を <see cref="GetDevicePath"/>
+    /// （EnumDisplayDevicesW）で解決する。既定は false。未移動のユーザーに追加の API 呼び出しを
+    /// 発生させないため、DevicePath が必要な呼び出し側だけが true を渡す
+    /// （018-draggable-background-image、research.md R-5）。
+    /// </param>
+    public static IReadOnlyList<MonitorInfo> GetMonitors(bool includeDevicePath = false)
     {
         var monitors = new List<MonitorInfo>();
 
@@ -41,6 +47,7 @@ public static class DisplayHelper
             }
 
             GetEffectiveDpi(hMonitor, out var dpiX, out var dpiY);
+            var devicePath = includeDevicePath ? GetDevicePath(info.SzDevice) : string.Empty;
 
             monitors.Add(new MonitorInfo(
                 MonitorRect: ToRectangle(info.RcMonitor),
@@ -48,7 +55,8 @@ public static class DisplayHelper
                 IsPrimary: (info.DwFlags & NativeConstants.MONITORINFOF_PRIMARY) != 0,
                 DpiX: dpiX,
                 DpiY: dpiY,
-                DeviceName: info.SzDevice));
+                DeviceName: info.SzDevice,
+                DevicePath: devicePath));
             return true;
         }
 
@@ -116,4 +124,31 @@ public static class DisplayHelper
     }
 
     private static Rectangle ToRectangle(RECT rect) => Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
+
+    // モニターのデバイスインターフェースパス（DevicePath）を解決する（018-draggable-background-image、research.md R-5）。
+    // EnumDisplayDevicesW に EDD_GET_DEVICE_INTERFACE_NAME を指定すると、GUID_DEVINTERFACE_MONITOR の
+    // デバイスインターフェース名が DISPLAY_DEVICE.DeviceID に格納される。
+    // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-enumdisplaydevicesw
+    // PowerToys FancyZones（MonitorUtils.cpp の IdentifyMonitors）と同じ方式：DISPLAY_DEVICE_ACTIVE が立ち、
+    // DISPLAY_DEVICE_MIRRORING_DRIVER が立っていない最初のエントリの DeviceID を採用する。
+    // https://github.com/microsoft/PowerToys/blob/main/src/modules/fancyzones/FancyZonesLib/MonitorUtils.cpp
+    private static string GetDevicePath(string deviceName)
+    {
+        for (uint iDevNum = 0; ; iDevNum++)
+        {
+            var device = DISPLAY_DEVICEW.Create();
+            if (!NativeMethods.EnumDisplayDevicesW(deviceName, iDevNum, ref device, NativeConstants.EDD_GET_DEVICE_INTERFACE_NAME))
+            {
+                // これ以上のエントリが無い。DevicePath は空文字のまま扱う（例外にしない）。
+                return string.Empty;
+            }
+
+            var isActive = (device.StateFlags & NativeConstants.DISPLAY_DEVICE_ACTIVE) != 0;
+            var isMirroring = (device.StateFlags & NativeConstants.DISPLAY_DEVICE_MIRRORING_DRIVER) != 0;
+            if (isActive && !isMirroring)
+            {
+                return device.DeviceID;
+            }
+        }
+    }
 }

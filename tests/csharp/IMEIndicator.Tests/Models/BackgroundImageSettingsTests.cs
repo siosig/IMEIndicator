@@ -4,6 +4,7 @@
 // under the terms of the GNU General Public License v2 or later.
 // See COPYING in the repository root for the full license text.
 
+using IMEIndicator.App;
 using IMEIndicator.Models;
 
 using Xunit;
@@ -33,6 +34,13 @@ public sealed class BackgroundImageSettingsTests
     {
         var s = new BackgroundImageSettings();
         Assert.Equal(string.Empty, s.ImagePath);
+    }
+
+    [Fact]
+    public void DefaultSettings_PositionIsNull()
+    {
+        var settings = new BackgroundImageSettings();
+        Assert.Null(settings.Position);
     }
 
     [Theory]
@@ -77,5 +85,75 @@ public sealed class BackgroundImageSettingsTests
         settings.Clamp();
 
         Assert.Equal(expected, settings.BackgroundImage.ImagePath);
+    }
+
+    [Fact]
+    public void ClampSetsPositionNull_WhenOffsetXIsNaN()
+    {
+        var settings = new AppSettings();
+        settings.BackgroundImage.Position = new BackgroundImagePosition("DISPLAY1", BackgroundImageAnchor.TopLeft, double.NaN, 10.0);
+
+        settings.Clamp();
+
+        Assert.Null(settings.BackgroundImage.Position);
+    }
+
+    [Fact]
+    public void ClampBoundsPositionOffsetXToZero_WhenNegative()
+    {
+        var settings = new AppSettings();
+        settings.BackgroundImage.Position = new BackgroundImagePosition("DISPLAY1", BackgroundImageAnchor.TopLeft, -50.0, 10.0);
+
+        settings.Clamp();
+
+        Assert.NotNull(settings.BackgroundImage.Position);
+        Assert.Equal(0.0, settings.BackgroundImage.Position!.OffsetX);
+    }
+
+    [Fact]
+    public void ClampBoundsPositionOffsetXToMax_WhenExceedsLimit()
+    {
+        var settings = new AppSettings();
+        settings.BackgroundImage.Position = new BackgroundImagePosition("DISPLAY1", BackgroundImageAnchor.TopLeft, 1e9, 10.0);
+
+        settings.Clamp();
+
+        Assert.NotNull(settings.BackgroundImage.Position);
+        Assert.Equal(AppConstants.BackgroundImageMaxPositionOffset, settings.BackgroundImage.Position!.OffsetX);
+    }
+
+    [Fact]
+    public void ClampTrimsPositionMonitorId()
+    {
+        var settings = new AppSettings();
+        settings.BackgroundImage.Position = new BackgroundImagePosition("  DISPLAY1  ", BackgroundImageAnchor.TopLeft, 10.0, 10.0);
+
+        settings.Clamp();
+
+        Assert.NotNull(settings.BackgroundImage.Position);
+        Assert.Equal("DISPLAY1", settings.BackgroundImage.Position!.MonitorId);
+    }
+
+    [Fact]
+    public void ClampSetsPositionNull_WhenAnchorIsUndefined()
+    {
+        var settings = new AppSettings();
+        settings.BackgroundImage.Position = new BackgroundImagePosition("DISPLAY1", (BackgroundImageAnchor)99, 10.0, 10.0);
+
+        settings.Clamp();
+
+        Assert.Null(settings.BackgroundImage.Position);
+    }
+
+    [Fact]
+    public void ClampKeepsValidPositionUnchanged()
+    {
+        var settings = new AppSettings();
+        var position = new BackgroundImagePosition("DISPLAY1", BackgroundImageAnchor.BottomRight, 24.0, 16.0);
+        settings.BackgroundImage.Position = position;
+
+        settings.Clamp();
+
+        Assert.Equal(position, settings.BackgroundImage.Position);
     }
 }

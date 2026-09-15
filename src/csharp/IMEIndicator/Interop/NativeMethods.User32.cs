@@ -224,6 +224,30 @@ internal static partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool IsIconic(nint hWnd);
 
+    // ---- 背景画像ドラッグ（マウスキャプチャ・カーソル・無効化解除、018-draggable-background-image） ----
+    // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-setcapture
+    [LibraryImport("user32.dll")]
+    public static partial nint SetCapture(nint hWnd);
+
+    // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-releasecapture
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool ReleaseCapture();
+
+    // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-setcursor
+    [LibraryImport("user32.dll")]
+    public static partial nint SetCursor(nint hCursor);
+
+    // lpCursorName は IDC_SIZEALL 等の整数リソース ID を渡す用途専用のため nint（文字列オーバーロードは使わない）。
+    // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-loadcursorw
+    [LibraryImport("user32.dll")]
+    public static partial nint LoadCursorW(nint hInstance, nint lpCursorName);
+
+    // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-enablewindow
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool EnableWindow(nint hWnd, [MarshalAs(UnmanagedType.Bool)] bool bEnable);
+
     // ---- クリップボード ----
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -261,4 +285,10 @@ internal static partial class NativeMethods
 
     [DllImport("user32.dll", EntryPoint = "EnumDisplaySettingsW", CharSet = CharSet.Unicode)]
     public static extern bool EnumDisplaySettingsW(string? lpszDeviceName, uint iModeNum, ref DEVMODEW lpDevMode);
+
+    // DISPLAY_DEVICEW も固定長文字列フィールドを含むため GetMonitorInfoW と同じ理由で DllImport を使う
+    // （018-draggable-background-image、モニター識別子の取得）。
+    // https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-enumdisplaydevicesw
+    [DllImport("user32.dll", EntryPoint = "EnumDisplayDevicesW", CharSet = CharSet.Unicode)]
+    public static extern bool EnumDisplayDevicesW(string? lpDevice, uint iDevNum, ref DISPLAY_DEVICEW lpDisplayDevice, uint dwFlags);
 }

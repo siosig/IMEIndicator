@@ -110,6 +110,11 @@ public sealed class App : ApplicationContext
         // 初期化自体は失敗しない設計（Relayout 失敗時は警告ログのみ。LayeredWindow 参照）。
         _backgroundImageWindow.ApplySettings(_settingsManager.Settings.BackgroundImage);
 
+        // ---- 背景画像の位置（018-draggable-background-image） ----
+        KeyboardHook.Instance.SetControlKeyCallback(isDown => _backgroundImageWindow.NotifyControlKey(isDown));
+        _backgroundImageWindow.ControlKeyStateStale += () => KeyboardHook.Instance.ResetControlKeyState();
+        _backgroundImageWindow.PositionCommitted += OnBackgroundImagePositionCommitted;
+
         // ---- ホットキー（HotkeyService、US4） ----
         // ImeIndicatorCommands（内部コマンド 200〜299）から本クラスの公開メソッドへ委譲するための
         // ハンドラを先に注入してから HotkeyService を起動する（移植元 App::initialize の
@@ -162,6 +167,7 @@ public sealed class App : ApplicationContext
 
         _hotkeyService.Stop();
         _priorityMonitor.Stop();
+        KeyboardHook.Instance.SetControlKeyCallback(null);
         _imeMonitor.Stop();
 
         // 正常終了の証としてバックアップを削除（次回起動で復元発火を防ぐ。移植元と同じ）。
@@ -438,6 +444,15 @@ public sealed class App : ApplicationContext
 
     // MouseTracker は Forms.Timer（UI スレッド）ベースのため、直接更新可能（移植元と同じ）。
     private void OnCursorPositionChanged(int x, int y) => _indicatorWindow.MoveTo(new Point(x, y));
+
+    // 018-draggable-background-image: 背景画像のドラッグが確定したときに呼ばれる。
+    // BackgroundImageWindow は App と同じ BackgroundImageSettings インスタンスを参照しているため、
+    // ApplySettings を呼び直す必要はない（設定への書き込みと保存だけでよい）。
+    private void OnBackgroundImagePositionCommitted(BackgroundImagePosition position)
+    {
+        _settingsManager.Settings.BackgroundImage.Position = position;
+        _settingsManager.Save();
+    }
 
     private void RefreshIndicatorColor()
     {
