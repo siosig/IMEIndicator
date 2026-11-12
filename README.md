@@ -223,8 +223,8 @@ dotnet publish src/csharp/IMEIndicator/IMEIndicator.csproj -c Release -r win-x64
 
 ### バージョン管理
 
-リリースビルドごとに [src/csharp/IMEIndicator/IMEIndicator.csproj](src/csharp/IMEIndicator/IMEIndicator.csproj)
-の `<Version>` を 1 つずつインクリメントしてください（FR-009）。
+バージョンは [Directory.Build.props](Directory.Build.props) の `<Version>`（`X.Y.Z` 形式）の 1 箇所で定義しています。
+リリースビルドごとに末尾の Z を 1 つずつインクリメントし、git タグ（例: `v1.5.4`）と一致させてください。
 
 ### 配布
 

@@ -45,9 +45,8 @@ internal static class Program
     /// <summary>
     /// <c>/powertoggle</c> 引数の処理。移植元 <c>runPowerToggleEntry()</c> と同じ 2 段構成:
     /// (1) 常駐インスタンスへ Event でトグル要求を送る。(2) 送れなければ（常駐が無ければ）
-    /// その場で電源モードをトグルする。<b>いずれの経路も通知（バルーン等）は行わない</b>
-    /// （移植元コメントに反し実際には未配線のまま出荷されている挙動をそのまま踏襲する。
-    /// tasks.md T042 の訂正記録を参照）。
+    /// その場で電源モードをトグルする。(1) では常駐側の <c>App.TogglePowerModeAndNotify</c> が
+    /// バルーン通知を出す。(2) では常駐インスタンスもトレイアイコンも無いため通知しない。
     /// </summary>
     private static void RunPowerToggleEntry()
     {
