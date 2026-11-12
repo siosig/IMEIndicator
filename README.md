@@ -3,8 +3,8 @@
 IMEIndicator は、Windows 11 上で日本語 IME の ON 状態をマウスカーソル付近に表示する常駐アプリです。通常はタスクトレイに常駐し、設定画面から表示サイズやオフセット、プロセス優先度ルールを変更できます。
 
 > [!IMPORTANT]
-> **.NET 10 / C# 実装**に全面移行しました（旧ネイティブ C++ 実装は廃止）。自己完結・単一 EXE
-> （約 72 MB）として配布され、.NET ランタイムの事前導入は不要です。
+> **C# / .NET 実装**に全面移行しました（旧ネイティブ C++ 実装は廃止）。自己完結・単一 EXE
+> （約 82 MB）として配布され、.NET ランタイムの事前導入は不要です。
 
 ## できること
 
@@ -18,7 +18,7 @@ IMEIndicator は、Windows 11 上で日本語 IME の ON 状態をマウスカ�
 ## 対応環境
 
 - Windows 11 64-bit
-- ランタイム不要（自己完結・単一 EXE として配布。.NET 10 ランタイムの事前導入は不要）
+- ランタイム不要（自己完結・単一 EXE として配布。.NET 11 ランタイムの事前導入は不要）
 
 > [!NOTE]
 > 配布された `IMEIndicator.exe` を任意のフォルダに置くだけで動作します（管理者権限不要）。プロセス優先度ルールでシステムプロセスを操作する場合のみ管理者権限を推奨。
@@ -202,7 +202,7 @@ IMEIndicator.exe /powertoggle
 
 ### 前提
 
-- .NET 10 SDK（[dotnet.microsoft.com](https://dotnet.microsoft.com/) から入手）
+- .NET 11 SDK（[dotnet.microsoft.com](https://dotnet.microsoft.com/) から入手）
 
 ### ビルド・テスト
 
@@ -219,7 +219,7 @@ dotnet publish src/csharp/IMEIndicator/IMEIndicator.csproj -c Release -r win-x64
   -o dist/csharp
 ```
 
-成果物: `dist/csharp/IMEIndicator.exe`（自己完結・単一ファイル、約 72 MB。.NET ランタイムの事前導入は不要）。
+成果物: `dist/csharp/IMEIndicator.exe`（自己完結・単一ファイル、約 82 MB。.NET ランタイムの事前導入は不要）。
 
 ### バージョン管理
 

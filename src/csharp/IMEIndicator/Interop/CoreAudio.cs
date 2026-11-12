@@ -15,7 +15,7 @@ namespace IMEIndicator.Interop;
 // アクティブ化ロジック（CoCreateInstance 呼び出し・COM 初期化）は
 // Services/Hotkey/Commands/VolumeCommands.cs 側に置く（このファイルはインターフェース定義のみ）。
 //
-// 技術選定: .NET 10 のソース生成 COM 相互運用（System.Runtime.InteropServices.Marshalling の
+// 技術選定: .NET 8 で導入されたソース生成 COM 相互運用（System.Runtime.InteropServices.Marshalling の
 // [GeneratedComInterface]）を使用する。[ComImport] ベースの旧来の相互運用より AOT フレンドリーで
 // 実行時コード生成が無く、ソース生成コード検証を context7 で行える。
 //
